@@ -1,0 +1,6 @@
+primary_diagnosis,study_name,number_of_participants,number_of_samples,study_data_types,participant_id,sample_id,file_name,therapeutic_agents,morphology,tissue_or_organ_of_origin,site_of_resection_or_biopsy
+Adenocarcinoma NOS,Human Tumor Atlas Network (HTAN) primary sequencing data,317,923,Genomicss,HTA1_01,HTA1_01_1,FILE1_R1.fastq.gz,Cetrelimab,"Comedo, Solid",Breast NOS,Upper-outer quadrant of breast
+Adenocarcinoma NOS,Human Tumor Atlas Network (HTAN) primary sequencing data,317,923,Genomics,HTA1_02,HTA1_02_1,FILE2_R1.fastq.gz,cetrelimab,"Comedo, Solid",Breast NOS,Upper-outer quadrant of breast
+Acute lymphoblastic leukemia NOS,Human Tumor Atlas Network (HTAN) primary sequencing data,317,923,Genomics,HTA1_03,HTA1_03_1,FILE3_R1.fastq.gz,cetrelimab,"Comedo, Solid",Breast NOS,Upper-outer quadrant of breast
+Familial adenomatous polyposis,Human Tumor Atlas Network (HTAN) primary sequencing data,317,923,Genomics,HTA1_04,HTA1_04_1,FILE4_R1.fastq.gz,Cetrelimab,"Comedo, Solid",Breast NOS,Upper-outer quadrant of breast
+Pancreatobiliary-type carcinoma,Human Tumor Atlas Network (HTAN) primary sequencing data,317,923,Genomics,HTA1_05,HTA1_05_1,FILE5_R1.fastq.gz,cetrelimabbbb,"Comedo, Clinging",Breast NOS,Lower-outer quadrant of breast

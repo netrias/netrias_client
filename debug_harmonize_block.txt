@@ -1,0 +1,46 @@
+async def _harmonize_async(source_path: Path, manifest_path: Path, output_path: Path | None = None) -> HarmonizationResult:
+    """Execute harmonization via the asynchronous job API."""
+
+    settings = get_settings()
+    csv_path = validate_source_path(source_path)
+    manifest = validate_manifest_path(manifest_path)
+    dest = validate_output_path(output_path, source_name=csv_path.stem)
+
+    _logger.info("harmonize start: file=%s", csv_path)
+
+    payload = build_harmonize_payload(csv_path, manifest)
+
+    job_payload, failure = await _submit_job_response(
+        base_url=settings.api_url,
+        api_key=settings.api_key,
+        timeout=settings.timeout,
+        payload=payload,
+        csv_path=csv_path,
+        dest=dest,
+    )
+    if failure is not None:
+        return failure
+
+    job_id, failure = _job_id_from_payload(job_payload, csv_path, dest)
+    if failure is not None:
+        return failure
+
+    final_payload, failure = await _resolve_final_payload(
+        base_url=settings.api_url,
+        api_key=settings.api_key,
+        job_id=job_id,
+        timeout=settings.timeout,
+        csv_path=csv_path,
+        dest=dest,
+    )
+    if failure is not None:
+        return failure
+
+    final_url, failure = _final_url_from_payload(final_payload, csv_path, dest)
+    if failure is not None:
+        return failure
+
+    download_failure = await _download_final(final_url, dest, settings.timeout, csv_path)
+    if download_failure is not None:
+        return download_failure
+

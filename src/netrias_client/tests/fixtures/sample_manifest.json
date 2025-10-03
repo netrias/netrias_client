@@ -1,0 +1,8 @@
+{
+  "mapping": "demo",
+  "columns": [
+    {"name": "a", "target": "alpha"},
+    {"name": "b", "target": "beta"},
+    {"name": "c", "target": "gamma"}
+  ]
+}

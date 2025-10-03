@@ -1,0 +1,43 @@
+{
+  "column_mappings": {
+    "study_name": {
+      "targetField": "study_name"
+    },
+    "number_of_participants": {
+      "targetField": "number_of_participants"
+    },
+    "number_of_samples": {
+      "targetField": "number_of_samples"
+    },
+    "study_data_types": {
+      "targetField": "study_data_types"
+    },
+    "participant_id": {
+      "targetField": "participant_id"
+    },
+    "sample_id": {
+      "targetField": "sample_id"
+    },
+    "file_name": {
+      "targetField": "file_name"
+    },
+    "therapeutic_agents": {
+      "route": "sagemaker:therapeutic_agents",
+      "targetField": "therapeutic_agents",
+      "cdeId": -203,
+      "cde_id": -203
+    },
+    "primary_diagnosis": {
+      "route": "sagemaker:primary",
+      "targetField": "primary_diagnosis",
+      "cdeId": -200,
+      "cde_id": -200
+    },
+    "morphology": {
+      "route": "sagemaker:morphology",
+      "targetField": "morphology",
+      "cdeId": -201,
+      "cde_id": -201
+    }
+  }
+}
