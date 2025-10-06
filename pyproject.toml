@@ -5,11 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "netrias-client"
 version = "0.0.1"
-description = "Ergonomic Python client for the Netrias harmonization API"
+description = "Python client for the Netrias harmonization API"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 dependencies = [
-    "httpx>=0.27.0",
+    "httpx",
+    "boto3",
+
 ]
 license = { file = "LICENSE" }
 classifiers = [
@@ -21,13 +23,14 @@ classifiers = [
 ]
 keywords = ["netrias", "harmonization", "cde", "api", "client"]
 
+# Run with `uv run test` etc
 [project.scripts]
-"netrias-client-test" = "pytest:main"
+test = "pytest:main"
+check = "netrias_client.scripts:check"
+live_check = "netrias_client.scripts:live_check"
+
 
 [project.optional-dependencies]
-aws = [
-    "boto3>=1.35.0",
-]
 dev = [
     "pytest>=7",
     "pytest-asyncio>=0.23",
@@ -38,9 +41,6 @@ dev = [
     "python-dotenv>=1.0",
 ]
 
-[tool.uv.scripts]
-pytest = "pytest"
-live-test = "PYTHONPATH=src python -m netrias_client.live_test.test"
 
 [tool.hatch.build]
 include = [
@@ -56,8 +56,6 @@ exclude = [
     "*.csv",
     "*.log",
     "debug_*",
-    "old_block.txt",
-    "suggest_CDE.ipynb",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -74,8 +72,6 @@ exclude = [
     "*.csv",
     "*.log",
     "debug_*",
-    "old_block.txt",
-    "suggest_CDE.ipynb",
 ]
 
 [dependency-groups]

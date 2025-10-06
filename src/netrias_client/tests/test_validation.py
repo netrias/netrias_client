@@ -9,13 +9,16 @@ from pathlib import Path
 
 import pytest
 
-from netrias_client import harmonize
+from netrias_client import NetriasClient
 from netrias_client._errors import FileValidationError, OutputLocationError
 from netrias_client._validators import HARD_MAX_CSV_BYTES
 
 
-@pytest.mark.usefixtures("configured_client")
-def test_missing_source_file_raises(sample_manifest_path: Path, output_directory: Path) -> None:
+def test_missing_source_file_raises(
+    configured_client: NetriasClient,
+    sample_manifest_path: Path,
+    output_directory: Path,
+) -> None:
     """Raise FileValidationError when the source CSV is absent.
 
     'why': prevent network calls when the input file cannot be found
@@ -26,14 +29,21 @@ def test_missing_source_file_raises(sample_manifest_path: Path, output_directory
     # Given a missing CSV path
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=missing_path, manifest=sample_manifest_path, output_path=output_directory)
+        _ = configured_client.harmonize(
+            source_path=missing_path,
+            manifest=sample_manifest_path,
+            output_path=output_directory,
+        )
 
     # Then the error mentions the missing file
     assert "not found" in str(exc.value)
 
 
-@pytest.mark.usefixtures("configured_client")
-def test_directory_source_path_rejected(sample_manifest_path: Path, output_directory: Path) -> None:
+def test_directory_source_path_rejected(
+    configured_client: NetriasClient,
+    sample_manifest_path: Path,
+    output_directory: Path,
+) -> None:
     """Reject directory paths for the source CSV input.
 
     'why': enforce file-only inputs before uploading
@@ -44,15 +54,21 @@ def test_directory_source_path_rejected(sample_manifest_path: Path, output_direc
     # Given a directory in place of a CSV file
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=directory_path, manifest=sample_manifest_path, output_path=output_directory)
+        _ = configured_client.harmonize(
+            source_path=directory_path,
+            manifest=sample_manifest_path,
+            output_path=output_directory,
+        )
 
     # Then the error clarifies the path is not a file
     assert "not a file" in str(exc.value)
 
 
-@pytest.mark.usefixtures("configured_client")
 def test_invalid_source_extension_rejected(
-    sample_manifest_path: Path, output_directory: Path, tmp_path: Path
+    configured_client: NetriasClient,
+    sample_manifest_path: Path,
+    output_directory: Path,
+    tmp_path: Path,
 ) -> None:
     """Reject non-CSV source files.
 
@@ -65,14 +81,18 @@ def test_invalid_source_extension_rejected(
     # Given a non-CSV source path
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=wrong_extension, manifest=sample_manifest_path, output_path=output_directory)
+        _ = configured_client.harmonize(
+            source_path=wrong_extension,
+            manifest=sample_manifest_path,
+            output_path=output_directory,
+        )
 
     # Then the error references the unsupported extension
     assert "extension" in str(exc.value)
 
 
-@pytest.mark.usefixtures("configured_client")
 def test_source_file_too_large(
+    configured_client: NetriasClient,
     sample_manifest_path: Path,
     output_directory: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -93,14 +113,22 @@ def test_source_file_too_large(
     # Given a CSV that appears larger than the limit
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=sample_csv_path, manifest=sample_manifest_path, output_path=output_directory)
+        _ = configured_client.harmonize(
+            source_path=sample_csv_path,
+            manifest=sample_manifest_path,
+            output_path=output_directory,
+        )
 
     # Then an explicit size error is raised
     assert "exceeds" in str(exc.value)
 
 
-@pytest.mark.usefixtures("configured_client")
-def test_manifest_must_be_json(sample_csv_path: Path, output_directory: Path, tmp_path: Path) -> None:
+def test_manifest_must_be_json(
+    configured_client: NetriasClient,
+    sample_csv_path: Path,
+    output_directory: Path,
+    tmp_path: Path,
+) -> None:
     """Reject non-JSON manifest paths.
 
     'why': avoid uploading unsupported manifest formats
@@ -112,14 +140,18 @@ def test_manifest_must_be_json(sample_csv_path: Path, output_directory: Path, tm
     # Given a manifest that is not a .json file
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=sample_csv_path, manifest=bad_manifest, output_path=output_directory)
+        _ = configured_client.harmonize(
+            source_path=sample_csv_path,
+            manifest=bad_manifest,
+            output_path=output_directory,
+        )
 
     # Then the error highlights the extension issue
     assert "manifest" in str(exc.value)
 
 
-@pytest.mark.usefixtures("configured_client")
 def test_output_path_existing_file_versioned(
+    configured_client: NetriasClient,
     sample_csv_path: Path,
     sample_manifest_path: Path,
     output_directory: Path,
@@ -138,7 +170,7 @@ def test_output_path_existing_file_versioned(
     capture = job_success(chunks=(b"col1,col2\n", b"1,2\n"))
     install_mock_transport(monkeypatch, capture)
 
-    result = harmonize(
+    result = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         output_path=output_directory,
@@ -153,8 +185,8 @@ def test_output_path_existing_file_versioned(
     assert len(capture.requests) == 3
 
 
-@pytest.mark.usefixtures("configured_client")
 def test_output_directory_must_be_writable(
+    configured_client: NetriasClient,
     sample_csv_path: Path,
     sample_manifest_path: Path,
     output_directory: Path,
@@ -179,7 +211,11 @@ def test_output_directory_must_be_writable(
     # Given an unwritable output directory
     # When harmonize executes
     with pytest.raises(OutputLocationError) as exc:
-        _ = harmonize(source_path=sample_csv_path, manifest=sample_manifest_path, output_path=target)
+        _ = configured_client.harmonize(
+            source_path=sample_csv_path,
+            manifest=sample_manifest_path,
+            output_path=target,
+        )
 
     # Then an OutputLocationError is raised with a helpful message
     assert "not writable" in str(exc.value)

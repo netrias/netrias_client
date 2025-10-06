@@ -13,11 +13,7 @@ import pytest
 
 from pathlib import Path
 
-from netrias_client import (
-    discover_mapping,
-    discover_mapping_async,
-    discover_cde_mapping,
-)
+from netrias_client import NetriasClient
 from netrias_client._errors import MappingDiscoveryError, MappingValidationError, NetriasAPIUnavailable
 
 from ._utils import install_mock_transport, json_failure, json_success, transport_error
@@ -30,8 +26,10 @@ def _sample_columns() -> Mapping[str, Sequence[object]]:
     }
 
 
-@pytest.mark.usefixtures("configured_client")
-def test_discover_mapping_success(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_discover_mapping_success(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Return structured recommendations when the API succeeds."""
 
     payload = {
@@ -58,7 +56,10 @@ def test_discover_mapping_success(monkeypatch: pytest.MonkeyPatch) -> None:
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    manifest = discover_mapping(target_schema="ccdi", column_samples=_sample_columns())
+    manifest = configured_client.discover_mapping(
+        target_schema="ccdi",
+        column_samples=_sample_columns(),
+    )
 
     column_mappings = manifest.get("column_mappings", {})
     assert "sample_name" in column_mappings
@@ -75,8 +76,10 @@ def test_discover_mapping_success(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "sample_name" in body_raw
 
 
-@pytest.mark.usefixtures("configured_client")
-def test_discover_mapping_parses_dict_body(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_discover_mapping_parses_dict_body(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Handle responses that already present body as a JSON object."""
 
     payload = {
@@ -93,14 +96,20 @@ def test_discover_mapping_parses_dict_body(monkeypatch: pytest.MonkeyPatch) -> N
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    manifest = discover_mapping(target_schema="sage_rnaseq", column_samples=_sample_columns())
+    manifest = configured_client.discover_mapping(
+        target_schema="sage_rnaseq",
+        column_samples=_sample_columns(),
+    )
 
     column_mappings = manifest.get("column_mappings", {})
     assert column_mappings["sample_name"]["targetField"] == "biospecimen.sample_id"
 
 
-@pytest.mark.usefixtures("configured_client")
-def test_discover_mapping_from_csv(monkeypatch: pytest.MonkeyPatch, sample_csv_path: Path) -> None:
+def test_discover_mapping_from_csv(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_csv_path: Path,
+) -> None:
     """CSV convenience wrapper derives samples and forwards to discovery API."""
 
     payload = {
@@ -109,7 +118,11 @@ def test_discover_mapping_from_csv(monkeypatch: pytest.MonkeyPatch, sample_csv_p
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    manifest = discover_cde_mapping(target_schema="ccdi", source_csv=sample_csv_path, sample_limit=1)
+    manifest = configured_client.discover_cde_mapping(
+        source_csv=sample_csv_path,
+        target_schema="ccdi",
+        sample_limit=1,
+    )
 
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
@@ -119,40 +132,52 @@ def test_discover_mapping_from_csv(monkeypatch: pytest.MonkeyPatch, sample_csv_p
     assert isinstance(manifest.get("column_mappings"), dict)
 
 
-@pytest.mark.usefixtures("configured_client")
-def test_discover_mapping_handles_api_error(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_discover_mapping_handles_api_error(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Raise MappingDiscoveryError when the API returns a non-2xx status."""
 
     capture = json_failure({"message": "unsupported schema"}, status_code=400)
     install_mock_transport(monkeypatch, capture)
 
     with pytest.raises(MappingDiscoveryError) as exc:
-        _ = discover_mapping(target_schema="bogus", column_samples=_sample_columns())
+        _ = configured_client.discover_mapping(
+            target_schema="bogus",
+            column_samples=_sample_columns(),
+        )
 
     assert "unsupported schema" in str(exc.value)
 
 
-def test_discover_mapping_validates_inputs() -> None:
+def test_discover_mapping_validates_inputs(configured_client: NetriasClient) -> None:
     """Input validation rejects empty column data."""
 
     with pytest.raises(MappingValidationError):
-        _ = discover_mapping(target_schema="ccdi", column_samples={})
+        _ = configured_client.discover_mapping(target_schema="ccdi", column_samples={})
 
 
-@pytest.mark.usefixtures("configured_client")
-def test_discover_mapping_raises_on_transport_error(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_discover_mapping_raises_on_transport_error(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Raise NetriasAPIUnavailable when transport fails."""
 
     capture = transport_error(httpx.ConnectError("boom"))
     install_mock_transport(monkeypatch, capture)
 
     with pytest.raises(NetriasAPIUnavailable):
-        _ = discover_mapping(target_schema="ccdi", column_samples=_sample_columns())
+        _ = configured_client.discover_mapping(
+            target_schema="ccdi",
+            column_samples=_sample_columns(),
+        )
 
 
 @pytest.mark.asyncio
-@pytest.mark.usefixtures("configured_client")
-async def test_discover_mapping_async(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_discover_mapping_async(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Async variant yields the same structure as the sync function."""
 
     payload = {
@@ -169,6 +194,9 @@ async def test_discover_mapping_async(monkeypatch: pytest.MonkeyPatch) -> None:
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    manifest = await discover_mapping_async(target_schema="ccdi", column_samples=_sample_columns())
+    manifest = await configured_client.discover_mapping_async(
+        target_schema="ccdi",
+        column_samples=_sample_columns(),
+    )
     column_mappings = manifest.get("column_mappings", {})
     assert isinstance(column_mappings, dict)

@@ -1,44 +1,46 @@
-"""Centralize logger creation.
-
-'why': provide a unified logging approach configured once via settings
-"""
+"""Logger helpers for the Netrias client."""
 from __future__ import annotations
 
 import logging
+from pathlib import Path
+from typing import Final
+
+from ._models import LogLevel
 
 
-_LOGGER_NAME = "netrias_client"
-_logger: logging.Logger | None = None
+_FORMAT: Final[str] = "%(asctime)s %(levelname)s netrias_client: %(message)s"
 
 
-def get_logger() -> logging.Logger:
-    """Return the module logger, creating it if necessary."""
+def configure_logger(
+    name: str,
+    level: LogLevel,
+    log_directory: Path | None,
+) -> logging.Logger:
+    """Configure and return a logger dedicated to a Netrias client instance."""
 
-    global _logger
-    if _logger is not None:
-        return _logger
-    logger = logging.getLogger(_LOGGER_NAME)
-    if not logger.handlers:
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            fmt="%(asctime)s %(levelname)s netrias_client: %(message)s",
-        )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+    logger = logging.getLogger(name)
+    logger.handlers.clear()
     logger.propagate = False
-    _logger = logger
-    return logger
 
+    formatter = logging.Formatter(fmt=_FORMAT)
 
-def set_log_level(level: str) -> None:
-    """Apply the provided log level to the module logger."""
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
 
-    logger = get_logger()
-    levels = {
-        "CRITICAL": logging.CRITICAL,
-        "ERROR": logging.ERROR,
-        "WARNING": logging.WARNING,
-        "INFO": logging.INFO,
-        "DEBUG": logging.DEBUG,
+    if log_directory is not None:
+        log_directory.mkdir(parents=True, exist_ok=True)
+        file_path = log_directory / f"{name.replace('.', '_')}.log"
+        file_handler = logging.FileHandler(file_path, encoding="utf-8")
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+    mapping = {
+        LogLevel.CRITICAL: logging.CRITICAL,
+        LogLevel.ERROR: logging.ERROR,
+        LogLevel.WARNING: logging.WARNING,
+        LogLevel.INFO: logging.INFO,
+        LogLevel.DEBUG: logging.DEBUG,
     }
-    logger.setLevel(levels.get(level.upper(), logging.INFO))
+    logger.setLevel(mapping[level])
+    return logger

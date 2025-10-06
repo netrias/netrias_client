@@ -4,35 +4,30 @@
 """
 from __future__ import annotations
 
-from collections.abc import Iterator
 from pathlib import Path
+
+from typing import cast
 
 import pytest
 
-from netrias_client import configure
-
-
-@pytest.fixture(autouse=True)
-def reset_configuration(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    """Clear global client settings before and after each test.
-
-    'why': ensure scenarios remain isolated regardless of configure usage
-    """
-
-    monkeypatch.setattr("netrias_client._config._settings", None, raising=False)
-    yield
-    monkeypatch.setattr("netrias_client._config._settings", None, raising=False)
+from netrias_client import NetriasClient
 
 
 @pytest.fixture
-def configured_client() -> Iterator[None]:
-    """Configure the client with deterministic test credentials.
+def configured_client() -> NetriasClient:
+    """Return a client configured with deterministic credentials.
 
-    'why': provide a ready-to-use setup for harmonization scenarios
+    'why': provide a ready-to-use setup for discovery and harmonization scenarios
     """
 
-    configure(api_key="test-api-key", timeout=5, log_level="INFO", discovery_use_gateway_bypass=False)
-    yield
+    client = NetriasClient()
+    client.configure(
+        api_key="test-api-key",
+        timeout=5,
+        log_level="INFO",
+        discovery_use_gateway_bypass=False,
+    )
+    return client
 
 
 @pytest.fixture
@@ -73,4 +68,4 @@ def sample_manifest_mapping(sample_manifest_path: Path) -> dict[str, object]:
 
     import json
 
-    return json.loads(sample_manifest_path.read_text(encoding="utf-8"))
+    return cast(dict[str, object], json.loads(sample_manifest_path.read_text(encoding="utf-8")))

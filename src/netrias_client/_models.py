@@ -6,8 +6,19 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Literal
+
+
+class LogLevel(str, Enum):
+    """Enumerate supported logging levels for the client."""
+
+    CRITICAL = "CRITICAL"
+    ERROR = "ERROR"
+    WARNING = "WARNING"
+    INFO = "INFO"
+    DEBUG = "DEBUG"
 
 
 @dataclass(frozen=True)
@@ -18,13 +29,10 @@ class Settings:
     discovery_url: str
     harmonization_url: str
     timeout: float
-    log_level: str
+    log_level: LogLevel
     confidence_threshold: float
     discovery_use_gateway_bypass: bool
-    discovery_bypass_function: str
-    discovery_bypass_alias: str
-    discovery_bypass_region: str
-    discovery_bypass_profile: str | None
+    log_directory: Path | None
 
 
 @dataclass(frozen=True)

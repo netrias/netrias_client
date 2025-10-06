@@ -25,7 +25,6 @@ class MockTransportCapture:
 
 
 def job_success(
-    *,
     chunks: Sequence[bytes],
     job_id: str = "job-123",
     final_url: str = "https://mock.netrias/result.csv",
@@ -48,7 +47,7 @@ def job_success(
     return MockTransportCapture(httpx.MockTransport(handler), recorded)
 
 
-def json_failure(payload: dict[str, object], *, status_code: int) -> MockTransportCapture:
+def json_failure(payload: dict[str, object], status_code: int) -> MockTransportCapture:
     """Return a mock transport returning a JSON failure payload.
 
     'why': drive domain failure scenarios with realistic API responses
@@ -64,7 +63,7 @@ def json_failure(payload: dict[str, object], *, status_code: int) -> MockTranspo
     return MockTransportCapture(httpx.MockTransport(handler), recorded)
 
 
-def json_success(payload: Mapping[str, object], *, status_code: int = 200) -> MockTransportCapture:
+def json_success(payload: Mapping[str, object], status_code: int = 200) -> MockTransportCapture:
     """Return a mock transport yielding a JSON success payload."""
 
     recorded: list[httpx.Request] = []
@@ -100,10 +99,10 @@ def install_mock_transport(monkeypatch: MonkeyPatch, capture: MockTransportCaptu
     original_async_client = httpx.AsyncClient
 
     class _PatchedAsyncClient(original_async_client):
-        def __init__(self, *args: object, **kwargs: object) -> None:  # type: ignore[override]
+        def __init__(self, **kwargs: object) -> None:  # type: ignore[override]
             kwdict: dict[str, object] = dict(kwargs)
             kwdict["transport"] = capture.transport
-            super().__init__(*args, **kwdict)
+            super().__init__(**kwdict)  # pyright: ignore[reportArgumentType]
 
     monkeypatch.setattr("netrias_client._http.httpx.AsyncClient", _PatchedAsyncClient)
     monkeypatch.setattr("netrias_client._core.httpx.AsyncClient", _PatchedAsyncClient)

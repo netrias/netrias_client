@@ -6,9 +6,10 @@
 - Maintain transparency on failures by surfacing structured errors, typed results, and detailed logs rather than silent retries.
 
 ## Module Overview
-- `__init__.py`: surface the public API (`configure`, `discover_mapping*`, `harmonize*`) and version metadata.
+- `__init__.py`: surface the public API (`NetriasClient`) and version metadata.
 - `_adapter.py`: internal helpers that translate discovery responses into harmonization manifest snippets, enforcing confidence thresholds and hydrating static CDE metadata.
-- `_config.py`: own the global `Settings` snapshot, validate configuration, normalize gateway-bypass options, and set the shared logger level.
+- `_client.py`: implement the stateful `NetriasClient` facade.
+- `_config.py`: validate configuration inputs, normalize gateway-bypass options, and build immutable `Settings` snapshots.
 - `_core.py`: contain the harmonization workflow (submit → poll → download) shared by sync/async entry points.
 - `_discovery.py`: implement discovery workflows, CSV sampling helpers, and conditional routing between API Gateway and the Lambda alias bypass.
 - `_errors.py`: collect the client exception taxonomy (`ClientConfigurationError`, `MappingDiscoveryError`, `NetriasAPIUnavailable`, etc.).
@@ -21,29 +22,24 @@
 - `tests/`: Given/When/Then-style fixtures and utilities for validation, discovery, and harmonization.
 
 ## Configuration & Settings
-- `configure(...)` must be called before any API invocation; defaults are intentionally minimal.
+- `NetriasClient.configure(...)` must be called before any discovery/harmonization call; defaults are intentionally minimal. Discovery calls require an explicit target schema per invocation.
 - Required parameters: `api_key`.
 - Optional parameters:
   - `timeout`: defaults to `21600.0` seconds (6 hours) to match long-running harmonization jobs.
-  - `log_level`: normalized to standard logging levels (INFO by default).
+  - `log_level`: accepts a `LogLevel` enum value (defaults to `LogLevel.INFO`).
   - `confidence_threshold`: defaults to `0.8`; used by the adapter to filter discovery candidates.
-  - `discovery_use_gateway_bypass`: opt-in flag enabling the Lambda alias dispatcher.
-  - `discovery_bypass_function` / `discovery_bypass_alias` / `discovery_bypass_region` / `discovery_bypass_profile`: override values for the bypass when enabled.
-- Settings updates are guarded by a module-level lock and produce an immutable snapshot for callers; the logger level updates immediately to avoid stale verbosity.
+  - `discovery_use_gateway_bypass`: opt-in flag enabling the Lambda alias dispatcher (other bypass parameters remain fixed by the library).
+- Settings updates live on each `NetriasClient` instance; `.settings` returns a defensive copy. Logger level updates immediately to avoid stale verbosity.
 - Optional AWS dependency (`boto3`) is exposed through the `aws` dependency group for environments that need the bypass.
 
 ## Public API
-- `configure(*, api_key: str, timeout: float | None = None, log_level: str | None = None, confidence_threshold: float | None = None, discovery_use_gateway_bypass: bool | None = None, discovery_bypass_function: str | None = None, discovery_bypass_alias: str | None = None, discovery_bypass_region: str | None = None, discovery_bypass_profile: str | None = None) -> None`
-  - Validates credentials, normalizes optional settings, and mutates the global `Settings` snapshot; raises `ClientConfigurationError` on invalid input.
-- Discovery helpers (sync + async):
-  - `discover_mapping`, `discover_mapping_async`
-  - `discover_mapping_from_csv`, `discover_mapping_from_csv_async`
-  - Accept target schema plus either prepared samples or a CSV path; return `MappingDiscoveryResult`; raise `MappingDiscoveryError` (domain failures), `MappingValidationError` (input issues), or `NetriasAPIUnavailable` (transport errors).
-- Harmonization helpers (sync + async):
-  - `harmonize`, `harmonize_async`
-  - Require CSV + manifest paths, optional output path; return `HarmonizationResult` regardless of success/failure; raise `HarmonizationJobError` on submit/poll/timeout failures and `NetriasAPIUnavailable` on transport errors.
-- Adapter helper:
-  - Discovery helpers automatically convert responses into harmonization manifest payloads using the adapter utilities.
+- `NetriasClient`
+  - `configure(...)` – validates credentials, normalizes optional settings, and stores an immutable `Settings` snapshot; raises `ClientConfigurationError` on invalid input.
+  - `discover_mapping`, `discover_mapping_async` – accept a target schema and prepared column samples; return manifest payloads; raise `MappingDiscoveryError`, `MappingValidationError`, or `NetriasAPIUnavailable`.
+  - `discover_mapping_from_csv`, `discover_mapping_from_csv_async` – derive samples from a CSV before delegating to discovery.
+  - `harmonize`, `harmonize_async` – require CSV + manifest (path or mapping) and optional output destinations; return `HarmonizationResult` even on failure; raise `NetriasAPIUnavailable` on transport errors.
+- Consumers instantiate `NetriasClient`; configuration snapshots and loggers live on the instance rather than module-wide globals.
+- Adapter helpers remain internal; discovery APIs automatically convert responses into harmonization manifest payloads for callers.
 
 ## Discovery Workflow
 1. Validate schema (`validate_target_schema`) and column samples (`validate_column_samples`); CSV helpers (`discover_mapping_from_csv*`) read the header plus up to `sample_limit` rows (default 25) to build samples automatically.
@@ -65,14 +61,15 @@
 5. Stream the final CSV via the signed `finalUrl`; successful downloads emit `HarmonizationResult(status="succeeded")`, while non-2xx responses return `status="failed"` with parsed error messaging. Transport errors raise `NetriasAPIUnavailable`.
 
 ## Data Models & Exceptions
-- `Settings`: configuration snapshot, including gateway-bypass decisions.
+- `Settings`: configuration snapshot, including gateway-bypass decisions and optional per-client log directory.
 - `MappingDiscoveryResult` / `MappingSuggestion` / `MappingRecommendationOption`: structured discovery outputs plus raw payload.
 - `HarmonizationResult`: communicates file path, status (`succeeded`, `failed`, `timeout`), description, and optional mapping identifier.
 - Exceptions inherit from `NetriasClientError`:
   - `ClientConfigurationError`, `FileValidationError`, `MappingDiscoveryError`, `MappingValidationError`, `OutputLocationError`, `NetriasAPIUnavailable`, `HarmonizationJobError`, `GatewayBypassError` (internal).
 
 ## Logging Strategy
-- Logger name: `netrias_client`.
+- Logger namespace: `netrias_client` (unique per client instance).
+- Each `NetriasClient.configure(...)` call wires stream handlers and, when provided, a file handler under the supplied `log_directory` path.
 - INFO logs:
   - Discovery start/finish with duration, bypass invocation start/finish, adapter decisions.
   - Harmonization start, job submission, polling heartbeats (with elapsed seconds), download completion, and total workflow duration.

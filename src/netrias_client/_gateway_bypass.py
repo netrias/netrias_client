@@ -1,32 +1,52 @@
 """Temporary gateway bypass helpers for direct Lambda invocation.
 
 'why': mitigate API Gateway timeouts by calling the CDE recommendation alias directly
+
+# TODO: remove this module once API Gateway latency is resolved and direct Lambda
+# calls are no longer necessary.
 """
 from __future__ import annotations
 
 import json
-from typing import Any, Mapping, Sequence
-
-from ._logging import get_logger
-
-
-_logger = get_logger()
+import logging
+from collections.abc import Mapping, Sequence
+from typing import Callable, IO, Protocol, cast
 
 
 class GatewayBypassError(RuntimeError):
     """Raised when the direct Lambda invocation fails."""
 
 
+class _LambdaClient(Protocol):
+    def invoke(
+        self,
+        FunctionName: str,
+        Qualifier: str,
+        Payload: bytes,
+    ) -> Mapping[str, object]:
+        ...
+
+
+class _ClientFactory(Protocol):
+    def __call__(self, service_name: str, **kwargs: object) -> object:
+        ...
+
+
+class _SessionProtocol(Protocol):
+    def client(self, service_name: str, **kwargs: object) -> object:
+        ...
+
+
 def invoke_cde_recommendation_alias(
-    *,
     target_schema: str,
-    columns: Mapping[str, Sequence[str]],
+    columns: Mapping[str, Sequence[object]],
     function_name: str = "cde-recommendation",
     alias: str = "prod",
     region_name: str = "us-east-2",
     timeout_seconds: float | None = None,
     profile_name: str | None = None,
-) -> Mapping[str, Any]:
+    logger: logging.Logger | None = None,
+) -> Mapping[str, object]:
     """Call the CDE recommendation Lambda alias directly and return its parsed payload.
 
     NOTE: This bypass is temporary. Prefer the public API once API Gateway limits are addressed.
@@ -41,7 +61,9 @@ def invoke_cde_recommendation_alias(
     body = json.dumps({"target_schema": target_schema, "data": normalized_columns})
     event = {"body": body, "isBase64Encoded": False}
 
-    _logger.info(
+    active_logger = logger or logging.getLogger("netrias_client")
+
+    active_logger.info(
         "gateway bypass invoke start: function=%s alias=%s schema=%s columns=%s",
         function_name,
         alias,
@@ -56,7 +78,7 @@ def invoke_cde_recommendation_alias(
             Payload=json.dumps(event).encode("utf-8"),
         )
     except Exception as exc:  # pragma: no cover - boto3 specific
-        _logger.error(
+        active_logger.error(
             "gateway bypass invoke failed: function=%s alias=%s err=%s",
             function_name,
             alias,
@@ -65,15 +87,11 @@ def invoke_cde_recommendation_alias(
         raise GatewayBypassError(f"lambda invoke failed: {exc}") from exc
 
     status_code = response.get("StatusCode")
-    payload_stream = response.get("Payload")
-    raw_payload = payload_stream.read() if payload_stream is not None else b""
+    payload_stream = cast(IO[bytes] | None, response.get("Payload"))
+    raw_payload = _read_lambda_payload(payload_stream)
+    payload = _json_payload(raw_payload)
 
-    try:
-        payload = json.loads(raw_payload.decode("utf-8")) if raw_payload else {}
-    except json.JSONDecodeError as exc:  # pragma: no cover - unexpected lambda output
-        raise GatewayBypassError(f"lambda returned non-JSON payload: {exc}") from exc
-
-    _logger.info(
+    active_logger.info(
         "gateway bypass invoke complete: function=%s alias=%s status=%s",
         function_name,
         alias,
@@ -84,43 +102,85 @@ def invoke_cde_recommendation_alias(
 
 
 def _build_lambda_client(
-    *,
     region_name: str,
     profile_name: str | None,
     timeout_seconds: float | None,
-):
+) -> _LambdaClient:
+    boto3, Config = _load_boto_dependencies()
+    config = (
+        Config(
+            read_timeout=timeout_seconds,
+            connect_timeout=min(timeout_seconds, 10.0),
+        )
+        if timeout_seconds is not None
+        else None
+    )
+
+    if profile_name:
+        session_factory = cast(
+            Callable[..., object],
+            getattr(boto3, "Session"),
+        )
+        session = cast(
+            _SessionProtocol,
+            session_factory(profile_name=profile_name, region_name=region_name),
+        )
+        factory = cast(_ClientFactory, session.client)
+    else:
+        factory = cast(_ClientFactory, getattr(boto3, "client"))
+
+    return _lambda_client_from_factory(factory, region_name=region_name, config=config)
+
+
+def _load_boto_dependencies():
     try:
-        import boto3  # type: ignore
-        from botocore.config import Config  # type: ignore
+        import boto3  # pyright: ignore[reportMissingTypeStubs]
+        from botocore.config import Config  # pyright: ignore[reportMissingTypeStubs]
     except ImportError as exc:  # pragma: no cover - optional dependency
         raise GatewayBypassError(
             "boto3 is required for the gateway bypass helper; install netrias-client[aws] or boto3 explicitly"
         ) from exc
-
-    client_kwargs: dict[str, object] = {"region_name": region_name}
-    if timeout_seconds is not None:
-        client_kwargs["config"] = Config(
-            read_timeout=timeout_seconds,
-            connect_timeout=min(timeout_seconds, 10.0),
-        )
-
-    if profile_name:
-        session = boto3.Session(profile_name=profile_name, region_name=region_name)
-        return session.client("lambda", **client_kwargs)
-    return boto3.client("lambda", **client_kwargs)
+    return boto3, Config
 
 
-def _extract_body_mapping(payload: Mapping[str, Any]) -> Mapping[str, Any]:
+def _lambda_client_from_factory(
+    factory: _ClientFactory,
+    region_name: str,
+    config: object | None,
+) -> _LambdaClient:
+    kwargs: dict[str, object] = {"region_name": region_name}
+    if config is not None:
+        kwargs["config"] = config
+    client_obj = factory("lambda", **kwargs)
+    return cast(_LambdaClient, client_obj)
+
+
+def _read_lambda_payload(stream: IO[bytes] | None) -> bytes:
+    if stream is None:
+        return b""
+    return stream.read()
+
+
+def _json_payload(raw_payload: bytes) -> Mapping[str, object]:
+    if not raw_payload:
+        return {}
+    try:
+        return cast(Mapping[str, object], json.loads(raw_payload.decode("utf-8")))
+    except json.JSONDecodeError as exc:  # pragma: no cover - unexpected lambda output
+        raise GatewayBypassError(f"lambda returned non-JSON payload: {exc}") from exc
+
+
+def _extract_body_mapping(payload: Mapping[str, object]) -> Mapping[str, object]:
     body = payload.get("body")
     if isinstance(body, str):
         try:
-            return json.loads(body)
+            return cast(Mapping[str, object], json.loads(body))
         except json.JSONDecodeError as exc:  # pragma: no cover - unexpected lambda output
             raise GatewayBypassError(f"lambda body was not valid JSON: {exc}") from exc
     return payload
 
 
-def _normalized_columns(columns: Mapping[str, Sequence[str]]) -> dict[str, list[str]]:
+def _normalized_columns(columns: Mapping[str, Sequence[object]]) -> dict[str, list[str]]:
     normalized: dict[str, list[str]] = {}
     for key, values in columns.items():
         name = _normalized_column_key(key)

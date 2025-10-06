@@ -6,41 +6,36 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import cast
 
 import httpx
 import pytest
 
-from netrias_client import harmonize
+from netrias_client import NetriasClient
 from netrias_client._errors import NetriasAPIUnavailable
 from netrias_client._models import HarmonizationResult
 
 from ._utils import install_mock_transport, job_success, json_failure, transport_error
 
 
-@pytest.mark.usefixtures("configured_client")
 def test_harmonize_streaming_success(
+    configured_client: NetriasClient,
     sample_csv_path: Path,
     sample_manifest_path: Path,
     output_directory: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Write harmonized output and return a success result when the API streams CSV bytes.
-
-    'why': confirm the happy path covers validation, HTTP, and disk IO coherently
-    """
+    """Write harmonized output and return a success result when the API streams CSV bytes."""
 
     capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
     install_mock_transport(monkeypatch, capture)
 
-    # Given valid inputs and a successful transport response
-    # When harmonize executes
-    result: HarmonizationResult = harmonize(
+    result: HarmonizationResult = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         output_path=output_directory,
     )
 
-    # Then the harmonized file is written and the result reports success
     expected_output = output_directory / "sample.harmonized.csv"
     assert result.status == "succeeded"
     assert result.file_path == expected_output
@@ -59,30 +54,24 @@ def test_harmonize_streaming_success(
     assert final_request.method == "GET"
 
 
-@pytest.mark.usefixtures("configured_client")
 def test_harmonize_handles_api_failure(
+    configured_client: NetriasClient,
     sample_csv_path: Path,
     sample_manifest_path: Path,
     output_directory: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Return a failed HarmonizationResult when the API responds with an error payload.
-
-    'why': ensure error messaging propagates without raising
-    """
+    """Return a failed HarmonizationResult when the API responds with an error payload."""
 
     capture = json_failure({"message": "invalid mapping"}, status_code=400)
     install_mock_transport(monkeypatch, capture)
 
-    # Given valid inputs but a failing API response
-    # When harmonize executes
-    result: HarmonizationResult = harmonize(
+    result: HarmonizationResult = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         output_path=output_directory,
     )
 
-    # Then the result surfaces the failure message and no file is written
     expected_output = output_directory / "sample.harmonized.csv"
     assert result.status == "failed"
     assert result.description == "invalid mapping"
@@ -91,36 +80,30 @@ def test_harmonize_handles_api_failure(
     assert len(capture.requests) == 1
 
 
-@pytest.mark.usefixtures("configured_client")
 def test_harmonize_raises_on_transport_error(
+    configured_client: NetriasClient,
     sample_csv_path: Path,
     sample_manifest_path: Path,
     output_directory: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Raise NetriasAPIUnavailable when the transport layer fails.
-
-    'why': bubble critical network failures to the caller immediately
-    """
+    """Raise NetriasAPIUnavailable when the transport layer fails."""
 
     capture = transport_error(httpx.ConnectError("boom"))
     install_mock_transport(monkeypatch, capture)
 
-    # Given valid inputs but the transport raises
-    # When harmonize executes
     with pytest.raises(NetriasAPIUnavailable):
-        _ = harmonize(
+        _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
             output_path=output_directory,
         )
 
-    # Then the request attempt was recorded once
     assert len(capture.requests) == 1
 
 
-@pytest.mark.usefixtures("configured_client")
 def test_harmonize_accepts_manifest_mapping(
+    configured_client: NetriasClient,
     sample_csv_path: Path,
     sample_manifest_mapping: dict[str, object],
     output_directory: Path,
@@ -131,7 +114,7 @@ def test_harmonize_accepts_manifest_mapping(
     capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
     install_mock_transport(monkeypatch, capture)
 
-    result: HarmonizationResult = harmonize(
+    result: HarmonizationResult = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_mapping,
         output_path=output_directory,
@@ -143,8 +126,8 @@ def test_harmonize_accepts_manifest_mapping(
     assert expected_output.exists()
 
 
-@pytest.mark.usefixtures("configured_client")
 def test_harmonize_writes_manifest_when_requested(
+    configured_client: NetriasClient,
     sample_csv_path: Path,
     sample_manifest_mapping: dict[str, object],
     output_directory: Path,
@@ -158,7 +141,7 @@ def test_harmonize_writes_manifest_when_requested(
 
     manifest_output = tmp_path / "manifest.json"
 
-    _ = harmonize(
+    _ = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_mapping,
         output_path=output_directory,
@@ -166,5 +149,30 @@ def test_harmonize_writes_manifest_when_requested(
     )
 
     assert manifest_output.exists()
-    loaded = json.loads(manifest_output.read_text(encoding="utf-8"))
+    loaded = cast(dict[str, object], json.loads(manifest_output.read_text(encoding="utf-8")))
     assert loaded == sample_manifest_mapping
+
+
+@pytest.mark.asyncio
+async def test_harmonize_async_success(
+    configured_client: NetriasClient,
+    sample_csv_path: Path,
+    sample_manifest_path: Path,
+    output_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Async client method returns a successful result."""
+
+    capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
+    install_mock_transport(monkeypatch, capture)
+
+    result = await configured_client.harmonize_async(
+        source_path=sample_csv_path,
+        manifest=sample_manifest_path,
+        output_path=output_directory,
+    )
+
+    expected_output = output_directory / "sample.harmonized.csv"
+    assert result.status == "succeeded"
+    assert result.file_path == expected_output
+    assert expected_output.exists()

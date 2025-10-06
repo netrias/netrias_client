@@ -32,7 +32,7 @@
   - #When `harmonize` executes.
   - #Then a `ClientConfigurationError` bubbles with the "call configure" guidance.
 - **Input Normalization**
-  - #Given attempts to call `configure` with blank `api_key`, blank `api_url`, unsupported `log_level`, or non-positive `timeout`.
+  - #Given attempts to call `configure` with blank `api_key`, unsupported `log_level`, or non-positive `timeout`.
   - #When the function executes.
   - #Then each invalid input raises `ClientConfigurationError` with precise messaging.
 - **Logging Level Applied**

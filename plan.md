@@ -1,7 +1,7 @@
 # Netrias Client Refactor Plan – Stateful NetriasClient (Plan B)
 
 ## Overview
-Introduce a `NetriasClient` class that encapsulates configuration state and exposes the discovery and harmonization APIs (sync/async). Module-level functions remain as shims during a transition period, delegating to a default client instance.
+Introduce a `NetriasClient` class that encapsulates configuration state and exposes the discovery and harmonization APIs (sync/async). Module-level shims are retired in favour of explicit client instances so concurrent workflows stay isolated.
 
 ## Rationale
 - **Simplify the public surface:** Today callers must understand the sequencing of `configure`, `discover_mapping_from_csv`, `_adapter.build_column_mapping_payload`, and `harmonize`. The goal is to expose these capabilities through a single client object with clearly documented methods, so new users can discover everything via IDE/tooling without reading internal modules.
@@ -13,9 +13,9 @@ Introduce a `NetriasClient` class that encapsulates configuration state and expo
 - `configure(api_key=..., ...)` is the only configuration entry point; discovery and harmonization URLs are fixed internally (`https://api.netriasbdf.cloud` and `https://tbdxz7nffi.execute-api.us-east-2.amazonaws.com`). Gateway bypass defaults to `True`.
 - Discovery helpers (`discover_mapping*`) now return manifest payloads (`{"column_mappings": {...}}`), not the raw `MappingDiscoveryResult` dataclass. `_adapter` is an internal detail.
 - `harmonize`/`harmonize_async` accept either a manifest mapping or a `Path`, with optional `manifest_output_path` to persist the JSON.
-- Live harness resides under `netrias_client/live_test/` and is runnable via `uv run live-test` (script defined in `[tool.uv.scripts]`).
+- Live harness resides under `netrias_client/live_test/` and is runnable via `uv run python -m netrias_client.live_test.test` (expects `.env` with credentials).
 - Tests expect the single-key flow (bypass is disabled in fixtures) and assert that manifests already contain the resolved `column_mappings` structure.
-- Logging, timeout configuration, and gateway bypass options remain centralized in `_config`; settings currently include discovery/harmonization URLs, bypass metadata, confidence threshold, etc.
+- Logging, timeout configuration, and gateway bypass options remain centralized in `_config`; settings now also capture per-client log level and optional log directory paths.
 
 ## Detailed Steps
 1. **Client Class & Settings Management**
@@ -28,28 +28,31 @@ Introduce a `NetriasClient` class that encapsulates configuration state and expo
 2. **Refactor Core Modules to Use Instance State**
    - Update `_discovery`, `_core`, `_adapter`, `_gateway_bypass`, `_http`, `_validators` to accept a `Settings` argument supplied by the client rather than calling `get_settings()`.
    - Ensure async workflows capture the `Settings` snapshot at entry so configuration changes do not affect in-flight calls.
-   - Maintain logging calls but ensure the configured log level is applied when instantiating the client (consider whether logger should remain global or become per-client).
+   - Maintain logging calls but move to per-client logger instances so level/destinations follow each `NetriasClient` (including optional log directories).
 
-3. **Module-Level Compatibility Layer**
-   - Create a module-scoped default client (`DEFAULT_CLIENT = NetriasClient()`).
-   - Keep existing functions (`configure`, `discover_mapping*`, `harmonize*`) but have them delegate to `DEFAULT_CLIENT`.
-   - Document the legacy entry points as supported but encourage new code to instantiate and use `NetriasClient` directly.
+3. **Public Surface Simplification**
+   - Drop the legacy module-level functions in favour of explicit `NetriasClient` usage everywhere.
+   - Make `NetriasClient` the sole exported entry point in `__init__.py` alongside package metadata.
+   - Communicate the breaking change through documentation updates and migration notes.
 
 4. **Documentation & Discoverability**
    - Update README, architecture notes, and live test examples to showcase the object-oriented workflow:
      ```python
+     from pathlib import Path
+
      from netrias_client import NetriasClient
+     from netrias_client._models import LogLevel
 
      client = NetriasClient()
-     client.configure(api_key="...")
-     manifest = client.discover_mapping_from_csv(Path("data.csv"))
+     client.configure(api_key="...", log_level=LogLevel.INFO)
+     manifest = client.discover_mapping_from_csv(Path("data.csv"), target_schema="ccdi")
      result = client.harmonize(Path("data.csv"), manifest, manifest_output_path=Path("manifest.json"))
      ```
    - Highlight async usage (`await client.harmonize_async(...)`) and mention that multiple clients can operate simultaneously with different credentials.
 
 5. **Testing Adjustments**
    - Replace fixtures that mutate global configuration with fixtures that yield a configured `NetriasClient` instance (disable bypass in tests where deterministic mock transports are used).
-   - Add regression tests ensuring the module-level shims still behave as expected (manifest dict returned, harmonize accepts both dict/path).
+   - Add regression coverage for discovery and harmonization flows using the instance API (sync and async) plus file/mapping manifest inputs.
    - Add tests for multiple clients to verify isolation (e.g., different API keys, toggling bypass) and confirm shared single-key behaviour.
    - Update live-test documentation/runbook to reference `uv run live-test`.
 
@@ -60,12 +63,12 @@ Introduce a `NetriasClient` class that encapsulates configuration state and expo
 
 7. **Future Enhancements (Post-Refactor)**
    - Consider optional constructor arguments (e.g., `NetriasClient(api_key=..., bypass=False)`), per-client transport configuration, and metrics hooks once the facade stabilizes.
-   - Evaluate whether to deprecate the module-level functions in a future major release once consumers migrate.
+   - Evaluate whether to introduce higher-level helpers (CLI, env loaders) once client usage matures.
 
 ## Additional Notes
 - Discovery API unit tests currently simulate HTTP responses via `json_success`; ensure the new return type expectations (manifest dict) remain aligned when refactoring internals.
 - Harmonization tests rely on the `job_success` helper to emulate submit/poll/download; the client refactor must continue to allow injection of custom transports for these scenarios.
-- Keep the UV scripts (`pytest`, `live-test`) working throughout the refactor so CLI workflows remain stable.
+- Keep the CLI workflows (`uv run test`, `uv run python -m netrias_client.live_test.test`) working throughout the refactor so developer experience remains stable.
 - Watch for logging semantics: the current logger is module-global; if moving to per-client logging, update tests that assert on log content.
 
 ## Pros

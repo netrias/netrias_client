@@ -3,7 +3,7 @@
 Python toolkit for working with the Netrias recommendation and harmonization services. The client wraps the HTTP APIs with strong typing, logging, and guard rails so analytics code can focus on describing data rather than orchestrating requests.
 
 ## Highlights
-- **Single configuration hook** – call `netrias_client.configure(...)` once to centralize API credentials, base URL, logging, and confidence thresholds.
+- **Stateful client facade** – instantiate `NetriasClient` and call `client.configure(...)` once.
 - **Column discovery helpers** – derive column samples from CSV files, invoke the recommendation service, and normalize responses into `MappingDiscoveryResult` models.
 - **Adapter utilities** – convert discovery output into harmonization-ready manifest payloads while applying confidence filters and CDE overrides.
 - **Asynchronous harmonization loop** – submit jobs, poll for completion, download results, and version output files automatically to avoid accidental overwrites.
@@ -30,21 +30,27 @@ uv sync --group aws --group dev  # include optional AWS dependencies
 
 ## Configuration
 
-All client entry points require explicit configuration. Provide the API key; discovery and harmonization endpoints are fixed by the library.
+All client entry points require explicit configuration. Create a `NetriasClient`, then provide the API key; discovery and harmonization endpoints remain fixed by the library.
 
 ```python
-from netrias_client import configure
+from pathlib import Path
 
-configure(
+from netrias_client import NetriasClient
+from netrias_client._models import LogLevel
+
+client = NetriasClient()
+client.configure(
     api_key="<netrias api key>",
     # Optional overrides:
     timeout=21600.0,               # seconds (default: 6 hours)
-    log_level="INFO",             # CRITICAL|ERROR|WARNING|INFO|DEBUG
+    log_level=LogLevel.INFO,
     confidence_threshold=0.80,     # discovery adapter filter, 0.0–1.0
+    discovery_use_gateway_bypass=True,  # toggle Lambda bypass (default: True)
+    log_directory=Path("logs/netrias"),  # optional per-client log files
 )
 ```
 
-Configuration errors raise `ClientConfigurationError`. Calling `configure` again replaces the active settings atomically and adjusts the global logger to the requested level.
+Configuration errors raise `ClientConfigurationError`. Calling `configure` again replaces the active settings snapshot and reinitializes the dedicated logger (refreshing file handlers when `log_directory` is supplied).
 
 ## End-to-End Workflow
 
@@ -53,25 +59,29 @@ The typical harmonization flow contains three steps:
 ```python
 from pathlib import Path
 
-from netrias_client import configure, discover_mapping_from_csv, harmonize
+from netrias_client import NetriasClient
 
-configure(api_key="<netrias api key>")
+client = NetriasClient()
+client.configure(api_key="<netrias api key>")
 
 csv_path = Path("/path/to/source.csv")
 schema = "ccdi"
 
 # 1. Ask the recommendation service for potential targets.
-manifest_payload = discover_mapping_from_csv(csv_path, target_schema=schema)
+manifest_payload = client.discover_mapping_from_csv(
+    source_csv=csv_path,
+    target_schema=schema,
+)
 
 # 2. Kick off harmonization directly with the manifest payload.
-result = harmonize(csv_path, manifest_payload)
+result = client.harmonize(source_path=csv_path, manifest=manifest_payload)
 print(result.status)
 print(result.description)
 print(result.file_path)
 ```
 
-- `discover_mapping_from_csv` samples up to 25 values per column (configurable), calls the API, and returns a manifest-ready payload (including static metadata such as CDE routes/IDs where configured).
-- `harmonize` submits a job and polls `GET /v1/jobs/{jobId}` until the backend returns success or failure. Downloaded CSVs are written next to the source file (versioned as `data.harmonized.v1.csv`, etc.). Pass `manifest_output_path=` if you also want to persist the manifest JSON for inspection.
+- `client.discover_mapping_from_csv(...)` samples up to 25 values per column (configurable), calls the API, and returns a manifest-ready payload (including static metadata such as CDE routes/IDs where configured).
+- `client.harmonize(...)` submits a job and polls `GET /v1/jobs/{jobId}` until the backend returns success or failure. Downloaded CSVs are written next to the source file (versioned as `data.harmonized.v1.csv`, etc.). Pass `manifest_output_path=` if you also want to persist the manifest JSON for inspection.
 
 ### Timing Logs
 
@@ -127,7 +137,8 @@ Live verification scripts are located under `live_test/` and require a populated
 src/netrias_client/
     __init__.py          # re-exported public surface
     _adapter.py          # discovery → manifest conversion
-    _config.py           # configure()/get_settings()
+    _client.py           # NetriasClient facade and state management
+    _config.py           # settings validation helpers
     _core.py             # harmonization workflow
     _discovery.py        # discovery wrappers and CSV sampling
     _errors.py           # exception taxonomy

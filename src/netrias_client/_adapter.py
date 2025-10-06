@@ -4,22 +4,26 @@
 """
 from __future__ import annotations
 
+import json
+import logging
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 from typing import Final, cast
 
-from ._config import get_settings
-from ._logging import get_logger
 from ._models import MappingDiscoveryResult, MappingRecommendationOption, MappingSuggestion
 
 
-_logger = get_logger()
 
-
-def build_column_mapping_payload(result: MappingDiscoveryResult) -> dict[str, dict[str, dict[str, object]]]:
+def build_column_mapping_payload(
+    result: MappingDiscoveryResult,
+    threshold: float,
+    logger: logging.Logger | None = None,
+) -> dict[str, dict[str, dict[str, object]]]:
     """Convert discovery output into the manifest structure expected by harmonization."""
 
-    strongest = strongest_targets(result)
-    return {"column_mappings": _column_entries(strongest)}
+    active_logger = logger or logging.getLogger("netrias_client")
+    strongest = strongest_targets(result, threshold=threshold, logger=active_logger)
+    return {"column_mappings": _column_entries(strongest, active_logger)}
 
 
 _COLUMN_METADATA: Final[dict[str, dict[str, object]]] = {
@@ -68,11 +72,12 @@ _COLUMN_METADATA: Final[dict[str, dict[str, object]]] = {
 }
 
 
-def strongest_targets(result: MappingDiscoveryResult) -> dict[str, str]:
+def strongest_targets(
+    result: MappingDiscoveryResult,
+    threshold: float,
+    logger: logging.Logger,
+) -> dict[str, str]:
     """Return the highest-confidence target per column, filtered by threshold."""
-
-    settings = get_settings()
-    threshold = settings.confidence_threshold
 
     if result.suggestions:
         selected = _from_suggestions(result.suggestions, threshold)
@@ -80,13 +85,16 @@ def strongest_targets(result: MappingDiscoveryResult) -> dict[str, str]:
         selected = _from_raw_payload(result.raw, threshold)
 
     if selected:
-        _logger.info("adapter strongest targets: %s", selected)
+        logger.info("adapter strongest targets: %s", selected)
     else:
-        _logger.warning("adapter strongest targets empty after filtering")
+        logger.warning("adapter strongest targets empty after filtering")
     return selected
 
 
-def _column_entries(strongest: Mapping[str, str]) -> dict[str, dict[str, object]]:
+def _column_entries(
+    strongest: Mapping[str, str],
+    logger: logging.Logger,
+) -> dict[str, dict[str, object]]:
     entries: dict[str, dict[str, object]] = {}
     missing_cde: dict[str, str] = {}
     for source, target in strongest.items():
@@ -98,7 +106,7 @@ def _column_entries(strongest: Mapping[str, str]) -> dict[str, dict[str, object]
     _apply_metadata_defaults(entries)
 
     if missing_cde:
-        _logger.info("adapter unresolved targets (no CDE id mapping): %s", missing_cde)
+        logger.info("adapter unresolved targets (no CDE id mapping): %s", missing_cde)
     return entries
 
 
@@ -183,3 +191,98 @@ def _meets_threshold(option: MappingRecommendationOption, threshold: float) -> b
     if score is None:
         return False
     return score >= threshold
+
+def normalize_manifest_mapping(
+    manifest: Path | Mapping[str, object] | None,
+) -> dict[str, int]:
+    """Normalize manifest column→CDE entries for harmonization payloads."""
+
+    if manifest is None:
+        return {}
+    raw = _load_manifest_raw(manifest)
+    mapping = _mapping_dict(raw)
+    normalized: dict[str, int] = {}
+    for field, value in mapping.items():
+        _apply_cde_entry(normalized, field, value)
+    return normalized
+
+
+def _load_manifest_raw(manifest: Path | Mapping[str, object]) -> Mapping[str, object]:
+    if isinstance(manifest, Path):
+        content = manifest.read_text(encoding="utf-8")
+        try:
+            return cast(Mapping[str, object], json.loads(content))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"manifest must be valid JSON: {exc}") from exc
+    return manifest
+
+
+def _mapping_dict(raw: Mapping[str, object]) -> dict[str, object]:
+    mapping = _dict_if_str_mapping(raw)
+    if mapping is None:
+        return {}
+    candidate = _dict_if_str_mapping(mapping.get("column_mappings"))
+    return candidate if candidate is not None else mapping
+
+
+def _dict_if_str_mapping(value: object) -> dict[str, object] | None:
+    if isinstance(value, Mapping):
+        typed = cast(Mapping[str, object], value)
+        return dict(typed)
+    return None
+
+
+def _apply_cde_entry(destination: dict[str, int], field: object, value: object) -> None:
+    name = _clean_field(field)
+    cde_id = _coerce_cde_id(value)
+    if name is None or cde_id is None:
+        return
+    destination[name] = cde_id
+
+
+def _clean_field(field: object) -> str | None:
+    if not isinstance(field, str):
+        return None
+    name = field.strip()
+    return name or None
+
+
+def _coerce_cde_id(value: object) -> int | None:
+    candidate = _cde_candidate(value)
+    if candidate is None:
+        return None
+    return _int_from_candidate(candidate)
+
+
+def _cde_candidate(value: object) -> object | None:
+    mapping = _dict_if_str_mapping(value)
+    if mapping is not None:
+        return mapping.get("cdeId") or mapping.get("cde_id")
+    return value
+
+
+def _int_from_candidate(candidate: object) -> int | None:
+    if isinstance(candidate, bool):
+        return int(candidate)
+    if isinstance(candidate, (int, float)):
+        return _int_from_number(candidate)
+    if isinstance(candidate, str):
+        return _int_from_string(candidate)
+    return None
+
+
+def _int_from_number(value: int | float) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _int_from_string(value: str) -> int | None:
+    stripped = value.strip()
+    if not stripped:
+        return None
+    try:
+        return int(stripped)
+    except ValueError:
+        return None

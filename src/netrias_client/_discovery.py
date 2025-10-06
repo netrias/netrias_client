@@ -13,44 +13,46 @@ from collections.abc import Mapping, Sequence
 from typing import cast
 
 import httpx
+import logging
 
 from ._adapter import build_column_mapping_payload
-from ._config import get_settings
+from ._config import BYPASS_ALIAS, BYPASS_FUNCTION, BYPASS_REGION
 from ._errors import MappingDiscoveryError, NetriasAPIUnavailable
 from ._gateway_bypass import GatewayBypassError, invoke_cde_recommendation_alias
 from ._http import request_mapping_discovery
-from ._logging import get_logger
 from ._models import MappingDiscoveryResult, MappingRecommendationOption, MappingSuggestion, Settings
 from ._validators import validate_column_samples, validate_target_schema, validate_source_path
 
-
-
-
-_logger = get_logger()
 
 ManifestPayload = dict[str, dict[str, dict[str, object]]]
 
 
 async def _discover_mapping_async(
-    target_schema: str, column_samples: Mapping[str, Sequence[object]]
+    settings: Settings,
+    target_schema: str,
+    column_samples: Mapping[str, Sequence[object]],
+    logger: logging.Logger,
 ) -> ManifestPayload:
     """Perform mapping discovery via the recommendation endpoint."""
 
     schema = validate_target_schema(target_schema)
-    samples = validate_column_samples(column_samples)
-    settings = get_settings()
+    samples: dict[str, list[str]] = validate_column_samples(column_samples)
     started = time.perf_counter()
-    _logger.info("discover mapping start: schema=%s columns=%s", schema, len(samples))
+    logger.info("discover mapping start: schema=%s columns=%s", schema, len(samples))
 
     try:
-        result = await _discover_with_backend(settings, schema, samples)
+        result = await _discover_with_backend(settings, schema, samples, logger)
     except (httpx.TimeoutException, httpx.HTTPError, GatewayBypassError) as exc:
-        _handle_discovery_error(schema, started, exc)
+        _handle_discovery_error(schema, started, exc, logger)
         raise AssertionError("_handle_discovery_error should raise") from exc
 
-    manifest = build_column_mapping_payload(result)
+    manifest = build_column_mapping_payload(
+        result,
+        threshold=settings.confidence_threshold,
+        logger=logger,
+    )
     elapsed = time.perf_counter() - started
-    _logger.info(
+    logger.info(
         "discover mapping complete: schema=%s columns=%s duration=%.2fs",
         schema,
         len(manifest.get("column_mappings", {})),
@@ -60,56 +62,95 @@ async def _discover_mapping_async(
 
 
 def discover_mapping(
-    target_schema: str, column_samples: Mapping[str, Sequence[object]]
+    settings: Settings,
+    target_schema: str,
+    column_samples: Mapping[str, Sequence[object]],
+    logger: logging.Logger,
 ) -> ManifestPayload:
     """Sync wrapper around `_discover_mapping_async`."""
 
-    return asyncio.run(_discover_mapping_async(target_schema=target_schema, column_samples=column_samples))
+    return asyncio.run(
+        _discover_mapping_async(
+            settings=settings,
+            target_schema=target_schema,
+            column_samples=column_samples,
+            logger=logger,
+        )
+    )
 
 
 async def discover_mapping_async(
-    target_schema: str, column_samples: Mapping[str, Sequence[object]]
+    settings: Settings,
+    target_schema: str,
+    column_samples: Mapping[str, Sequence[object]],
+    logger: logging.Logger,
 ) -> ManifestPayload:
     """Async entry point mirroring `discover_mapping` semantics."""
 
-    return await _discover_mapping_async(target_schema=target_schema, column_samples=column_samples)
+    return await _discover_mapping_async(
+        settings=settings,
+        target_schema=target_schema,
+        column_samples=column_samples,
+        logger=logger,
+    )
 
 
 def discover_cde_mapping(
-    source_csv: Path, target_schema: str = "ccdi", sample_limit: int = 25
+    settings: Settings,
+    source_csv: Path,
+    target_schema: str,
+    sample_limit: int,
+    logger: logging.Logger,
 ) -> ManifestPayload:
     """Convenience wrapper that derives column samples from a CSV file."""
 
     samples = _samples_from_csv(source_csv, sample_limit)
-    return discover_mapping(target_schema, samples)
+    return discover_mapping(
+        settings=settings,
+        target_schema=target_schema,
+        column_samples=samples,
+        logger=logger,
+    )
 
 
 async def discover_mapping_from_csv_async(
-    source_csv: Path, target_schema: str = "ccdi", sample_limit: int = 25
+    settings: Settings,
+    source_csv: Path,
+    target_schema: str,
+    sample_limit: int,
+    logger: logging.Logger,
 ) -> ManifestPayload:
     """Async variant of `discover_mapping_from_csv`."""
 
     samples = _samples_from_csv(source_csv, sample_limit)
-    return await discover_mapping_async(target_schema, samples)
+    return await discover_mapping_async(
+        settings=settings,
+        target_schema=target_schema,
+        column_samples=samples,
+        logger=logger,
+    )
 
 
 async def _discover_with_backend(
     settings: Settings,
     schema: str,
-    samples: Mapping[str, Sequence[object]],
+    samples: Mapping[str, Sequence[str]],
+    logger: logging.Logger,
 ) -> MappingDiscoveryResult:
     if settings.discovery_use_gateway_bypass:
+        logger.debug("discover backend via bypass alias")
         payload = invoke_cde_recommendation_alias(
             target_schema=schema,
             columns=samples,
-            function_name=settings.discovery_bypass_function,
-            alias=settings.discovery_bypass_alias,
-            region_name=settings.discovery_bypass_region,
+            function_name=BYPASS_FUNCTION,
+            alias=BYPASS_ALIAS,
+            region_name=BYPASS_REGION,
             timeout_seconds=settings.timeout,
-            profile_name=settings.discovery_bypass_profile,
+            logger=logger,
         )
         return _result_from_payload(payload, schema)
 
+    logger.debug("discover backend via HTTP API")
     response = await request_mapping_discovery(
         base_url=settings.discovery_url,
         api_key=settings.api_key,
@@ -120,13 +161,18 @@ async def _discover_with_backend(
     return _interpret_discovery_response(response, schema)
 
 
-def _handle_discovery_error(schema: str, started: float, exc: Exception) -> None:
+def _handle_discovery_error(
+    schema: str,
+    started: float,
+    exc: Exception,
+    logger: logging.Logger,
+) -> None:
     elapsed = time.perf_counter() - started
     if isinstance(exc, httpx.TimeoutException):  # pragma: no cover - exercised via integration tests
-        _logger.error("discover mapping timeout: schema=%s duration=%.2fs err=%s", schema, elapsed, exc)
+        logger.error("discover mapping timeout: schema=%s duration=%.2fs err=%s", schema, elapsed, exc)
         raise NetriasAPIUnavailable("mapping discovery timed out") from exc
     if isinstance(exc, GatewayBypassError):
-        _logger.error(
+        logger.error(
             "discover mapping bypass error: schema=%s duration=%.2fs err=%s",
             schema,
             elapsed,
@@ -134,7 +180,7 @@ def _handle_discovery_error(schema: str, started: float, exc: Exception) -> None
         )
         raise NetriasAPIUnavailable(f"gateway bypass error: {exc}") from exc
 
-    _logger.error(
+    logger.error(
         "discover mapping transport error: schema=%s duration=%.2fs err=%s",
         schema,
         elapsed,

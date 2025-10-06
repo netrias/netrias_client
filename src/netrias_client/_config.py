@@ -1,31 +1,65 @@
 """Manage runtime client configuration.
 
-'why': centralize settings mutation and validation; require explicit configuration
+'why': centralize settings creation and validation for NetriasClient
 """
 from __future__ import annotations
 
-import threading
-from dataclasses import replace
+from pathlib import Path
 
 from ._errors import ClientConfigurationError
-from ._logging import set_log_level
-from ._models import Settings
+from ._models import LogLevel, Settings
 
-
-_lock = threading.Lock()
-_settings: Settings | None = None
 
 DISCOVERY_BASE_URL = "https://api.netriasbdf.cloud"
 HARMONIZATION_BASE_URL = "https://tbdxz7nffi.execute-api.us-east-2.amazonaws.com"
+# TODO: remove once API Gateway latency constraints are resolved.
+BYPASS_FUNCTION = "cde-recommendation"
+BYPASS_ALIAS = "prod"
+BYPASS_REGION = "us-east-2"
 
 
-def _normalized_level(level: str | None) -> str:
-    if not level:
-        return "INFO"
+def build_settings(
+    api_key: str,
+    timeout: float | None = None,
+    log_level: LogLevel | str | None = None,
+    confidence_threshold: float | None = None,
+    discovery_use_gateway_bypass: bool | None = None,
+    log_directory: Path | str | None = None,
+) -> Settings:
+    """Return a validated Settings snapshot for the provided configuration."""
+
+    key = (api_key or "").strip()
+    if not key:
+        raise ClientConfigurationError("api_key must be a non-empty string; call configure(api_key=...) before use")
+
+    level = _normalized_level(log_level)
+    timeout_value = _validated_timeout(timeout)
+    threshold = _validated_confidence_threshold(confidence_threshold)
+    bypass_enabled = _normalized_bool(discovery_use_gateway_bypass, default=True)
+    directory = _validated_log_directory(log_directory)
+
+    return Settings(
+        api_key=key,
+        discovery_url=DISCOVERY_BASE_URL,
+        harmonization_url=HARMONIZATION_BASE_URL,
+        timeout=timeout_value,
+        log_level=level,
+        confidence_threshold=threshold,
+        discovery_use_gateway_bypass=bypass_enabled,
+        log_directory=directory,
+    )
+
+
+def _normalized_level(level: LogLevel | str | None) -> LogLevel:
+    if level is None:
+        return LogLevel.INFO
+    if isinstance(level, LogLevel):
+        return level
     upper = level.upper()
-    if upper not in {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"}:
-        raise ClientConfigurationError(f"unsupported log_level: {level}")
-    return upper
+    try:
+        return LogLevel[upper]
+    except KeyError as exc:
+        raise ClientConfigurationError(f"unsupported log_level: {level}") from exc
 
 
 def _validated_timeout(timeout: float | None) -> float:
@@ -44,84 +78,18 @@ def _validated_confidence_threshold(value: float | None) -> float:
     return float(value)
 
 
-def _normalized_bool(value: bool | None, *, default: bool = False) -> bool:
+def _normalized_bool(value: bool | None, default: bool = False) -> bool:
     if value is None:
         return default
     return bool(value)
 
 
-def _normalized_identifier(value: str | None, *, default: str) -> str:
-    candidate = (value or "").strip()
-    return candidate if candidate else default
-
-
-def _normalized_profile(value: str | None) -> str | None:
+def _validated_log_directory(value: Path | str | None) -> Path | None:
     if value is None:
         return None
-    trimmed = value.strip()
-    return trimmed or None
-
-
-def configure(
-    *,
-    api_key: str,
-    api_url: str | None = None,
-    timeout: float | None = None,
-    log_level: str | None = None,
-    confidence_threshold: float | None = None,
-    discovery_use_gateway_bypass: bool | None = None,
-    discovery_bypass_function: str | None = None,
-    discovery_bypass_alias: str | None = None,
-    discovery_bypass_region: str | None = None,
-    discovery_bypass_profile: str | None = None,
-) -> None:
-    """Configure the client for subsequent calls.
-
-    'why': normalize client setup and logging without exposing transport internals
-    """
-
-    key = (api_key or "").strip()
-    _ = (api_url or "").strip()  # retained for backward compatibility; value ignored
-    if not key:
-        raise ClientConfigurationError("api_key must be a non-empty string; call configure(api_key=...) before use")
-
-    level = _normalized_level(log_level)
-    to = _validated_timeout(timeout)
-    threshold = _validated_confidence_threshold(confidence_threshold)
-    bypass_enabled = _normalized_bool(discovery_use_gateway_bypass, default=True)
-    bypass_function = _normalized_identifier(
-        discovery_bypass_function,
-        default="cde-recommendation",
-    )
-    bypass_alias = _normalized_identifier(discovery_bypass_alias, default="prod")
-    bypass_region = _normalized_identifier(discovery_bypass_region, default="us-east-2")
-    bypass_profile = _normalized_profile(discovery_bypass_profile)
-
-    with _lock:
-        global _settings
-        _settings = Settings(
-            api_key=key,
-            discovery_url=DISCOVERY_BASE_URL,
-            harmonization_url=HARMONIZATION_BASE_URL,
-            timeout=to,
-            log_level=level,
-            confidence_threshold=threshold,
-            discovery_use_gateway_bypass=bypass_enabled,
-            discovery_bypass_function=bypass_function,
-            discovery_bypass_alias=bypass_alias,
-            discovery_bypass_region=bypass_region,
-            discovery_bypass_profile=bypass_profile,
-        )
-        set_log_level(level)
-
-
-def get_settings() -> Settings:
-    """Return an immutable snapshot of current settings.
-
-    Raises ClientConfigurationError if not configured.
-    """
-
-    if _settings is None:
-        raise ClientConfigurationError("client not configured; call configure(api_key=..., api_url=...) before use")
-    # return a shallow copy to discourage mutation
-    return replace(_settings)
+    directory = Path(value)
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise ClientConfigurationError(f"unable to create log directory {directory}: {exc}") from exc
+    return directory
