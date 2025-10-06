@@ -61,20 +61,16 @@ csv_path = Path("/path/to/source.csv")
 schema = "ccdi"
 
 # 1. Ask the recommendation service for potential targets.
-discovery = discover_mapping_from_csv(csv_path, target_schema=schema)
+manifest_payload = discover_mapping_from_csv(csv_path, target_schema=schema)
 
-# 2. Translate the discovery result into a harmonization manifest.
-manifest_payload = build_column_mapping_payload(discovery)
-
-# 3. Kick off harmonization directly with the manifest payload.
+# 2. Kick off harmonization directly with the manifest payload.
 result = harmonize(csv_path, manifest_payload)
 print(result.status)
 print(result.description)
 print(result.file_path)
 ```
 
-- `discover_mapping_from_csv` samples up to 25 values per column (configurable) before making a recommendation request.
-- `build_column_mapping_payload` keeps only the highest-confidence target per source column, filters options below the configured threshold, and injects Netrias CDE routing hints when available.
+- `discover_mapping_from_csv` samples up to 25 values per column (configurable), calls the API, and returns a manifest-ready payload (including static metadata such as CDE routes/IDs where configured).
 - `harmonize` submits a job and polls `GET /v1/jobs/{jobId}` until the backend returns success or failure. Downloaded CSVs are written next to the source file (versioned as `data.harmonized.v1.csv`, etc.). Pass `manifest_output_path=` if you also want to persist the manifest JSON for inspection.
 
 ### Timing Logs
