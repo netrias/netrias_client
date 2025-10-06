@@ -1,160 +1,100 @@
 # Netrias Client
 
-Python toolkit for working with the Netrias recommendation and harmonization services. The client wraps the HTTP APIs with strong typing, logging, and guard rails so analytics code can focus on describing data rather than orchestrating requests.
+"""Explain how to install and exercise the Netrias harmonization client."""
 
-## Highlights
-- **Stateful client facade** – instantiate `NetriasClient` and call `client.configure(...)` once.
-- **Column discovery helpers** – derive column samples from CSV files, invoke the recommendation service, and normalize responses into `MappingDiscoveryResult` models.
-- **Adapter utilities** – convert discovery output into harmonization-ready manifest payloads while applying confidence filters and CDE overrides.
-- **Asynchronous harmonization loop** – submit jobs, poll for completion, download results, and version output files automatically to avoid accidental overwrites.
-- **Extended timing logs** – discovery and harmonization emit duration metrics so you can spot slow calls quickly during live runs.
+## Install with `uv`
+- Install `uv` once (or update): `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Sync dependencies for a project that consumes the client:
+  ```bash
+  uv add netrias_client
+  uv add python-dotenv  # optional helper for loading .env files
+  ```
+- Prefer `uv run <command>` for executing scripts so the managed environment is reused automatically.
 
-## Installation (uv)
-
-The project targets Python 3.12+. Use [uv](https://github.com/astral-sh/uv) to manage environments and installations.
-
+### Alternative: `pip`
 ```bash
-# create or update a project that depends on netrias-client
-uv add netrias-client
-
-# install optional AWS helpers (gateway bypass)
-uv add netrias-client[aws]
+python -m pip install netrias_client
+python -m pip install python-dotenv  # optional
 ```
 
-For local development within this repository:
-
-```bash
-uv sync --group dev            # install development tooling
-uv sync --group aws --group dev  # include optional AWS dependencies
-```
-
-## Configuration
-
-All client entry points require explicit configuration. Create a `NetriasClient`, then provide the API key; discovery and harmonization endpoints remain fixed by the library.
+## Quickstart Script
+Reference script (save as `main.py`) showing a full harmonization round-trip:
 
 ```python
+#!/usr/bin/env -S uv run python
+# /// script
+# requires-python = ">=3.13"
+# dependencies = ["netrias_client", "python-dotenv"]
+# ///
+
+"""Exercise the packaged Netrias client against the live APIs."""
+
+import asyncio
+import os
 from pathlib import Path
+from typing import Final
 
-from netrias_client import NetriasClient
-from netrias_client._models import LogLevel
+from dotenv import load_dotenv
+from netrias_client import NetriasClient, __version__ as CLIENT_VERSION
 
-client = NetriasClient()
-client.configure(
-    api_key="<netrias api key>",
-    # Optional overrides:
-    timeout=21600.0,               # seconds (default: 6 hours)
-    log_level=LogLevel.INFO,
-    confidence_threshold=0.80,     # discovery adapter filter, 0.0–1.0
-    discovery_use_gateway_bypass=True,  # toggle Lambda bypass (default: True)
-    log_directory=Path("logs/netrias"),  # optional per-client log files
-)
+load_dotenv(override=True)
+
+CSV_PATH: Final[Path] = Path("data/primary_diagnosis_1.csv")
+
+
+async def main() -> None:
+    client = NetriasClient()
+    client.configure(api_key=_resolve_api_key())
+
+    manifest = client.discover_cde_mapping(
+        source_csv=CSV_PATH,
+        target_schema="ccdi",
+    )
+
+    result = await client.harmonize_async(
+        source_path=CSV_PATH,
+        manifest=manifest,
+    )
+
+    print(f"netrias_client version: {CLIENT_VERSION}")
+    print(f"Harmonize status: {result.status}")
+    print(f"Harmonized file: {result.file_path}")
+
+
+def _resolve_api_key() -> str:
+    api_key = os.getenv("NETRIAS_API_KEY")
+    if api_key:
+        return api_key
+    msg = "Set NETRIAS_API_KEY in your environment or .env file"
+    raise RuntimeError(msg)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-Configuration errors raise `ClientConfigurationError`. Calling `configure` again replaces the active settings snapshot and reinitializes the dedicated logger (refreshing file handlers when `log_directory` is supplied).
+### Steps
+1. Install or update `uv` (see above).
+2. Export `NETRIAS_API_KEY` (or add it to a local `.env`).
+3. Adjust `CSV_PATH` to point at the source CSV you want to harmonize.
+4. Run `uv run python main.py`.
 
-## End-to-End Workflow
+## `configure()` Options
+`NetriasClient.configure(...)` accepts additional tuning knobs. You can mix and match the ones you need:
 
-The typical harmonization flow contains three steps:
+| Parameter | Type | Purpose |
+| --- | --- | --- |
+| `api_key` | `str` | **Required.** Bearer token for authenticating with the Netrias services. |
+| `timeout` | `float | None` | Override the default 6-hour timeout for long-running harmonization jobs. |
+| `log_level` | `LogLevel | str | None` | Control verbosity (`INFO` by default). Accepts enum members or string names. |
+| `confidence_threshold` | `float | None` | Minimum score (0–1) for keeping discovery recommendations; lower it to capture more tentative matches. |
+| `discovery_use_gateway_bypass` | `bool | None` | Toggle the temporary AWS Lambda bypass path for discovery (defaults to `True`). Set to `False` once API Gateway limits are sufficient. |
+| `log_directory` | `Path | str | None` | Directory for per-client log files. When omitted, logs stay on stdout. |
 
-```python
-from pathlib import Path
+Configure only the options you need; unspecified values fall back to sensible defaults.
 
-from netrias_client import NetriasClient
-
-client = NetriasClient()
-client.configure(api_key="<netrias api key>")
-
-csv_path = Path("/path/to/source.csv")
-schema = "ccdi"
-
-# 1. Ask the recommendation service for potential targets.
-manifest_payload = client.discover_mapping_from_csv(
-    source_csv=csv_path,
-    target_schema=schema,
-)
-
-# 2. Kick off harmonization directly with the manifest payload.
-result = client.harmonize(source_path=csv_path, manifest=manifest_payload)
-print(result.status)
-print(result.description)
-print(result.file_path)
-```
-
-- `client.discover_mapping_from_csv(...)` samples up to 25 values per column (configurable), calls the API, and returns a manifest-ready payload (including static metadata such as CDE routes/IDs where configured).
-- `client.harmonize(...)` submits a job and polls `GET /v1/jobs/{jobId}` until the backend returns success or failure. Downloaded CSVs are written next to the source file (versioned as `data.harmonized.v1.csv`, etc.). Pass `manifest_output_path=` if you also want to persist the manifest JSON for inspection.
-
-### Timing Logs
-
-Both discovery and harmonization log elapsed seconds for the full operation and for timeout/transport failures. Sample output:
-
-```
-INFO netrias_client: discover mapping start: schema=ccdi columns=12
-INFO netrias_client: discover mapping complete: schema=ccdi suggestions=0 duration=47.12s
-INFO netrias_client: harmonize start: file=data.csv
-INFO netrias_client: harmonize finished: file=data.csv status=succeeded duration=182.45s
-```
-
-Use these metrics to separate slow API responses from downstream processing overhead.
-
-## Adapter Notes
-
-Discovery results are normalized to manifest payloads automatically; unmatched columns are logged so you can expand coverage. Confidence thresholds come from `configure(confidence_threshold=...)` and default to 0.8.
-
-## Gateway Bypass (Temporary)
-
-The module `netrias_client._gateway_bypass` exposes `invoke_cde_recommendation_alias(...)`, a stopgap helper that calls the `cde-recommendation` Lambda alias directly. This avoids API Gateway’s short timeout window but requires AWS credentials with `lambda:InvokeFunction` permission and the `boto3` dependency.
-
-```python
-from netrias_client._gateway_bypass import invoke_cde_recommendation_alias
-
-result = invoke_cde_recommendation_alias(
-    target_schema="ccdi",
-    columns={"study_name": ["foo", "bar"]},
-    alias="prod",
-    region_name="us-east-2",
-)
-```
-
-Install `boto3` (or `netrias-client[aws]` if provided) before importing the bypass module, and rotate IAM credentials frequently. Once API Gateway limits are raised, prefer the standard discovery flow again.
-
-## Testing & Tooling
-
-The repository ships with pytest-based integration tests plus lint/type tooling.
-
-
-```bash
-uv run pytest
-uv run ruff check
-uv run basedpyright
-uv build                 # produce wheel + sdist
-```
-
-Live verification scripts are located under `live_test/` and require a populated `.env` file containing `NETRIAS_API_KEY` (and optionally harmonization overrides while services converge).
-
-## Project Layout
-
-```
-src/netrias_client/
-    __init__.py          # re-exported public surface
-    _adapter.py          # discovery → manifest conversion
-    _client.py           # NetriasClient facade and state management
-    _config.py           # settings validation helpers
-    _core.py             # harmonization workflow
-    _discovery.py        # discovery wrappers and CSV sampling
-    _errors.py           # exception taxonomy
-    _http.py             # HTTP primitives (submit/poll/download)
-    _io.py               # streaming helpers
-    _logging.py          # standardized logger setup
-    _models.py           # dataclasses for structured responses
-    _validators.py       # filesystem and payload validation
-```
-
-Tests reside under `src/netrias_client/tests/` and are excluded from the published wheel to keep installs slim; run them locally via `uv run pytest`.
-
-## Contributing
-
-1. `uv sync --group dev` (add `--group aws` if needed) to create the virtual environment.
-2. `uv run pytest` to ensure the suite passes prior to committing.
-3. Follow the repo conventions: keep functions focused, prefer typed interfaces, and favor logging key transitions over verbose chatter.
-
-Pull requests should include updated documentation or fixtures when they alter API behavior or the manifest contract.
+## Usage Notes
+- `discover_cde_mapping(...)` samples CSV values and returns a manifest-ready payload; use the async variant if you’re already in an event loop.
+- Call `harmonize(...)` (sync) or `harmonize_async(...)` (async) with the manifest to download a harmonized CSV. The result object reports status, description, and the output path.
+- The package exposes `__version__` so callers can assert the installed release.
+- Optional extras (`netrias_client[aws]`) add boto3 helpers for the temporary gateway bypass.

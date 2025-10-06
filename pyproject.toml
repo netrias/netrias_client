@@ -3,31 +3,42 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "netrias-client"
+name = "netrias_client"
 version = "0.0.1"
 description = "Python client for the Netrias harmonization API"
 readme = "README.md"
 requires-python = ">=3.10"
+authors = [
+    { name = "Chris Harman", email = "charman@netrias.com" },
+]
 dependencies = [
     "httpx",
     "boto3",
-
 ]
 license = { file = "LICENSE" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
     "Intended Audience :: Developers",
 ]
 keywords = ["netrias", "harmonization", "cde", "api", "client"]
 
+[project.urls]
+Homepage = "https://github.com/netrias/netrias_client"
+Repository = "https://github.com/netrias/netrias_client"
+Documentation = "https://github.com/netrias/netrias_client#readme"
+
 # Run with `uv run test` etc
 [project.scripts]
 test = "pytest:main"
 check = "netrias_client.scripts:check"
 live_check = "netrias_client.scripts:live_check"
+release = "netrias_client.scripts:release"
 
 
 [project.optional-dependencies]
@@ -39,6 +50,7 @@ dev = [
     "typing-extensions",
     "ty",
     "python-dotenv>=1.0",
+    "twine>=5.0",
 ]
 
 
@@ -83,6 +95,7 @@ dev = [
     "typing-extensions",
     "ty",
     "python-dotenv>=1.0",
+    "twine>=5.0",
 ]
 aws = [
     "boto3>=1.35.0",
