@@ -54,7 +54,6 @@ The typical harmonization flow contains three steps:
 from pathlib import Path
 
 from netrias_client import configure, discover_mapping_from_csv, harmonize
-from netrias_client._adapter import build_column_mapping_payload
 
 configure(api_key="<netrias api key>")
 
@@ -93,7 +92,7 @@ Use these metrics to separate slow API responses from downstream processing over
 
 ## Adapter Notes
 
-`_adapter.build_column_mapping_payload` maintains a static lookup of CDE metadata (route, target field, CDE ID). Only columns present in the lookup inherit IDs; unmatched columns are logged as unresolved so you can enrich `_COLUMN_METADATA` as the catalog grows. Confidence thresholds come from `configure(confidence_threshold=...)` and default to 0.8.
+Discovery results are normalized to manifest payloads automatically; unmatched columns are logged so you can expand coverage. Confidence thresholds come from `configure(confidence_threshold=...)` and default to 0.8.
 
 ## Gateway Bypass (Temporary)
 

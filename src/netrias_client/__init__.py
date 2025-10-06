@@ -7,14 +7,14 @@ from ._core import harmonize, harmonize_async
 from ._discovery import (
     discover_mapping,
     discover_mapping_async,
-    discover_mapping_from_csv,
+    discover_cde_mapping,
     discover_mapping_from_csv_async,
 )
 
 __all__ = [
     "discover_mapping",
     "discover_mapping_async",
-    "discover_mapping_from_csv",
+    "discover_cde_mapping",
     "discover_mapping_from_csv_async",
     "configure",
     "harmonize",

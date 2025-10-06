@@ -7,7 +7,7 @@
 
 ## Module Overview
 - `__init__.py`: surface the public API (`configure`, `discover_mapping*`, `harmonize*`) and version metadata.
-- `_adapter.py`: translate discovery responses into harmonization manifest snippets, enforce confidence thresholds, and hydrate static CDE metadata.
+- `_adapter.py`: internal helpers that translate discovery responses into harmonization manifest snippets, enforcing confidence thresholds and hydrating static CDE metadata.
 - `_config.py`: own the global `Settings` snapshot, validate configuration, normalize gateway-bypass options, and set the shared logger level.
 - `_core.py`: contain the harmonization workflow (submit → poll → download) shared by sync/async entry points.
 - `_discovery.py`: implement discovery workflows, CSV sampling helpers, and conditional routing between API Gateway and the Lambda alias bypass.
@@ -22,7 +22,7 @@
 
 ## Configuration & Settings
 - `configure(...)` must be called before any API invocation; defaults are intentionally minimal.
-- Required parameters: `api_key`, `api_url`.
+- Required parameters: `api_key`.
 - Optional parameters:
   - `timeout`: defaults to `21600.0` seconds (6 hours) to match long-running harmonization jobs.
   - `log_level`: normalized to standard logging levels (INFO by default).
@@ -33,7 +33,7 @@
 - Optional AWS dependency (`boto3`) is exposed through the `aws` dependency group for environments that need the bypass.
 
 ## Public API
-- `configure(*, api_key: str, api_url: str, timeout: float | None = None, log_level: str | None = None, confidence_threshold: float | None = None, discovery_use_gateway_bypass: bool | None = None, discovery_bypass_function: str | None = None, discovery_bypass_alias: str | None = None, discovery_bypass_region: str | None = None, discovery_bypass_profile: str | None = None) -> None`
+- `configure(*, api_key: str, timeout: float | None = None, log_level: str | None = None, confidence_threshold: float | None = None, discovery_use_gateway_bypass: bool | None = None, discovery_bypass_function: str | None = None, discovery_bypass_alias: str | None = None, discovery_bypass_region: str | None = None, discovery_bypass_profile: str | None = None) -> None`
   - Validates credentials, normalizes optional settings, and mutates the global `Settings` snapshot; raises `ClientConfigurationError` on invalid input.
 - Discovery helpers (sync + async):
   - `discover_mapping`, `discover_mapping_async`
@@ -43,25 +43,25 @@
   - `harmonize`, `harmonize_async`
   - Require CSV + manifest paths, optional output path; return `HarmonizationResult` regardless of success/failure; raise `HarmonizationJobError` on submit/poll/timeout failures and `NetriasAPIUnavailable` on transport errors.
 - Adapter helper:
-  - `build_column_mapping_payload` (exported via `_adapter` for advanced consumers) converts discovery output into the manifest format expected by harmonization.
+  - Discovery helpers automatically convert responses into harmonization manifest payloads using the adapter utilities.
 
 ## Discovery Workflow
 1. Validate schema (`validate_target_schema`) and column samples (`validate_column_samples`); CSV helpers (`discover_mapping_from_csv*`) read the header plus up to `sample_limit` rows (default 25) to build samples automatically.
 2. Route based on configuration:
-   - **Default (API Gateway)**: POST to `{api_url}/cde-recommendation` with payload `{ "body": "{...}" }`, sending the configured API key as `x-api-key`. Responses are parsed via `_interpret_discovery_response` and converted into `MappingDiscoveryResult`.
+   - **Default (API Gateway)**: POST to the built-in discovery URL with payload `{ "body": "{...}" }`, sending the configured API key as `x-api-key`. Responses are parsed via `_interpret_discovery_response` and converted into manifest payloads.
    - **Gateway Bypass (temporary)**: Call the `cde-recommendation` Lambda alias directly using boto3. Request and response shapes mimic the API Gateway proxy event (`{"body": "...", "isBase64Encoded": false}`); errors surface as `GatewayBypassError`, wrapped into `NetriasAPIUnavailable` for the public surface.
 3. Suggestions are represented as `MappingSuggestion` / `MappingRecommendationOption` instances and stored alongside the raw payload for diagnostics.
 4. Duration metrics are logged for success, transport errors, and bypass failures.
 
 ## Adapter Responsibilities
-- `build_column_mapping_payload(result)` extracts the highest-confidence target per source column, filters below the configured threshold, and merges static CDE metadata (route, target field, `cdeId`).
+- Discovery normalization extracts the highest-confidence target per source column, filters below the configured threshold, and merges static CDE metadata (route, target field, `cdeId`).
 - Unresolved columns (missing CDE metadata) are logged for observability; downstream harmonization can still proceed with passthrough mappings when appropriate.
 
 ## Harmonization Workflow
 1. Validate inputs (`validate_source_path`, `validate_manifest_path`, `validate_output_path`). Output validation automatically versions existing destinations (`.harmonized.v1.csv`, `.v2`, …) rather than overwriting.
 2. Build a gzip-compressed payload containing schema/document data plus the mapping manifest (`_http.build_harmonize_payload`). Hard fail if compression exceeds 10 MiB.
-3. Submit the job via `POST {api_url}/v1/jobs/harmonize` with `Bearer` authentication; capture `jobId`.
-4. Poll `GET {api_url}/v1/jobs/{jobId}` until the status is `SUCCEEDED` or `FAILED`. INFO logs include elapsed seconds per heartbeat; timeouts emit the accumulated duration before raising `HarmonizationJobError`.
+3. Submit the job via `POST <harmonization_url>/v1/jobs/harmonize` with `Bearer` authentication; capture `jobId`.
+4. Poll `GET <harmonization_url>/v1/jobs/{jobId}` until the status is `SUCCEEDED` or `FAILED`. INFO logs include elapsed seconds per heartbeat; timeouts emit the accumulated duration before raising `HarmonizationJobError`.
 5. Stream the final CSV via the signed `finalUrl`; successful downloads emit `HarmonizationResult(status="succeeded")`, while non-2xx responses return `status="failed"` with parsed error messaging. Transport errors raise `NetriasAPIUnavailable`.
 
 ## Data Models & Exceptions

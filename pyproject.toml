@@ -38,6 +38,10 @@ dev = [
     "python-dotenv>=1.0",
 ]
 
+[tool.uv.scripts]
+pytest = "pytest"
+live-test = "PYTHONPATH=src python -m netrias_client.live_test.test"
+
 [tool.hatch.build]
 include = [
     "README.md",

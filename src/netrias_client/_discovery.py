@@ -14,6 +14,7 @@ from typing import cast
 
 import httpx
 
+from ._adapter import build_column_mapping_payload
 from ._config import get_settings
 from ._errors import MappingDiscoveryError, NetriasAPIUnavailable
 from ._gateway_bypass import GatewayBypassError, invoke_cde_recommendation_alias
@@ -24,12 +25,15 @@ from ._validators import validate_column_samples, validate_target_schema, valida
 
 
 
+
 _logger = get_logger()
+
+ManifestPayload = dict[str, dict[str, dict[str, object]]]
 
 
 async def _discover_mapping_async(
     target_schema: str, column_samples: Mapping[str, Sequence[object]]
-) -> MappingDiscoveryResult:
+) -> ManifestPayload:
     """Perform mapping discovery via the recommendation endpoint."""
 
     schema = validate_target_schema(target_schema)
@@ -42,20 +46,22 @@ async def _discover_mapping_async(
         result = await _discover_with_backend(settings, schema, samples)
     except (httpx.TimeoutException, httpx.HTTPError, GatewayBypassError) as exc:
         _handle_discovery_error(schema, started, exc)
+        raise AssertionError("_handle_discovery_error should raise") from exc
 
+    manifest = build_column_mapping_payload(result)
     elapsed = time.perf_counter() - started
     _logger.info(
-        "discover mapping complete: schema=%s suggestions=%s duration=%.2fs",
-        result.schema,
-        len(result.suggestions),
+        "discover mapping complete: schema=%s columns=%s duration=%.2fs",
+        schema,
+        len(manifest.get("column_mappings", {})),
         elapsed,
     )
-    return result
+    return manifest
 
 
 def discover_mapping(
     target_schema: str, column_samples: Mapping[str, Sequence[object]]
-) -> MappingDiscoveryResult:
+) -> ManifestPayload:
     """Sync wrapper around `_discover_mapping_async`."""
 
     return asyncio.run(_discover_mapping_async(target_schema=target_schema, column_samples=column_samples))
@@ -63,15 +69,15 @@ def discover_mapping(
 
 async def discover_mapping_async(
     target_schema: str, column_samples: Mapping[str, Sequence[object]]
-) -> MappingDiscoveryResult:
+) -> ManifestPayload:
     """Async entry point mirroring `discover_mapping` semantics."""
 
     return await _discover_mapping_async(target_schema=target_schema, column_samples=column_samples)
 
 
-def discover_mapping_from_csv(
+def discover_cde_mapping(
     source_csv: Path, target_schema: str = "ccdi", sample_limit: int = 25
-) -> MappingDiscoveryResult:
+) -> ManifestPayload:
     """Convenience wrapper that derives column samples from a CSV file."""
 
     samples = _samples_from_csv(source_csv, sample_limit)
@@ -80,7 +86,7 @@ def discover_mapping_from_csv(
 
 async def discover_mapping_from_csv_async(
     source_csv: Path, target_schema: str = "ccdi", sample_limit: int = 25
-) -> MappingDiscoveryResult:
+) -> ManifestPayload:
     """Async variant of `discover_mapping_from_csv`."""
 
     samples = _samples_from_csv(source_csv, sample_limit)

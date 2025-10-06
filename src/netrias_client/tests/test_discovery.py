@@ -16,10 +16,9 @@ from pathlib import Path
 from netrias_client import (
     discover_mapping,
     discover_mapping_async,
-    discover_mapping_from_csv,
+    discover_cde_mapping,
 )
 from netrias_client._errors import MappingDiscoveryError, MappingValidationError, NetriasAPIUnavailable
-from netrias_client._models import MappingDiscoveryResult
 
 from ._utils import install_mock_transport, json_failure, json_success, transport_error
 
@@ -59,15 +58,11 @@ def test_discover_mapping_success(monkeypatch: pytest.MonkeyPatch) -> None:
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    result: MappingDiscoveryResult = discover_mapping(target_schema="ccdi", column_samples=_sample_columns())
+    manifest = discover_mapping(target_schema="ccdi", column_samples=_sample_columns())
 
-    assert result.schema == "ccdi"
-    assert len(result.suggestions) == 2
-    first = result.suggestions[0]
-    assert first.source_column == "sample_name"
-    assert first.options[0].target == "Sample.name"
-    confidence = first.options[0].confidence or 0.0
-    assert abs(confidence - 0.92) < 1e-9
+    column_mappings = manifest.get("column_mappings", {})
+    assert "sample_name" in column_mappings
+    assert column_mappings["sample_name"]["targetField"] == "Sample.name"
 
     request = capture.requests[0]
     assert request.headers.get("x-api-key") == "test-api-key"
@@ -98,15 +93,10 @@ def test_discover_mapping_parses_dict_body(monkeypatch: pytest.MonkeyPatch) -> N
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    result = discover_mapping(target_schema="sage_rnaseq", column_samples=_sample_columns())
+    manifest = discover_mapping(target_schema="sage_rnaseq", column_samples=_sample_columns())
 
-    assert result.schema == "sage_rnaseq"
-    assert len(result.suggestions) == 1
-    suggestion = result.suggestions[0]
-    assert suggestion.source_column == "sample_name"
-    assert suggestion.options[0].target == "biospecimen.sample_id"
-    confidence = suggestion.options[0].confidence or 0.0
-    assert abs(confidence - 0.88) < 1e-9
+    column_mappings = manifest.get("column_mappings", {})
+    assert column_mappings["sample_name"]["targetField"] == "biospecimen.sample_id"
 
 
 @pytest.mark.usefixtures("configured_client")
@@ -119,13 +109,14 @@ def test_discover_mapping_from_csv(monkeypatch: pytest.MonkeyPatch, sample_csv_p
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    _ = discover_mapping_from_csv(target_schema="ccdi", source_csv=sample_csv_path, sample_limit=1)
+    manifest = discover_cde_mapping(target_schema="ccdi", source_csv=sample_csv_path, sample_limit=1)
 
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     body = cast(dict[str, object], json.loads(cast(str, content["body"])))
     data_section = cast(dict[str, object], body.get("data", {}))
     assert any(column in data_section for column in ("a", "b", "c"))
+    assert isinstance(manifest.get("column_mappings"), dict)
 
 
 @pytest.mark.usefixtures("configured_client")
@@ -178,7 +169,6 @@ async def test_discover_mapping_async(monkeypatch: pytest.MonkeyPatch) -> None:
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    result = await discover_mapping_async(target_schema="ccdi", column_samples=_sample_columns())
-
-    assert result.schema == "ccdi"
-    assert len(result.suggestions) == 1
+    manifest = await discover_mapping_async(target_schema="ccdi", column_samples=_sample_columns())
+    column_mappings = manifest.get("column_mappings", {})
+    assert isinstance(column_mappings, dict)
