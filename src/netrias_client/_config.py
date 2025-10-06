@@ -41,6 +41,24 @@ def _validated_confidence_threshold(value: float | None) -> float:
     return float(value)
 
 
+def _normalized_bool(value: bool | None) -> bool:
+    if value is None:
+        return False
+    return bool(value)
+
+
+def _normalized_identifier(value: str | None, *, default: str) -> str:
+    candidate = (value or "").strip()
+    return candidate if candidate else default
+
+
+def _normalized_profile(value: str | None) -> str | None:
+    if value is None:
+        return None
+    trimmed = value.strip()
+    return trimmed or None
+
+
 def configure(
     *,
     api_key: str,
@@ -48,6 +66,11 @@ def configure(
     timeout: float | None = None,
     log_level: str | None = None,
     confidence_threshold: float | None = None,
+    discovery_use_gateway_bypass: bool | None = None,
+    discovery_bypass_function: str | None = None,
+    discovery_bypass_alias: str | None = None,
+    discovery_bypass_region: str | None = None,
+    discovery_bypass_profile: str | None = None,
 ) -> None:
     """Configure the client for subsequent calls.
 
@@ -64,6 +87,14 @@ def configure(
     level = _normalized_level(log_level)
     to = _validated_timeout(timeout)
     threshold = _validated_confidence_threshold(confidence_threshold)
+    bypass_enabled = _normalized_bool(discovery_use_gateway_bypass)
+    bypass_function = _normalized_identifier(
+        discovery_bypass_function,
+        default="cde-recommendation",
+    )
+    bypass_alias = _normalized_identifier(discovery_bypass_alias, default="prod")
+    bypass_region = _normalized_identifier(discovery_bypass_region, default="us-east-2")
+    bypass_profile = _normalized_profile(discovery_bypass_profile)
 
     with _lock:
         global _settings
@@ -73,6 +104,11 @@ def configure(
             timeout=to,
             log_level=level,
             confidence_threshold=threshold,
+            discovery_use_gateway_bypass=bypass_enabled,
+            discovery_bypass_function=bypass_function,
+            discovery_bypass_alias=bypass_alias,
+            discovery_bypass_region=bypass_region,
+            discovery_bypass_profile=bypass_profile,
         )
         set_log_level(level)
 

@@ -31,7 +31,11 @@ csv_path = Path(ROOT) / "data/primary_diagnosis_1.csv"
 manifest_path = ROOT / "data/generated_manifest.json"
 schema = "ccdi"
 
-configure(api_key=(ENV.get("NETRIAS_API_KEY") or ""), api_url=API_URL)
+configure(
+    api_key=(ENV.get("NETRIAS_API_KEY") or ""),
+    api_url=API_URL,
+    discovery_use_gateway_bypass=True,
+)
 discovery = discover_mapping_from_csv(csv_path, target_schema=schema)
 
 mapping_payload = build_column_mapping_payload(discovery)

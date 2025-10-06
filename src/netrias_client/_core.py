@@ -182,10 +182,12 @@ async def _resolve_final_payload(
     timeout: float,
     csv_path: Path,
 ) -> Mapping[str, JSONValue]:
-    deadline = time.monotonic() + timeout
+    started = time.monotonic()
+    deadline = started + timeout
     poll_interval = max(1.0, min(JOB_POLL_INTERVAL_SECONDS, timeout / 60 if timeout else JOB_POLL_INTERVAL_SECONDS))
 
     while time.monotonic() < deadline:
+        elapsed = time.monotonic() - started
         response = await _job_status_http(
             base_url=base_url,
             api_key=api_key,
@@ -196,13 +198,25 @@ async def _resolve_final_payload(
 
         payload = _interpret_job_status(response, csv_path)
         if payload is None:
-            _logger.info("harmonize job polling: file=%s job_id=%s status=pending", csv_path, job_id)
+            _logger.info(
+                "harmonize job polling: file=%s job_id=%s status=pending elapsed=%.2fs",
+                csv_path,
+                job_id,
+                elapsed,
+            )
             await asyncio.sleep(poll_interval)
             continue
-        _logger.info("harmonize job polling: file=%s job_id=%s status=%s", csv_path, job_id, payload.get("status"))
+        _logger.info(
+            "harmonize job polling: file=%s job_id=%s status=%s elapsed=%.2fs",
+            csv_path,
+            job_id,
+            payload.get("status"),
+            elapsed,
+        )
         return payload
 
-    _logger.error("harmonize job polling timed out: file=%s", csv_path)
+    total_elapsed = time.monotonic() - started
+    _logger.error("harmonize job polling timed out: file=%s elapsed=%.2fs", csv_path, total_elapsed)
     raise HarmonizationJobError("harmonization job polling timed out")
 
 

@@ -16,6 +16,7 @@ import httpx
 
 from ._config import get_settings
 from ._errors import MappingDiscoveryError, NetriasAPIUnavailable
+from ._gateway_bypass import GatewayBypassError, invoke_cde_recommendation_alias
 from ._http import request_mapping_discovery
 from ._logging import get_logger
 from ._models import MappingDiscoveryResult, MappingRecommendationOption, MappingSuggestion
@@ -36,14 +37,28 @@ async def _discover_mapping_async(
     settings = get_settings()
     started = time.perf_counter()
     _logger.info("discover mapping start: schema=%s columns=%s", schema, len(samples))
+
     try:
-        response = await request_mapping_discovery(
-            base_url=settings.api_url,
-            api_key=settings.api_key,
-            timeout=settings.timeout,
-            schema=schema,
-            columns=samples,
-        )
+        if settings.discovery_use_gateway_bypass:
+            payload = invoke_cde_recommendation_alias(
+                target_schema=schema,
+                columns=samples,
+                function_name=settings.discovery_bypass_function,
+                alias=settings.discovery_bypass_alias,
+                region_name=settings.discovery_bypass_region,
+                timeout_seconds=settings.timeout,
+                profile_name=settings.discovery_bypass_profile,
+            )
+            result = _result_from_payload(payload, schema)
+        else:
+            response = await request_mapping_discovery(
+                base_url=settings.api_url,
+                api_key=settings.api_key,
+                timeout=settings.timeout,
+                schema=schema,
+                columns=samples,
+            )
+            result = _interpret_discovery_response(response, schema)
     except httpx.TimeoutException as exc:  # pragma: no cover - exercised via unit tests
         elapsed = time.perf_counter() - started
         _logger.error("discover mapping timeout: schema=%s duration=%.2fs err=%s", schema, elapsed, exc)
@@ -57,8 +72,16 @@ async def _discover_mapping_async(
             exc,
         )
         raise NetriasAPIUnavailable(f"mapping discovery transport error: {exc}") from exc
+    except GatewayBypassError as exc:
+        elapsed = time.perf_counter() - started
+        _logger.error(
+            "discover mapping bypass error: schema=%s duration=%.2fs err=%s",
+            schema,
+            elapsed,
+            exc,
+        )
+        raise NetriasAPIUnavailable(f"gateway bypass error: {exc}") from exc
 
-    result = _interpret_discovery_response(response, schema)
     elapsed = time.perf_counter() - started
     _logger.info(
         "discover mapping complete: schema=%s suggestions=%s duration=%.2fs",
@@ -112,6 +135,10 @@ def _interpret_discovery_response(response: httpx.Response, requested_schema: st
         raise MappingDiscoveryError(message)
 
     payload = _load_payload(response)
+    return _result_from_payload(payload, requested_schema)
+
+
+def _result_from_payload(payload: Mapping[str, object], requested_schema: str) -> MappingDiscoveryResult:
     schema = _resolved_schema(payload, requested_schema)
     suggestions = _suggestions_from_payload(payload)
     return MappingDiscoveryResult(schema=schema, suggestions=suggestions, raw=payload)

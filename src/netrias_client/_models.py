@@ -19,6 +19,11 @@ class Settings:
     timeout: float
     log_level: str
     confidence_threshold: float
+    discovery_use_gateway_bypass: bool
+    discovery_bypass_function: str
+    discovery_bypass_alias: str
+    discovery_bypass_region: str
+    discovery_bypass_profile: str | None
 
 
 @dataclass(frozen=True)
