@@ -45,7 +45,7 @@ include = [
 ]
 exclude = [
     "src/netrias_client/tests/**",
-    "live_test/**",
+    "src/netrias_client/live_test/**",
     "architecture.md",
     "uv.lock",
     "*.env",
@@ -61,7 +61,18 @@ packages = ["src/netrias_client"]
 exclude = ["src/netrias_client/tests/**"]
 
 [tool.hatch.build.targets.sdist]
-exclude = ["src/netrias_client/tests/**", "live_test/**", "architecture.md", "uv.lock", "*.env", "*.csv", "*.log", "debug_*", "old_block.txt", "suggest_CDE.ipynb"]
+exclude = [
+    "src/netrias_client/tests/**",
+    "src/netrias_client/live_test/**",
+    "architecture.md",
+    "uv.lock",
+    "*.env",
+    "*.csv",
+    "*.log",
+    "debug_*",
+    "old_block.txt",
+    "suggest_CDE.ipynb",
+]
 
 [dependency-groups]
 dev = [
