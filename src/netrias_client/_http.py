@@ -6,7 +6,7 @@ import gzip
 import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Final, cast
+from typing import Any, Final, cast
 
 import httpx
 
@@ -17,7 +17,7 @@ MAX_COMPRESSED_BYTES: Final[int] = 10 * 1024 * 1024
 
 def build_harmonize_payload(
     csv_path: Path,
-    manifest_path: Path,
+    manifest: Path | Mapping[str, object] | None,
     *,
     model_version: str = DEFAULT_MODEL_VERSION,
 ) -> bytes:
@@ -38,7 +38,7 @@ def build_harmonize_payload(
         },
     }
 
-    mapping = _normalized_mapping(manifest_path)
+    mapping = _normalized_mapping(manifest)
     if mapping:
         envelope["mapping"] = mapping
 
@@ -134,12 +134,20 @@ def _read_tabular(path: Path) -> list[list[str]]:
         return [list(row) for row in reader]
 
 
-def _normalized_mapping(path: Path) -> dict[str, int]:
-    content = path.read_text(encoding="utf-8")
-    try:
-        raw = cast(object, json.loads(content))
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"manifest must be valid JSON: {exc}") from exc
+def _normalized_mapping(manifest: Path | Mapping[str, object] | None) -> dict[str, int]:
+    if manifest is None:
+        return {}
+
+    if isinstance(manifest, Path):
+        content = manifest.read_text(encoding="utf-8")
+        try:
+            raw: object = json.loads(content)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"manifest must be valid JSON: {exc}") from exc
+    elif isinstance(manifest, Mapping):
+        raw = manifest
+    else:
+        raise ValueError("manifest must be a path or mapping")
 
     mapping = _mapping_dict(raw)
     normalized: dict[str, int] = {}

@@ -15,6 +15,9 @@ from ._models import Settings
 _lock = threading.Lock()
 _settings: Settings | None = None
 
+DISCOVERY_BASE_URL = "https://api.netriasbdf.cloud"
+HARMONIZATION_BASE_URL = "https://tbdxz7nffi.execute-api.us-east-2.amazonaws.com"
+
 
 def _normalized_level(level: str | None) -> str:
     if not level:
@@ -41,9 +44,9 @@ def _validated_confidence_threshold(value: float | None) -> float:
     return float(value)
 
 
-def _normalized_bool(value: bool | None) -> bool:
+def _normalized_bool(value: bool | None, *, default: bool = False) -> bool:
     if value is None:
-        return False
+        return default
     return bool(value)
 
 
@@ -62,7 +65,7 @@ def _normalized_profile(value: str | None) -> str | None:
 def configure(
     *,
     api_key: str,
-    api_url: str,
+    api_url: str | None = None,
     timeout: float | None = None,
     log_level: str | None = None,
     confidence_threshold: float | None = None,
@@ -78,16 +81,14 @@ def configure(
     """
 
     key = (api_key or "").strip()
-    url = (api_url or "").strip()
+    _ = (api_url or "").strip()  # retained for backward compatibility; value ignored
     if not key:
-        raise ClientConfigurationError("api_key must be a non-empty string; call configure(api_key=..., api_url=...) before use")
-    if not url:
-        raise ClientConfigurationError("api_url must be a non-empty string; call configure(api_key=..., api_url=...) before use")
+        raise ClientConfigurationError("api_key must be a non-empty string; call configure(api_key=...) before use")
 
     level = _normalized_level(log_level)
     to = _validated_timeout(timeout)
     threshold = _validated_confidence_threshold(confidence_threshold)
-    bypass_enabled = _normalized_bool(discovery_use_gateway_bypass)
+    bypass_enabled = _normalized_bool(discovery_use_gateway_bypass, default=True)
     bypass_function = _normalized_identifier(
         discovery_bypass_function,
         default="cde-recommendation",
@@ -100,7 +101,8 @@ def configure(
         global _settings
         _settings = Settings(
             api_key=key,
-            api_url=url,
+            discovery_url=DISCOVERY_BASE_URL,
+            harmonization_url=HARMONIZATION_BASE_URL,
             timeout=to,
             log_level=level,
             confidence_threshold=threshold,

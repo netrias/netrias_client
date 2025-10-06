@@ -31,7 +31,7 @@ def configured_client() -> Iterator[None]:
     'why': provide a ready-to-use setup for harmonization scenarios
     """
 
-    configure(api_key="test-api-key", api_url="https://api.netrias.test", timeout=5, log_level="INFO")
+    configure(api_key="test-api-key", timeout=5, log_level="INFO", discovery_use_gateway_bypass=False)
     yield
 
 
@@ -65,3 +65,12 @@ def output_directory(tmp_path: Path) -> Path:
     dest = tmp_path / "outputs"
     dest.mkdir(parents=True, exist_ok=True)
     return dest
+
+
+@pytest.fixture
+def sample_manifest_mapping(sample_manifest_path: Path) -> dict[str, object]:
+    """Return the manifest payload as a Python mapping."""
+
+    import json
+
+    return json.loads(sample_manifest_path.read_text(encoding="utf-8"))

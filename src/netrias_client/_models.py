@@ -15,7 +15,8 @@ class Settings:
     """Capture runtime settings for API calls."""
 
     api_key: str
-    api_url: str
+    discovery_url: str
+    harmonization_url: str
     timeout: float
     log_level: str
     confidence_threshold: float

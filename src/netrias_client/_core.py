@@ -5,11 +5,12 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import time
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Final, TypeAlias, cast
+from typing import Any, Final, TypeAlias, cast
+
+import json
 
 import httpx
 
@@ -40,12 +41,17 @@ class HarmonizationJobError(RuntimeError):
     """Raised when the harmonization job fails before producing a result."""
 
 
-async def _harmonize_async(source_path: Path, manifest_path: Path, output_path: Path | None = None) -> HarmonizationResult:
+async def _harmonize_async(
+    source_path: Path,
+    manifest: Path | Mapping[str, object],
+    output_path: Path | None = None,
+    manifest_output_path: Path | None = None,
+) -> HarmonizationResult:
     """Execute harmonization using the asynchronous job API."""
 
     settings = get_settings()
     csv_path = validate_source_path(source_path)
-    manifest = validate_manifest_path(manifest_path)
+    manifest_input = _resolve_manifest(manifest, manifest_output_path)
     dest = validate_output_path(output_path, source_name=csv_path.stem, allow_versioning=True)
 
     started = time.perf_counter()
@@ -53,9 +59,9 @@ async def _harmonize_async(source_path: Path, manifest_path: Path, output_path: 
     _logger.info("harmonize start: file=%s", csv_path)
 
     try:
-        payload = build_harmonize_payload(csv_path, manifest)
+        payload = build_harmonize_payload(csv_path, manifest_input)
         job_payload = await _submit_job_response(
-            base_url=settings.api_url,
+            base_url=settings.harmonization_url,
             api_key=settings.api_key,
             timeout=settings.timeout,
             payload=payload,
@@ -64,7 +70,7 @@ async def _harmonize_async(source_path: Path, manifest_path: Path, output_path: 
         job_id = _require_job_id(job_payload, csv_path)
         _logger.info("harmonize job queued: file=%s job_id=%s", csv_path, job_id)
         final_payload = await _resolve_final_payload(
-            base_url=settings.api_url,
+            base_url=settings.harmonization_url,
             api_key=settings.api_key,
             job_id=job_id,
             timeout=settings.timeout,
@@ -88,18 +94,72 @@ async def _harmonize_async(source_path: Path, manifest_path: Path, output_path: 
         )
 
 
-def harmonize(source_path: Path, manifest_path: Path, output_path: Path | None = None) -> HarmonizationResult:
+def harmonize(
+    source_path: Path,
+    manifest: Path | Mapping[str, object],
+    output_path: Path | None = None,
+    *,
+    manifest_output_path: Path | None = None,
+) -> HarmonizationResult:
     """Sync wrapper: run the async harmonize workflow and block until completion."""
 
     _ = get_settings()
-    return asyncio.run(_harmonize_async(source_path, manifest_path, output_path=output_path))
+    return asyncio.run(
+        _harmonize_async(
+            source_path,
+            manifest,
+            output_path=output_path,
+            manifest_output_path=manifest_output_path,
+        )
+    )
 
 
-async def harmonize_async(source_path: Path, manifest_path: Path, output_path: Path | None = None) -> HarmonizationResult:
+async def harmonize_async(
+    source_path: Path,
+    manifest: Path | Mapping[str, object],
+    output_path: Path | None = None,
+    *,
+    manifest_output_path: Path | None = None,
+) -> HarmonizationResult:
     """Async counterpart to `harmonize` with identical validation and result semantics."""
 
     _ = get_settings()
-    return await _harmonize_async(source_path, manifest_path, output_path=output_path)
+    return await _harmonize_async(
+        source_path,
+        manifest,
+        output_path=output_path,
+        manifest_output_path=manifest_output_path,
+    )
+
+
+def _resolve_manifest(
+    manifest: Path | Mapping[str, object], manifest_output_path: Path | None
+) -> Path | Mapping[str, object]:
+    if isinstance(manifest, Path):
+        validated = validate_manifest_path(manifest)
+        if manifest_output_path is not None and manifest_output_path != validated:
+            manifest_output_path.parent.mkdir(parents=True, exist_ok=True)
+            manifest_output_path.write_text(validated.read_text(encoding="utf-8"), encoding="utf-8")
+            return manifest_output_path
+        return validated
+
+    if isinstance(manifest, Mapping):
+        normalized = _normalize_manifest_mapping(manifest)
+        if manifest_output_path is not None:
+            manifest_output_path.parent.mkdir(parents=True, exist_ok=True)
+            manifest_output_path.write_text(json.dumps(normalized, indent=2), encoding="utf-8")
+            return manifest_output_path
+        return normalized
+
+    raise ValueError("manifest must be a Path or mapping of JSON-serializable data")
+
+
+def _normalize_manifest_mapping(manifest: Mapping[str, object]) -> dict[str, object]:
+    try:
+        serialized = json.dumps(manifest)
+    except TypeError as exc:  # pragma: no cover - guarded by tests
+        raise ValueError("manifest mapping must be JSON-serializable") from exc
+    return cast(dict[str, object], json.loads(serialized))
 
 
 async def _submit_job_response(

@@ -26,7 +26,7 @@ def test_missing_source_file_raises(sample_manifest_path: Path, output_directory
     # Given a missing CSV path
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=missing_path, manifest_path=sample_manifest_path, output_path=output_directory)
+        _ = harmonize(source_path=missing_path, manifest=sample_manifest_path, output_path=output_directory)
 
     # Then the error mentions the missing file
     assert "not found" in str(exc.value)
@@ -44,7 +44,7 @@ def test_directory_source_path_rejected(sample_manifest_path: Path, output_direc
     # Given a directory in place of a CSV file
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=directory_path, manifest_path=sample_manifest_path, output_path=output_directory)
+        _ = harmonize(source_path=directory_path, manifest=sample_manifest_path, output_path=output_directory)
 
     # Then the error clarifies the path is not a file
     assert "not a file" in str(exc.value)
@@ -65,7 +65,7 @@ def test_invalid_source_extension_rejected(
     # Given a non-CSV source path
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=wrong_extension, manifest_path=sample_manifest_path, output_path=output_directory)
+        _ = harmonize(source_path=wrong_extension, manifest=sample_manifest_path, output_path=output_directory)
 
     # Then the error references the unsupported extension
     assert "extension" in str(exc.value)
@@ -93,7 +93,7 @@ def test_source_file_too_large(
     # Given a CSV that appears larger than the limit
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=sample_csv_path, manifest_path=sample_manifest_path, output_path=output_directory)
+        _ = harmonize(source_path=sample_csv_path, manifest=sample_manifest_path, output_path=output_directory)
 
     # Then an explicit size error is raised
     assert "exceeds" in str(exc.value)
@@ -112,7 +112,7 @@ def test_manifest_must_be_json(sample_csv_path: Path, output_directory: Path, tm
     # Given a manifest that is not a .json file
     # When harmonize executes
     with pytest.raises(FileValidationError) as exc:
-        _ = harmonize(source_path=sample_csv_path, manifest_path=bad_manifest, output_path=output_directory)
+        _ = harmonize(source_path=sample_csv_path, manifest=bad_manifest, output_path=output_directory)
 
     # Then the error highlights the extension issue
     assert "manifest" in str(exc.value)
@@ -140,7 +140,7 @@ def test_output_path_existing_file_versioned(
 
     result = harmonize(
         source_path=sample_csv_path,
-        manifest_path=sample_manifest_path,
+        manifest=sample_manifest_path,
         output_path=output_directory,
     )
 
@@ -179,7 +179,7 @@ def test_output_directory_must_be_writable(
     # Given an unwritable output directory
     # When harmonize executes
     with pytest.raises(OutputLocationError) as exc:
-        _ = harmonize(source_path=sample_csv_path, manifest_path=sample_manifest_path, output_path=target)
+        _ = harmonize(source_path=sample_csv_path, manifest=sample_manifest_path, output_path=target)
 
     # Then an OutputLocationError is raised with a helpful message
     assert "not writable" in str(exc.value)

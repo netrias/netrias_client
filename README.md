@@ -30,14 +30,13 @@ uv sync --group aws --group dev  # include optional AWS dependencies
 
 ## Configuration
 
-All client entry points require explicit configuration. At minimum provide the API key and the base URL.
+All client entry points require explicit configuration. Provide the API key; discovery and harmonization endpoints are fixed by the library.
 
 ```python
 from netrias_client import configure
 
 configure(
     api_key="<netrias api key>",
-    api_url="https://api.netriasbdf.cloud",
     # Optional overrides:
     timeout=21600.0,               # seconds (default: 6 hours)
     log_level="INFO",             # CRITICAL|ERROR|WARNING|INFO|DEBUG
@@ -57,7 +56,7 @@ from pathlib import Path
 from netrias_client import configure, discover_mapping_from_csv, harmonize
 from netrias_client._adapter import build_column_mapping_payload
 
-configure(api_key="<netrias api key>", api_url="https://api.netriasbdf.cloud")
+configure(api_key="<netrias api key>")
 
 csv_path = Path("/path/to/source.csv")
 schema = "ccdi"
@@ -68,11 +67,8 @@ discovery = discover_mapping_from_csv(csv_path, target_schema=schema)
 # 2. Translate the discovery result into a harmonization manifest.
 manifest_payload = build_column_mapping_payload(discovery)
 
-# 3. Persist the manifest (JSON) and kick off harmonization.
-manifest_path = csv_path.with_suffix(".manifest.json")
-manifest_path.write_text(json.dumps(manifest_payload, indent=2), encoding="utf-8")
-
-result = harmonize(csv_path, manifest_path)
+# 3. Kick off harmonization directly with the manifest payload.
+result = harmonize(csv_path, manifest_payload)
 print(result.status)
 print(result.description)
 print(result.file_path)
@@ -80,7 +76,7 @@ print(result.file_path)
 
 - `discover_mapping_from_csv` samples up to 25 values per column (configurable) before making a recommendation request.
 - `build_column_mapping_payload` keeps only the highest-confidence target per source column, filters options below the configured threshold, and injects Netrias CDE routing hints when available.
-- `harmonize` submits a job and polls `GET /v1/jobs/{jobId}` until the backend returns success or failure. Downloaded CSVs are written next to the source file. When the destination already exists, the client emits versioned filenames such as `data.harmonized.v1.csv`.
+- `harmonize` submits a job and polls `GET /v1/jobs/{jobId}` until the backend returns success or failure. Downloaded CSVs are written next to the source file (versioned as `data.harmonized.v1.csv`, etc.). Pass `manifest_output_path=` if you also want to persist the manifest JSON for inspection.
 
 ### Timing Logs
 

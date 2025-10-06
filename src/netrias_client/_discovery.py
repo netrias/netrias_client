@@ -105,7 +105,7 @@ async def _discover_with_backend(
         return _result_from_payload(payload, schema)
 
     response = await request_mapping_discovery(
-        base_url=settings.api_url,
+        base_url=settings.discovery_url,
         api_key=settings.api_key,
         timeout=settings.timeout,
         schema=schema,

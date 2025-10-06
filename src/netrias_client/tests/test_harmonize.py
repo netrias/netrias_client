@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import httpx
@@ -35,7 +36,7 @@ def test_harmonize_streaming_success(
     # When harmonize executes
     result: HarmonizationResult = harmonize(
         source_path=sample_csv_path,
-        manifest_path=sample_manifest_path,
+        manifest=sample_manifest_path,
         output_path=output_directory,
     )
 
@@ -77,7 +78,7 @@ def test_harmonize_handles_api_failure(
     # When harmonize executes
     result: HarmonizationResult = harmonize(
         source_path=sample_csv_path,
-        manifest_path=sample_manifest_path,
+        manifest=sample_manifest_path,
         output_path=output_directory,
     )
 
@@ -110,9 +111,60 @@ def test_harmonize_raises_on_transport_error(
     with pytest.raises(NetriasAPIUnavailable):
         _ = harmonize(
             source_path=sample_csv_path,
-            manifest_path=sample_manifest_path,
+            manifest=sample_manifest_path,
             output_path=output_directory,
         )
 
     # Then the request attempt was recorded once
     assert len(capture.requests) == 1
+
+
+@pytest.mark.usefixtures("configured_client")
+def test_harmonize_accepts_manifest_mapping(
+    sample_csv_path: Path,
+    sample_manifest_mapping: dict[str, object],
+    output_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Allow callers to provide manifest data without writing a file."""
+
+    capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
+    install_mock_transport(monkeypatch, capture)
+
+    result: HarmonizationResult = harmonize(
+        source_path=sample_csv_path,
+        manifest=sample_manifest_mapping,
+        output_path=output_directory,
+    )
+
+    expected_output = output_directory / "sample.harmonized.csv"
+    assert result.status == "succeeded"
+    assert result.file_path == expected_output
+    assert expected_output.exists()
+
+
+@pytest.mark.usefixtures("configured_client")
+def test_harmonize_writes_manifest_when_requested(
+    sample_csv_path: Path,
+    sample_manifest_mapping: dict[str, object],
+    output_directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Persist manifest data to disk when a destination path is supplied."""
+
+    capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
+    install_mock_transport(monkeypatch, capture)
+
+    manifest_output = tmp_path / "manifest.json"
+
+    _ = harmonize(
+        source_path=sample_csv_path,
+        manifest=sample_manifest_mapping,
+        output_path=output_directory,
+        manifest_output_path=manifest_output,
+    )
+
+    assert manifest_output.exists()
+    loaded = json.loads(manifest_output.read_text(encoding="utf-8"))
+    assert loaded == sample_manifest_mapping
