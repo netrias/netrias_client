@@ -88,6 +88,23 @@ Use these metrics to separate slow API responses from downstream processing over
 
 `_adapter.build_column_mapping_payload` maintains a static lookup of CDE metadata (route, target field, CDE ID). Only columns present in the lookup inherit IDs; unmatched columns are logged as unresolved so you can enrich `_COLUMN_METADATA` as the catalog grows. Confidence thresholds come from `configure(confidence_threshold=...)` and default to 0.8.
 
+## Gateway Bypass (Temporary)
+
+The module `netrias_client._gateway_bypass` exposes `invoke_cde_recommendation_alias(...)`, a stopgap helper that calls the `cde-recommendation` Lambda alias directly. This avoids API Gateway’s short timeout window but requires AWS credentials with `lambda:InvokeFunction` permission and the `boto3` dependency.
+
+```python
+from netrias_client._gateway_bypass import invoke_cde_recommendation_alias
+
+result = invoke_cde_recommendation_alias(
+    target_schema="ccdi",
+    columns={"study_name": ["foo", "bar"]},
+    alias="prod",
+    region_name="us-east-2",
+)
+```
+
+Install `boto3` (or `netrias-client[aws]` if provided) before importing the bypass module, and rotate IAM credentials frequently. Once API Gateway limits are raised, prefer the standard discovery flow again.
+
 ## Testing & Tooling
 
 The repository ships with pytest-based integration tests plus lint/type tooling.
