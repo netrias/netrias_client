@@ -178,22 +178,34 @@ def _coerce_cde_id(value: object) -> int | None:
     candidate = _cde_candidate(value)
     if candidate is None:
         return None
+    return _int_from_candidate(candidate)
+
+
+def _int_from_candidate(candidate: object) -> int | None:
     if isinstance(candidate, bool):
         return int(candidate)
     if isinstance(candidate, (int, float)):
-        try:
-            return int(candidate)
-        except (TypeError, ValueError):
-            return None
+        return _int_from_number(candidate)
     if isinstance(candidate, str):
-        stripped = candidate.strip()
-        if not stripped:
-            return None
-        try:
-            return int(stripped)
-        except ValueError:
-            return None
+        return _int_from_string(candidate)
     return None
+
+
+def _int_from_number(value: int | float) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _int_from_string(value: str) -> int | None:
+    stripped = value.strip()
+    if not stripped:
+        return None
+    try:
+        return int(stripped)
+    except ValueError:
+        return None
 
 
 def _cde_candidate(value: object) -> object | None:

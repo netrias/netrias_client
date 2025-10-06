@@ -123,15 +123,26 @@ def _extract_body_mapping(payload: Mapping[str, Any]) -> Mapping[str, Any]:
 def _normalized_columns(columns: Mapping[str, Sequence[str]]) -> dict[str, list[str]]:
     normalized: dict[str, list[str]] = {}
     for key, values in columns.items():
-        if not key:
+        name = _normalized_column_key(key)
+        if name is None:
             continue
-        collected: list[str] = []
-        for value in values:
-            if value is None:
-                continue
-            text = str(value).strip()
-            if text:
-                collected.append(text)
-        if collected:
-            normalized[key] = collected
+        cleaned = _normalized_column_values(values)
+        if cleaned:
+            normalized[name] = cleaned
     return normalized
+
+
+def _normalized_column_key(raw: str) -> str | None:
+    text = raw.strip()
+    return text or None
+
+
+def _normalized_column_values(values: Sequence[object]) -> list[str]:
+    return [text for text in (_normalized_column_value(value) for value in values) if text]
+
+
+def _normalized_column_value(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None

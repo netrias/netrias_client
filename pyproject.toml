@@ -31,37 +31,18 @@ aws = [
 [tool.ruff]
 unsafe-fixes = false
 line-length = 140
-select = [
-    "E", # Pycodestyle errors
-    "F", # Pyflakes
-    "I", # Import order
-    "C", # Pylint convention messages
-    "R", # Pylint refactor messages
-    "W", # Pylint warning messages
-    "E", # Pylint error messages
-]
-ignore = [
-    "F401", # Ignore unused import warning
-    "F601", # Ignore dictionary key literal repeated warning
-    "F811", # Ignore redefinition of unused name warning
-    "I001", # Ignore import block is un-sorted or un-formatted
-    "W293", # Ignore whitespace warning
-    "W291", # Ignore trailing whitespace warning
-    "E712", # Ignore comparisons to True/False directly
-]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 4
 
 [tool.ruff.lint]
 select = [
-    "E", # Pycodestyle errors
+    "E", # Pycodestyle & Pylint errors
     "F", # Pyflakes
     "I", # Import order
     "C", # Pylint convention messages
     "R", # Pylint refactor messages
     "W", # Pylint warning messages
-    "E", # Pylint error messages
 ]
 ignore = [
     "F401", # Ignore unused import warning

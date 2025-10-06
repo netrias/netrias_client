@@ -73,8 +73,7 @@ async def _harmonize_async(source_path: Path, manifest_path: Path, output_path: 
         final_url = _require_final_url(final_payload, csv_path)
     except HarmonizationJobError as exc:
         status_label = "failed"
-        result = HarmonizationResult(file_path=dest, status="failed", description=str(exc))
-        return result
+        return HarmonizationResult(file_path=dest, status="failed", description=str(exc))
     else:
         result = await _download_final(final_url, dest, settings.timeout, csv_path)
         status_label = result.status
