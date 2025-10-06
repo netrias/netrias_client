@@ -19,21 +19,24 @@ from netrias_client._adapter import build_column_mapping_payload  # noqa: E402
 ENV = dotenv_values(ROOT / ".env")
 
 
-def _env_value(key: str) -> str | None:
+def _env_value(key: str, default: str | None = None) -> str | None:
     value = ENV.get(key)
-    if value is None:
-        return None
-    stripped = value.strip()
-    return stripped or None
+    if value is None or not value.strip():
+        return default
+    return value.strip()
 
 
 csv_path = Path(ROOT) / "data/primary_diagnosis_1.csv"
 manifest_path = ROOT / "data/generated_manifest.json"
 schema = "ccdi"
 
+api_key = _env_value("NETRIAS_API_KEY") or ""
+discovery_url = _env_value("NETRIAS_API_URL", "https://api.netriasbdf.cloud")
+harmonization_url = _env_value("NETRIAS_HARMONIZATION_URL", discovery_url)
+
 configure(
-    api_key=_env_value("NETRIAS_API_KEY") or "",
-    api_url=_env_value("NETRIAS_API_URL") or "https://api.netriasbdf.cloud",
+    api_key=api_key,
+    api_url=discovery_url,
     discovery_use_gateway_bypass=True,
 )
 discovery = discover_mapping_from_csv(csv_path, target_schema=schema)
@@ -43,10 +46,8 @@ print(mapping_payload)
 
 _ = manifest_path.write_text(json.dumps(mapping_payload, indent=2), encoding="utf-8")
 
-harm_key = _env_value("NETRIAS_HARMONIZATION_KEY")
-harm_url = _env_value("NETRIAS_HARMONIZATION_URL")
-if harm_key and harm_url:
-    configure(api_key=harm_key, api_url=harm_url)
+if harmonization_url != discovery_url:
+    configure(api_key=api_key, api_url=harmonization_url)
 
 result = harmonize(csv_path, manifest_path)
 print(f"Harmonize status: {result.status}")
