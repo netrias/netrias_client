@@ -119,24 +119,38 @@ def test_manifest_must_be_json(sample_csv_path: Path, output_directory: Path, tm
 
 
 @pytest.mark.usefixtures("configured_client")
-def test_output_path_existing_file_rejected(
-    sample_csv_path: Path, sample_manifest_path: Path, output_directory: Path
+def test_output_path_existing_file_versioned(
+    sample_csv_path: Path,
+    sample_manifest_path: Path,
+    output_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Refuse to overwrite existing harmonized outputs.
+    """Version output filenames rather than overwriting existing harmonized results.
 
-    'why': protect callers from clobbering prior results
+    'why': ensure callers keep prior outputs while receiving the new artifact
     """
+
+    from ._utils import install_mock_transport, job_success
 
     existing = output_directory / "sample.harmonized.csv"
     _ = existing.write_text("old data", encoding="utf-8")
 
-    # Given an output path that already exists
-    # When harmonize executes
-    with pytest.raises(OutputLocationError) as exc:
-        _ = harmonize(source_path=sample_csv_path, manifest_path=sample_manifest_path, output_path=output_directory)
+    capture = job_success(chunks=(b"col1,col2\n", b"1,2\n"))
+    install_mock_transport(monkeypatch, capture)
 
-    # Then the error indicates the file will not be overwritten
-    assert "refusing" in str(exc.value)
+    result = harmonize(
+        source_path=sample_csv_path,
+        manifest_path=sample_manifest_path,
+        output_path=output_directory,
+    )
+
+    expected_new = output_directory / "sample.harmonized.v1.csv"
+    assert result.status == "succeeded"
+    assert result.file_path == expected_new
+    assert expected_new.exists()
+    assert expected_new.read_text(encoding="utf-8") == "col1,col2\n1,2\n"
+    assert existing.read_text(encoding="utf-8") == "old data"
+    assert len(capture.requests) == 3
 
 
 @pytest.mark.usefixtures("configured_client")

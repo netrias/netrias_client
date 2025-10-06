@@ -9,13 +9,24 @@ Python toolkit for working with the Netrias recommendation and harmonization ser
 - **Asynchronous harmonization loop** – submit jobs, poll for completion, download results, and version output files automatically to avoid accidental overwrites.
 - **Extended timing logs** – discovery and harmonization emit duration metrics so you can spot slow calls quickly during live runs.
 
-## Installation
+## Installation (uv)
+
+The project targets Python 3.12+. Use [uv](https://github.com/astral-sh/uv) to manage environments and installations.
 
 ```bash
-uv sync          # or pip install -e .
+# create or update a project that depends on netrias-client
+uv add netrias-client
+
+# install optional AWS helpers (gateway bypass)
+uv add netrias-client[aws]
 ```
 
-The project targets Python 3.12+. Dependency management is defined in `pyproject.toml`; `uv` is the preferred workflow during development.
+For local development within this repository:
+
+```bash
+uv sync --group dev            # install development tooling
+uv sync --group aws --group dev  # include optional AWS dependencies
+```
 
 ## Configuration
 
@@ -109,10 +120,12 @@ Install `boto3` (or `netrias-client[aws]` if provided) before importing the bypa
 
 The repository ships with pytest-based integration tests plus lint/type tooling.
 
+
 ```bash
 uv run pytest
 uv run ruff check
 uv run basedpyright
+uv build                 # produce wheel + sdist
 ```
 
 Live verification scripts are located under `live_test/` and require a populated `.env` file containing `NETRIAS_API_KEY` (and optionally harmonization overrides while services converge).
@@ -134,11 +147,11 @@ src/netrias_client/
     _validators.py       # filesystem and payload validation
 ```
 
-Tests live alongside fixtures under `src/netrias_client/tests/` to keep imports simple in editable installs.
+Tests reside under `src/netrias_client/tests/` and are excluded from the published wheel to keep installs slim; run them locally via `uv run pytest`.
 
 ## Contributing
 
-1. `uv sync` (or preferred installer) to create the virtual environment.
+1. `uv sync --group dev` (add `--group aws` if needed) to create the virtual environment.
 2. `uv run pytest` to ensure the suite passes prior to committing.
 3. Follow the repo conventions: keep functions focused, prefer typed interfaces, and favor logging key transitions over verbose chatter.
 

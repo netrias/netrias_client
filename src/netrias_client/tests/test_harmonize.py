@@ -13,7 +13,7 @@ from netrias_client import harmonize
 from netrias_client._errors import NetriasAPIUnavailable
 from netrias_client._models import HarmonizationResult
 
-from ._utils import install_mock_transport, json_failure, streaming_success, transport_error
+from ._utils import install_mock_transport, job_success, json_failure, transport_error
 
 
 @pytest.mark.usefixtures("configured_client")
@@ -28,7 +28,7 @@ def test_harmonize_streaming_success(
     'why': confirm the happy path covers validation, HTTP, and disk IO coherently
     """
 
-    capture = streaming_success(chunks=(b"col1,col2\n", b"7,8\n"))
+    capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
     install_mock_transport(monkeypatch, capture)
 
     # Given valid inputs and a successful transport response
@@ -45,11 +45,17 @@ def test_harmonize_streaming_success(
     assert result.file_path == expected_output
     assert expected_output.exists()
     assert expected_output.read_text(encoding="utf-8") == "col1,col2\n7,8\n"
-    assert len(capture.requests) == 1
-    request = capture.requests[0]
-    assert request.method == "POST"
-    assert request.url.path.endswith("/v1/harmonization/run")
-    assert request.headers.get("authorization") == "Bearer test-api-key"
+    assert len(capture.requests) == 3
+    submit_request = capture.requests[0]
+    poll_request = capture.requests[1]
+    final_request = capture.requests[2]
+
+    assert submit_request.method == "POST"
+    assert submit_request.url.path.endswith("/v1/jobs/harmonize")
+    assert submit_request.headers.get("authorization") == "Bearer test-api-key"
+    assert poll_request.method == "GET"
+    assert "/v1/jobs/" in poll_request.url.path
+    assert final_request.method == "GET"
 
 
 @pytest.mark.usefixtures("configured_client")

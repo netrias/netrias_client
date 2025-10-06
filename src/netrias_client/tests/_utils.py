@@ -7,7 +7,6 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncIterator, Mapping, Sequence
 from dataclasses import dataclass
-from functools import partial
 from typing import override
 
 import httpx
@@ -25,23 +24,26 @@ class MockTransportCapture:
     requests: list[httpx.Request]
 
 
-def streaming_success(
-    chunks: Sequence[bytes], *, headers: dict[str, str] | None = None, status_code: int = 200
+def job_success(
+    *,
+    chunks: Sequence[bytes],
+    job_id: str = "job-123",
+    final_url: str = "https://mock.netrias/result.csv",
 ) -> MockTransportCapture:
-    """Return a mock transport streaming CSV bytes.
+    """Return a mock transport that simulates the multi-step harmonization workflow.
 
-    'why': reuse identical streaming responses for success scenarios
+    'why': cover submit, poll, and download interactions without touching the network
     """
 
     recorded: list[httpx.Request] = []
+    state = _JobState()
 
-    handler = partial(
-        _streaming_handler,
-        chunks=tuple(chunks),
-        headers=headers,
-        status_code=status_code,
-        recorded=recorded,
-    )
+    async def handler(request: httpx.Request) -> httpx.Response:
+        recorded.append(request)
+        response = _resolve_job_response(request, job_id, final_url, chunks, state)
+        if response is None:
+            raise AssertionError(f"unexpected request during job_success: {request.method} {request.url}")
+        return response
 
     return MockTransportCapture(httpx.MockTransport(handler), recorded)
 
@@ -104,6 +106,7 @@ def install_mock_transport(monkeypatch: MonkeyPatch, capture: MockTransportCaptu
             super().__init__(*args, **kwdict)
 
     monkeypatch.setattr("netrias_client._http.httpx.AsyncClient", _PatchedAsyncClient)
+    monkeypatch.setattr("netrias_client._core.httpx.AsyncClient", _PatchedAsyncClient)
 
 
 class _ChunkStream(httpx.AsyncByteStream):
@@ -121,19 +124,63 @@ class _ChunkStream(httpx.AsyncByteStream):
         return self.aiter_bytes()
 
 
-async def _streaming_handler(
+
+@dataclass(slots=True)
+class _JobState:
+    status_served: bool = False
+
+
+def _job_submit_response(request: httpx.Request, job_id: str) -> httpx.Response | None:
+    if request.method != "POST":
+        return None
+    if not request.url.path.endswith("/v1/jobs/harmonize"):
+        return None
+    return httpx.Response(202, json={"jobId": job_id}, request=request)
+
+
+def _job_status_response(
     request: httpx.Request,
-    *,
+    job_id: str,
+    final_url: str,
+    state: _JobState,
+) -> httpx.Response | None:
+    if request.method != "GET":
+        return None
+    if not request.url.path.endswith(f"/v1/jobs/{job_id}"):
+        return None
+    state.status_served = True
+    payload = {"status": "SUCCEEDED", "finalUrl": final_url}
+    return httpx.Response(200, json=payload, request=request)
+
+
+def _job_download_response(
+    request: httpx.Request,
+    final_url: str,
     chunks: Sequence[bytes],
-    headers: dict[str, str] | None,
-    status_code: int,
-    recorded: list[httpx.Request],
-) -> httpx.Response:
-    recorded.append(request)
-    response_headers = headers or {"Content-Type": "text/csv"}
+) -> httpx.Response | None:
+    if request.method != "GET":
+        return None
+    if str(request.url) != final_url:
+        return None
     return httpx.Response(
-        status_code,
-        headers=response_headers,
+        200,
+        headers={"Content-Type": "text/csv"},
         stream=_ChunkStream(chunks),
         request=request,
     )
+
+
+def _resolve_job_response(
+    request: httpx.Request,
+    job_id: str,
+    final_url: str,
+    chunks: Sequence[bytes],
+    state: _JobState,
+) -> httpx.Response | None:
+    response = _job_submit_response(request, job_id)
+    if response is not None:
+        return response
+    response = _job_status_response(request, job_id, final_url, state)
+    if response is not None:
+        return response
+    return _job_download_response(request, final_url, chunks)

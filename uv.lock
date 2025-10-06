@@ -141,9 +141,23 @@ wheels = [
 [[package]]
 name = "netrias-client"
 version = "0.0.1"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "httpx" },
+]
+
+[package.optional-dependencies]
+aws = [
+    { name = "boto3" },
+]
+dev = [
+    { name = "basedpyright" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "python-dotenv" },
+    { name = "ruff" },
+    { name = "ty" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -161,7 +175,18 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "httpx", specifier = ">=0.27.0" }]
+requires-dist = [
+    { name = "basedpyright", marker = "extra == 'dev'" },
+    { name = "boto3", marker = "extra == 'aws'", specifier = ">=1.35.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
+    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5.0" },
+    { name = "ty", marker = "extra == 'dev'" },
+    { name = "typing-extensions", marker = "extra == 'dev'" },
+]
+provides-extras = ["aws", "dev"]
 
 [package.metadata.requires-dev]
 aws = [{ name = "boto3", specifier = ">=1.35.0" }]
