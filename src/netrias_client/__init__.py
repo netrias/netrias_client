@@ -6,4 +6,4 @@ from ._client import NetriasClient
 
 __all__ = ["NetriasClient", "__version__"]
 
-__version__ = "0.0.1"
+__version__ = "0.0.5"

@@ -12,6 +12,8 @@ from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
 
+from importlib.metadata import PackageNotFoundError, version as package_version
+
 from ._core import harmonize as _harmonize
 from ._core import harmonize_async as _harmonize_async
 from ._discovery import (
@@ -95,6 +97,7 @@ class NetriasClient:
         with self._lock:
             self._settings = settings
             self._logger = logger
+        _emit_configuration_summary(settings=settings, logger=logger)
 
     @property
     def settings(self) -> Settings:
@@ -187,6 +190,20 @@ class NetriasClient:
             logger=self._require_logger(),
         )
 
+    async def discover_cde_mapping_async(
+        self,
+        source_csv: Path,
+        target_schema: str,
+        sample_limit: int = 25,
+    ) -> ManifestPayload:
+        """Async compatibility alias for :meth:`discover_mapping_from_csv_async`."""
+
+        return await self.discover_mapping_from_csv_async(
+            source_csv=source_csv,
+            target_schema=target_schema,
+            sample_limit=sample_limit,
+        )
+
     def harmonize(
         self,
         source_path: Path,
@@ -249,3 +266,29 @@ class NetriasClient:
                 "client not configured; call configure(api_key=...) before use"
             )
         return self._logger
+
+
+def _emit_configuration_summary(*, settings: Settings, logger: logging.Logger) -> None:
+    """Log a sanitized summary of the active client configuration."""
+
+    summary = {
+        "package_version": _resolve_package_version(),
+        "discovery_url": settings.discovery_url,
+        "harmonization_url": settings.harmonization_url,
+        "timeout": settings.timeout,
+        "log_level": settings.log_level.value,
+        "confidence_threshold": settings.confidence_threshold,
+        "discovery_use_gateway_bypass": settings.discovery_use_gateway_bypass,
+        "log_directory": str(settings.log_directory) if settings.log_directory else None,
+    }
+    formatted = ", ".join(f"{key}={value}" for key, value in summary.items() if value is not None)
+    logger.info("client configured: %s", formatted)
+
+
+def _resolve_package_version() -> str:
+    """Return the installed package version or a fallback identifier."""
+
+    try:
+        return package_version("netrias_client")
+    except PackageNotFoundError:
+        return "0.0.0-dev"

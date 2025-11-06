@@ -27,6 +27,37 @@ def build_column_mapping_payload(
 
 
 _COLUMN_METADATA: Final[dict[str, dict[str, object]]] = {
+    "therapeutic_agents": {
+      "route": "sagemaker:therapeutic_agents",
+      "targetField": "therapeutic_agents",
+      "cdeId": 1,
+      "cde_id": 1
+    },
+    "primary_diagnosis": {
+      "route": "sagemaker:primary",
+      "targetField": "primary_diagnosis",
+      "cdeId": 2,
+      "cde_id": 2
+    },
+    "morphology": {
+      "route": "sagemaker:morphology",
+      "targetField": "morphology",
+      "cdeId": 3,
+      "cde_id": 3
+    },
+    "sample_anatomic_site": {
+      "route": "sagemaker:sample_anatomic_site",
+      "targetField": "sample_anatomic_site",
+      "cdeId": 5,
+      "cde_id": 5
+    },
+    "tissue_or_organ_of_origin": {
+      "route": "sagemaker:tissue_or_organ_of_origin",
+      "targetField": "tissue_or_organ_of_origin",
+      "cdeId": 4,
+      "cde_id": 4
+    }
+}
     # "study_name": {"route": "api:passthrough", "targetField": "study_name"},
     # "number_of_participants": {"route": "api:passthrough", "targetField": "number_of_participants"},
     # "number_of_samples": {"route": "api:passthrough", "targetField": "number_of_samples"},
@@ -39,24 +70,24 @@ _COLUMN_METADATA: Final[dict[str, dict[str, object]]] = {
     # "participant_id": {"route": "api:passthrough", "targetField": "participant_id"},
     # "sample_id": {"route": "api:passthrough", "targetField": "sample_id"},
     # "file_name": {"route": "api:passthrough", "targetField": "file_name"},
-    "primary_diagnosis": {
-        "route": "sagemaker:primary",
-        "targetField": "primary_diagnosis",
-        "cdeId": -200,
-        "cde_id": -200,
-    },
-    "therapeutic_agents": {
-        "route": "sagemaker:therapeutic_agents",
-        "targetField": "therapeutic_agents",
-        "cdeId": -203,
-        "cde_id": -203,
-    },
-    "morphology": {
-        "route": "sagemaker:morphology",
-        "targetField": "morphology",
-        "cdeId": -201,
-        "cde_id": -201,
-    },
+    # "primary_diagnosis": {
+    #     "route": "sagemaker:primary",
+    #     "targetField": "primary_diagnosis",
+    #     "cdeId": -200,
+    #     "cde_id": -200,
+    # },
+    # "therapeutic_agents": {
+    #     "route": "sagemaker:therapeutic_agents",
+    #     "targetField": "therapeutic_agents",
+    #     "cdeId": -203,
+    #     "cde_id": -203,
+    # },
+    # "morphology": {
+    #     "route": "sagemaker:morphology",
+    #     "targetField": "morphology",
+    #     "cdeId": -201,
+    #     "cde_id": -201,
+    # },
     # "tissue_or_organ_of_origin": {
     #     "route": "sagemaker:tissue_origin",
     #     "targetField": "tissue_or_organ_of_origin",
@@ -69,7 +100,7 @@ _COLUMN_METADATA: Final[dict[str, dict[str, object]]] = {
     #     "cdeId": -202,
     #     "cde_id": -202,
     # },
-}
+# }
 
 
 def strongest_targets(
@@ -79,15 +110,34 @@ def strongest_targets(
 ) -> dict[str, str]:
     """Return the highest-confidence target per column, filtered by threshold."""
 
+    # First, get ALL recommendations regardless of threshold
     if result.suggestions:
-        selected = _from_suggestions(result.suggestions, threshold)
+        all_targets, all_confidences = _from_suggestions_unfiltered(result.suggestions)
+        selected, confidences = _from_suggestions(result.suggestions, threshold)
     else:
-        selected = _from_raw_payload(result.raw, threshold)
+        all_targets, all_confidences = _from_raw_payload_unfiltered(result.raw)
+        selected, confidences = _from_raw_payload(result.raw, threshold)
 
+    # Log all discovered mappings before filtering
+    if all_targets:
+        all_with_scores = {col: f"{target} (confidence: {all_confidences.get(col, 'N/A')})"
+                          for col, target in all_targets.items()}
+        logger.info("adapter all discovered mappings (pre-filter): %s", all_with_scores)
+
+    # Log filtered mappings that passed the threshold
     if selected:
-        logger.info("adapter strongest targets: %s", selected)
+        targets_with_scores = {col: f"{target} (confidence: {confidences.get(col, 'N/A')})"
+                               for col, target in selected.items()}
+        logger.info("adapter strongest targets (threshold >= %.2f): %s", threshold, targets_with_scores)
     else:
-        logger.warning("adapter strongest targets empty after filtering")
+        logger.warning("adapter strongest targets empty after filtering (threshold=%.2f)", threshold)
+
+    # Log what was filtered out
+    filtered_out = {col: f"{all_targets[col]} (confidence: {all_confidences.get(col, 'N/A')})"
+                   for col in all_targets if col not in selected}
+    if filtered_out:
+        logger.info("adapter filtered out (below threshold): %s", filtered_out)
+
     return selected
 
 
@@ -96,15 +146,24 @@ def _column_entries(
     logger: logging.Logger,
 ) -> dict[str, dict[str, object]]:
     entries: dict[str, dict[str, object]] = {}
-    missing_cde: dict[str, str] = {}
+    missing_cde: list[str] = []
+    recognized_mappings: dict[str, int] = {}
+
     for source, target in strongest.items():
         entry = _initial_entry(source, target)
         if _needs_cde(entry):
-            missing_cde[source] = target
+            missing_cde.append(source)
+        else:
+            # Extract CDE id for recognized mappings
+            cde_id = entry.get("cdeId") or entry.get("cde_id")
+            if isinstance(cde_id, int):
+                recognized_mappings[source] = cde_id
         entries[source] = entry
 
     _apply_metadata_defaults(entries)
 
+    if recognized_mappings:
+        logger.info("adapter recognized mappings (column -> CDE id): %s", recognized_mappings)
     if missing_cde:
         logger.info("adapter unresolved targets (no CDE id mapping): %s", missing_cde)
     return entries
@@ -128,27 +187,64 @@ def _apply_metadata_defaults(entries: dict[str, dict[str, object]]) -> None:
             entries[source] = dict(metadata)
 
 
+def _from_suggestions_unfiltered(
+    suggestions: Iterable[MappingSuggestion]
+) -> tuple[dict[str, str], dict[str, float]]:
+    """Get all recommendations without filtering by threshold."""
+    strongest: dict[str, str] = {}
+    confidences: dict[str, float] = {}
+    for suggestion in suggestions:
+        option = _top_option_unfiltered(suggestion.options)
+        if option is None or option.target is None:
+            continue
+        strongest[suggestion.source_column] = option.target
+        if option.confidence is not None:
+            confidences[suggestion.source_column] = option.confidence
+    return strongest, confidences
+
+
 def _from_suggestions(
     suggestions: Iterable[MappingSuggestion], threshold: float
-) -> dict[str, str]:
+) -> tuple[dict[str, str], dict[str, float]]:
     strongest: dict[str, str] = {}
+    confidences: dict[str, float] = {}
     for suggestion in suggestions:
         option = _top_option(suggestion.options, threshold)
         if option is None or option.target is None:
             continue
         strongest[suggestion.source_column] = option.target
-    return strongest
+        if option.confidence is not None:
+            confidences[suggestion.source_column] = option.confidence
+    return strongest, confidences
 
 
-def _from_raw_payload(payload: Mapping[str, object], threshold: float) -> dict[str, str]:
+def _from_raw_payload_unfiltered(payload: Mapping[str, object]) -> tuple[dict[str, str], dict[str, float]]:
+    """Get all recommendations from raw payload without filtering by threshold."""
     strongest: dict[str, str] = {}
+    confidences: dict[str, float] = {}
+    for column, value in payload.items():
+        options = _coerce_options(value)
+        option = _top_option_unfiltered(options)
+        if option is None or option.target is None:
+            continue
+        strongest[column] = option.target
+        if option.confidence is not None:
+            confidences[column] = option.confidence
+    return strongest, confidences
+
+
+def _from_raw_payload(payload: Mapping[str, object], threshold: float) -> tuple[dict[str, str], dict[str, float]]:
+    strongest: dict[str, str] = {}
+    confidences: dict[str, float] = {}
     for column, value in payload.items():
         options = _coerce_options(value)
         option = _top_option(options, threshold)
         if option is None or option.target is None:
             continue
         strongest[column] = option.target
-    return strongest
+        if option.confidence is not None:
+            confidences[column] = option.confidence
+    return strongest, confidences
 
 
 def _coerce_options(value: object) -> tuple[MappingRecommendationOption, ...]:
@@ -175,6 +271,16 @@ def _option_from_mapping(item: Mapping[str, object]) -> MappingRecommendationOpt
     if isinstance(similarity, (float, int)):
         score = float(similarity)
     return MappingRecommendationOption(target=target, confidence=score, raw=item)
+
+
+def _top_option_unfiltered(
+    options: Iterable[MappingRecommendationOption]
+) -> MappingRecommendationOption | None:
+    """Return the highest-confidence option without filtering by threshold."""
+    options_list = list(options)
+    if not options_list:
+        return None
+    return max(options_list, key=lambda opt: opt.confidence or float("-inf"))
 
 
 def _top_option(
