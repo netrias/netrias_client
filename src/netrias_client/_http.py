@@ -1,4 +1,7 @@
-"""HTTP helpers for harmonization and discovery."""
+"""HTTP transport for harmonization and discovery API calls.
+
+'why': isolate httpx usage to enable centralized timeout, retry, and auth policy changes
+"""
 from __future__ import annotations
 
 import csv
@@ -7,6 +10,7 @@ import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Final
+from urllib.parse import quote
 
 import httpx
 
@@ -87,7 +91,9 @@ async def request_mapping_discovery(
     api_key: str,
     timeout: float,
     schema: str,
+    version: str,
     columns: Mapping[str, Sequence[str]],
+    top_k: int | None = None,
 ) -> httpx.Response:
     """Submit column samples for mapping recommendations."""
 
@@ -96,10 +102,115 @@ async def request_mapping_discovery(
         "Content-Type": "application/json",
         "x-api-key": api_key,
     }
-    body = {"target_schema": schema, "data": columns}
+    body: dict[str, object] = {
+        "target_schema": schema,
+        "target_version": version,
+        "data": columns,
+    }
+    if top_k is not None:
+        body["top_k"] = top_k
     payload = {"body": json.dumps(body)}
     async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
         return await client.post(url, headers=headers, json=payload)
+
+
+async def fetch_data_models(
+    base_url: str,
+    api_key: str,
+    timeout: float,
+    query: str | None = None,
+    include_versions: bool = False,
+    include_counts: bool = False,
+    limit: int | None = None,
+    offset: int = 0,
+) -> httpx.Response:
+    """Fetch data models from the Data Model Store."""
+
+    url = f"{base_url.rstrip('/')}/data-models"
+    headers = {"x-api-key": api_key}
+    params = _build_data_models_params(query, include_versions, include_counts, limit, offset)
+
+    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
+        return await client.get(url, headers=headers, params=params)
+
+
+def _build_data_models_params(
+    query: str | None,
+    include_versions: bool,
+    include_counts: bool,
+    limit: int | None,
+    offset: int,
+) -> dict[str, str | int]:
+    """Build query parameters for data models endpoint."""
+
+    candidates: list[tuple[str, str | int | None]] = [
+        ("offset", offset),
+        ("q", query),
+        ("include_versions", "true" if include_versions else None),
+        ("include_counts", "true" if include_counts else None),
+        ("limit", limit),
+    ]
+    return {k: v for k, v in candidates if v is not None}
+
+
+async def fetch_cdes(
+    base_url: str,
+    api_key: str,
+    timeout: float,
+    model_key: str,
+    version: str,
+    include_description: bool = False,
+    query: str | None = None,
+    limit: int | None = None,
+    offset: int = 0,
+) -> httpx.Response:
+    """Fetch CDEs for a data model version from the Data Model Store."""
+
+    url = f"{base_url.rstrip('/')}/data-models/{quote(model_key, safe='')}/versions/{quote(version, safe='')}/cdes"
+    headers = {"x-api-key": api_key}
+    params: dict[str, str | int] = {"offset": offset}
+    if include_description:
+        params["include_description"] = "true"
+    if query:
+        params["q"] = query
+    if limit is not None:
+        params["limit"] = limit
+
+    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
+        return await client.get(url, headers=headers, params=params)
+
+
+async def fetch_pvs(
+    base_url: str,
+    api_key: str,
+    timeout: float,
+    model_key: str,
+    version: str,
+    cde_key: str,
+    include_inactive: bool = False,
+    query: str | None = None,
+    limit: int | None = None,
+    offset: int = 0,
+) -> httpx.Response:
+    """Fetch permissible values for a CDE from the Data Model Store."""
+
+    path = (
+        f"/data-models/{quote(model_key, safe='')}"
+        f"/versions/{quote(version, safe='')}"
+        f"/cdes/{quote(cde_key, safe='')}/pvs"
+    )
+    url = f"{base_url.rstrip('/')}{path}"
+    headers = {"x-api-key": api_key}
+    params: dict[str, str | int] = {"offset": offset}
+    if include_inactive:
+        params["include_inactive"] = "true"
+    if query:
+        params["q"] = query
+    if limit is not None:
+        params["limit"] = limit
+
+    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
+        return await client.get(url, headers=headers, params=params)
 
 def _build_job_submit_url(base_url: str) -> str:
     base = base_url.rstrip("/")
@@ -107,7 +218,7 @@ def _build_job_submit_url(base_url: str) -> str:
 
 def _build_job_status_url(base_url: str, job_id: str) -> str:
     base = base_url.rstrip("/")
-    return f"{base}/v1/jobs/{job_id}"
+    return f"{base}/v1/jobs/{quote(job_id, safe='')}"
 
 def _build_discovery_url(base_url: str) -> str:
     base = base_url.rstrip("/")

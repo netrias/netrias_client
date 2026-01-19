@@ -20,9 +20,8 @@ def configured_client() -> NetriasClient:
     'why': provide a ready-to-use setup for discovery and harmonization scenarios
     """
 
-    client = NetriasClient()
+    client = NetriasClient(api_key="test-api-key")
     client.configure(
-        api_key="test-api-key",
         timeout=5,
         log_level="INFO",
         discovery_use_gateway_bypass=False,

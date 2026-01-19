@@ -31,3 +31,19 @@ class NetriasAPIUnavailable(NetriasClientError):
 
 class MappingDiscoveryError(NetriasClientError):
     """Raised when the mapping discovery API returns an error payload."""
+
+
+class DataModelStoreError(NetriasClientError):
+    """Raised when the Data Model Store API returns an error."""
+
+
+class HarmonizationJobError(NetriasClientError):
+    """Raised when the harmonization job fails or times out."""
+
+
+class AsyncDiscoveryError(NetriasClientError):
+    """Raised when async Step Functions execution fails or times out."""
+
+
+class GatewayBypassError(NetriasClientError):
+    """Raised when the direct Lambda invocation fails."""

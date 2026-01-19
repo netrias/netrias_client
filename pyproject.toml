@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "netrias_client"
-version = "0.0.1"
+version = "0.2.0"
 description = "Python client for the Netrias harmonization API"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -96,9 +96,6 @@ dev = [
     "ty",
     "python-dotenv>=1.0",
     "twine>=5.0",
-]
-aws = [
-    "boto3>=1.35.0",
 ]
 
 

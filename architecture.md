@@ -12,34 +12,44 @@
 - `_config.py`: validate configuration inputs, normalize gateway-bypass options, and build immutable `Settings` snapshots.
 - `_core.py`: contain the harmonization workflow (submit → poll → download) shared by sync/async entry points.
 - `_discovery.py`: implement discovery workflows, CSV sampling helpers, and conditional routing between API Gateway and the Lambda alias bypass.
-- `_errors.py`: collect the client exception taxonomy (`ClientConfigurationError`, `MappingDiscoveryError`, `NetriasAPIUnavailable`, etc.).
+- `_errors.py`: collect the client exception taxonomy (`ClientConfigurationError`, `MappingDiscoveryError`, `NetriasAPIUnavailable`, `DataModelStoreError`, etc.).
 - `_gateway_bypass.py`: temporary helpers that invoke the `cde-recommendation` Lambda alias directly via boto3.
-- `_http.py`: build harmonization payloads, submit jobs, fetch job status, and perform discovery requests via HTTPX.
+- `_http.py`: build harmonization payloads, submit jobs, fetch job status, perform discovery requests, and query the Data Model Store via HTTPX.
+- `_data_model_store.py`: business logic for querying data models, CDEs, and permissible values; provides async-first functions with sync wrappers that handle existing event loops via `ThreadPoolExecutor` fallback.
+- `_sfn_discovery.py`: Step Functions-based discovery polling using `discover_via_step_functions()` (blocking/synchronous; uses `time.sleep()` for polling).
 - `_io.py`: stream API responses to disk to avoid loading large files into memory.
 - `_logging.py`: create a namespaced logger (`netrias_client`) that honors configured log level.
-- `_models.py`: define typed dataclasses (`Settings`, `MappingDiscoveryResult`, `HarmonizationResult`, …).
+- `_models.py`: define typed dataclasses (`Settings`, `MappingDiscoveryResult`, `HarmonizationResult`, `DataModel`, `CDE`, `PermissibleValue`, …).
 - `_validators.py`: guard filesystem access, manifest JSON, and discovery samples; raise typed errors early.
 - `tests/`: Given/When/Then-style fixtures and utilities for validation, discovery, and harmonization.
 
 ## Configuration & Settings
-- `NetriasClient.configure(...)` must be called before any discovery/harmonization call; defaults are intentionally minimal. Discovery calls require an explicit target schema per invocation.
-- Required parameters: `api_key`.
-- Optional parameters:
-  - `timeout`: defaults to `21600.0` seconds (6 hours) to match long-running harmonization jobs.
-  - `log_level`: accepts a `LogLevel` enum value (defaults to `LogLevel.INFO`).
-  - `confidence_threshold`: defaults to `0.8`; used by the adapter to filter discovery candidates.
+- `NetriasClient(api_key)` initializes the client with an API key and default settings; the client is ready to use immediately after construction.
+- `NetriasClient.configure(...)` optionally adjusts non-default settings. Unspecified parameters preserve their current values (incremental configuration). Discovery calls require an explicit target schema per invocation.
+- All `configure()` parameters are optional:
+  - `timeout`: defaults to `1200.0` seconds (20 minutes).
+  - `log_level`: accepts a string value (`"CRITICAL"`, `"ERROR"`, `"WARNING"`, `"INFO"`, `"DEBUG"`); defaults to `"INFO"`.
   - `discovery_use_gateway_bypass`: opt-in flag enabling the Lambda alias dispatcher (other bypass parameters remain fixed by the library).
+  - URL overrides (`discovery_url`, `harmonization_url`, `data_model_store_url`): enable testing against staging environments without code changes.
+- `confidence_threshold` is a per-call parameter on discovery methods (not on `configure()`), allowing callers to adjust filtering per invocation.
 - Settings updates live on each `NetriasClient` instance; `.settings` returns a defensive copy. Logger level updates immediately to avoid stale verbosity.
+- Operations snapshot settings and logger atomically via `OperationContext` to ensure thread-safe behavior when `configure()` is called concurrently.
 - Optional AWS dependency (`boto3`) is exposed through the `aws` dependency group for environments that need the bypass.
 
 ## Public API
 - `NetriasClient`
-  - `configure(...)` – validates credentials, normalizes optional settings, and stores an immutable `Settings` snapshot; raises `ClientConfigurationError` on invalid input.
-  - `discover_mapping`, `discover_mapping_async` – accept a target schema and prepared column samples; return manifest payloads; raise `MappingDiscoveryError`, `MappingValidationError`, or `NetriasAPIUnavailable`.
-  - `discover_mapping_from_csv`, `discover_mapping_from_csv_async` – derive samples from a CSV before delegating to discovery.
+  - `__init__(api_key)` – validates the API key and initializes the client with default settings; raises `ClientConfigurationError` on invalid input.
+  - `configure(...)` – optionally adjusts settings; stores an immutable `Settings` snapshot; raises `ClientConfigurationError` on invalid input.
+  - `discover_mapping_from_csv`, `discover_mapping_from_csv_async` – derive samples from a CSV and return manifest payloads; accept `confidence_threshold` to filter recommendations; raise `MappingDiscoveryError`, `MappingValidationError`, or `NetriasAPIUnavailable`.
   - `harmonize`, `harmonize_async` – require CSV + manifest (path or mapping) and optional output destinations; return `HarmonizationResult` even on failure; raise `NetriasAPIUnavailable` on transport errors.
 - Consumers instantiate `NetriasClient`; configuration snapshots and loggers live on the instance rather than module-wide globals.
 - Adapter helpers remain internal; discovery APIs automatically convert responses into harmonization manifest payloads for callers.
+- Data Model Store methods:
+  - `list_data_models`, `list_data_models_async` – query available data commons; return `tuple[DataModel, ...]`.
+  - `list_cdes`, `list_cdes_async` – query CDEs for a model version; return `tuple[CDE, ...]`.
+  - `list_pvs`, `list_pvs_async` – query permissible values for a CDE; return `tuple[PermissibleValue, ...]`.
+  - `get_pv_set`, `get_pv_set_async` – auto-paginate and return `frozenset[str]` for O(1) membership testing.
+  - `validate_value`, `validate_value_async` – convenience methods returning `bool` for single-value validation.
 
 ## Discovery Workflow
 1. Validate schema (`validate_target_schema`) and column samples (`validate_column_samples`); CSV helpers (`discover_mapping_from_csv*`) read the header plus up to `sample_limit` rows (default 25) to build samples automatically.
@@ -60,16 +70,29 @@
 4. Poll `GET <harmonization_url>/v1/jobs/{jobId}` until the status is `SUCCEEDED` or `FAILED`. INFO logs include elapsed seconds per heartbeat; timeouts emit the accumulated duration before raising `HarmonizationJobError`.
 5. Stream the final CSV via the signed `finalUrl`; successful downloads emit `HarmonizationResult(status="succeeded")`, while non-2xx responses return `status="failed"` with parsed error messaging. Transport errors raise `NetriasAPIUnavailable`.
 
+## Data Model Store Workflow
+The Data Model Store API provides read-only access to reference data for validation use cases.
+
+1. **List data models**: Query available data commons via `GET /data-models`. Returns `DataModel` instances with key, name, and description.
+2. **List CDEs**: Query CDEs for a model version via `GET /data-models/{key}/versions/{version}/cdes`. Returns `CDE` instances with key, IDs, and optional description.
+3. **List PVs**: Query permissible values for a CDE via `GET /data-models/{key}/versions/{version}/cdes/{cde_key}/pvs`. Returns `PermissibleValue` instances.
+4. **Validation helpers**: `get_pv_set()` auto-paginates and returns `frozenset[str]` for O(1) membership testing. `validate_value()` provides a one-liner for checking a single value.
+
+All methods follow the async-first pattern with sync wrappers. Sync wrappers detect existing event loops and use `ThreadPoolExecutor` fallback to avoid `asyncio.run()` conflicts in Jupyter/FastAPI/Django contexts. Path parameters are URL-encoded to prevent injection. Errors surface as `DataModelStoreError` (4xx) or `NetriasAPIUnavailable` (5xx/timeout). Pagination is limited to 100 pages to prevent infinite loops.
+
 ## Data Models & Exceptions
 - `Settings`: configuration snapshot, including gateway-bypass decisions and optional per-client log directory.
 - `MappingDiscoveryResult` / `MappingSuggestion` / `MappingRecommendationOption`: structured discovery outputs plus raw payload.
 - `HarmonizationResult`: communicates file path, status (`succeeded`, `failed`, `timeout`), description, and optional mapping identifier.
+- `DataModel` / `CDE` / `PermissibleValue`: reference data from the Data Model Store for validation use cases.
 - Exceptions inherit from `NetriasClientError`:
-  - `ClientConfigurationError`, `FileValidationError`, `MappingDiscoveryError`, `MappingValidationError`, `OutputLocationError`, `NetriasAPIUnavailable`, `HarmonizationJobError`, `GatewayBypassError` (internal).
+  - `ClientConfigurationError`, `FileValidationError`, `MappingDiscoveryError`, `MappingValidationError`, `OutputLocationError`, `NetriasAPIUnavailable`, `HarmonizationJobError`, `DataModelStoreError`, `GatewayBypassError` (internal).
 
 ## Logging Strategy
-- Logger namespace: `netrias_client` (unique per client instance).
-- Each `NetriasClient.configure(...)` call wires stream handlers and, when provided, a file handler under the supplied `log_directory` path.
+- Logger namespace: `netrias_client` (exported as `LOGGER_NAMESPACE` for programmatic access).
+- Each client instance creates a child logger under this namespace (e.g., `netrias_client.instance.a1b2c3d4`).
+- External configuration: users can configure the parent logger before creating clients; handlers propagate to all instances.
+- `NetriasClient.__init__()` wires stream handlers if the parent has none; subsequent `configure()` calls may add a file handler when `log_directory` is supplied.
 - INFO logs:
   - Discovery start/finish with duration, bypass invocation start/finish, adapter decisions.
   - Harmonization start, job submission, polling heartbeats (with elapsed seconds), download completion, and total workflow duration.

@@ -7,24 +7,31 @@ from __future__ import annotations
 from pathlib import Path
 
 from ._errors import ClientConfigurationError
-from ._models import LogLevel, Settings
+from ._models import DataModelStoreEndpoints, LogLevel, Settings
 
 
 DISCOVERY_BASE_URL = "https://api.netriasbdf.cloud"
 HARMONIZATION_BASE_URL = "https://tbdxz7nffi.execute-api.us-east-2.amazonaws.com"
+DATA_MODEL_STORE_BASE_URL = "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default"
 # TODO: remove once API Gateway latency constraints are resolved.
 BYPASS_FUNCTION = "cde-recommendation"
 BYPASS_ALIAS = "prod"
 BYPASS_REGION = "us-east-2"
+# Async Step Functions API Gateway endpoint
+ASYNC_API_URL = "https://6ueocdz4mc.execute-api.us-east-2.amazonaws.com/staging"
+ASYNC_POLL_INTERVAL_SECONDS = 3.0
 
 
 def build_settings(
     api_key: str,
     timeout: float | None = None,
-    log_level: LogLevel | str | None = None,
-    confidence_threshold: float | None = None,
+    log_level: str | None = None,
     discovery_use_gateway_bypass: bool | None = None,
+    discovery_use_async_api: bool | None = None,
     log_directory: Path | str | None = None,
+    discovery_url: str | None = None,
+    harmonization_url: str | None = None,
+    data_model_store_url: str | None = None,
 ) -> Settings:
     """Return a validated Settings snapshot for the provided configuration."""
 
@@ -34,27 +41,34 @@ def build_settings(
 
     level = _normalized_level(log_level)
     timeout_value = _validated_timeout(timeout)
-    threshold = _validated_confidence_threshold(confidence_threshold)
     bypass_enabled = _normalized_bool(discovery_use_gateway_bypass, default=True)
+    async_api_enabled = _normalized_bool(discovery_use_async_api, default=False)
     directory = _validated_log_directory(log_directory)
+
+    resolved_discovery_url = discovery_url or DISCOVERY_BASE_URL
+    resolved_harmonization_url = harmonization_url or HARMONIZATION_BASE_URL
+    resolved_dms_url = data_model_store_url or DATA_MODEL_STORE_BASE_URL
+
+    data_model_store_endpoints = DataModelStoreEndpoints(
+        base_url=resolved_dms_url,
+    )
 
     return Settings(
         api_key=key,
-        discovery_url=DISCOVERY_BASE_URL,
-        harmonization_url=HARMONIZATION_BASE_URL,
+        discovery_url=resolved_discovery_url,
+        harmonization_url=resolved_harmonization_url,
         timeout=timeout_value,
         log_level=level,
-        confidence_threshold=threshold,
         discovery_use_gateway_bypass=bypass_enabled,
         log_directory=directory,
+        data_model_store_endpoints=data_model_store_endpoints,
+        discovery_use_async_api=async_api_enabled,
     )
 
 
-def _normalized_level(level: LogLevel | str | None) -> LogLevel:
+def _normalized_level(level: str | None) -> LogLevel:
     if level is None:
         return LogLevel.INFO
-    if isinstance(level, LogLevel):
-        return level
     upper = level.upper()
     try:
         return LogLevel[upper]
@@ -64,15 +78,20 @@ def _normalized_level(level: LogLevel | str | None) -> LogLevel:
 
 def _validated_timeout(timeout: float | None) -> float:
     if timeout is None:
-        return 21600.0  # default to 6 hours to accommodate long-running jobs
+        return 1200.0  # default to 20 minutes
     if timeout <= 0:
         raise ClientConfigurationError("timeout must be positive when provided")
     return float(timeout)
 
 
-def _validated_confidence_threshold(value: float | None) -> float:
+def validated_confidence_threshold(value: float | None, default: float = 0.8) -> float:
+    """Validate and return a confidence threshold value.
+
+    'why': discovery methods need per-call threshold validation
+    """
+
     if value is None:
-        return 0.8
+        return default
     if not (0.0 <= value <= 1.0):
         raise ClientConfigurationError("confidence_threshold must be between 0.0 and 1.0")
     return float(value)

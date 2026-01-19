@@ -91,12 +91,13 @@ def transport_error(exc: Exception) -> MockTransportCapture:
 
 
 def install_mock_transport(monkeypatch: MonkeyPatch, capture: MockTransportCapture) -> None:
-    """Patch `httpx.AsyncClient` within `_http` to use the provided transport.
+    """Patch httpx clients within modules to use the provided transport.
 
     'why': ensure the client under test routes through controlled mock transports
     """
 
     original_async_client = httpx.AsyncClient
+    original_sync_client = httpx.Client
 
     class _PatchedAsyncClient(original_async_client):
         def __init__(self, **kwargs: object) -> None:  # type: ignore[override]
@@ -104,8 +105,21 @@ def install_mock_transport(monkeypatch: MonkeyPatch, capture: MockTransportCaptu
             kwdict["transport"] = capture.transport
             super().__init__(**kwdict)  # pyright: ignore[reportArgumentType]
 
+    class _PatchedSyncClient(original_sync_client):
+        """Sync client wrapper that delegates to async transport via sync_execute.
+
+        'why': _sfn_discovery uses sync httpx.Client; we need to mock it too
+        """
+
+        def __init__(self, **kwargs: object) -> None:  # type: ignore[override]
+            kwdict: dict[str, object] = dict(kwargs)
+            kwdict["transport"] = capture.transport
+            super().__init__(**kwdict)  # pyright: ignore[reportArgumentType]
+
     monkeypatch.setattr("netrias_client._http.httpx.AsyncClient", _PatchedAsyncClient)
     monkeypatch.setattr("netrias_client._core.httpx.AsyncClient", _PatchedAsyncClient)
+    monkeypatch.setattr("netrias_client._data_model_store.httpx.AsyncClient", _PatchedAsyncClient)
+    monkeypatch.setattr("netrias_client._sfn_discovery.httpx.Client", _PatchedSyncClient)
 
 
 class _ChunkStream(httpx.AsyncByteStream):
@@ -183,3 +197,30 @@ def _resolve_job_response(
     if response is not None:
         return response
     return _job_download_response(request, final_url, chunks)
+
+
+def paginated_pv_responses(
+    pages: Sequence[Sequence[Mapping[str, object]]],
+) -> MockTransportCapture:
+    """Return a mock transport that returns paginated PV responses.
+
+    'why': test get_pv_set auto-pagination across multiple pages
+    """
+
+    recorded: list[httpx.Request] = []
+    call_count = [0]
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        recorded.append(request)
+        page_index = call_count[0]
+        call_count[0] += 1
+
+        if page_index >= len(pages):
+            payload: dict[str, object] = {"total": 0, "items": []}
+        else:
+            page = pages[page_index]
+            payload = {"total": len(page), "items": list(page)}
+
+        return httpx.Response(200, json=payload, request=request)
+
+    return MockTransportCapture(httpx.MockTransport(handler), recorded)

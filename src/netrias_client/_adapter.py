@@ -27,18 +27,6 @@ def build_column_mapping_payload(
 
 
 _COLUMN_METADATA: Final[dict[str, dict[str, object]]] = {
-    # "study_name": {"route": "api:passthrough", "targetField": "study_name"},
-    # "number_of_participants": {"route": "api:passthrough", "targetField": "number_of_participants"},
-    # "number_of_samples": {"route": "api:passthrough", "targetField": "number_of_samples"},
-    # "study_data_types": {
-    #     "route": "api:passthrough",
-    #     "targetField": "study_data_types",
-    #     "cdeId": 12_571_096,
-    #     "cde_id": 12_571_096,
-    # },
-    # "participant_id": {"route": "api:passthrough", "targetField": "participant_id"},
-    # "sample_id": {"route": "api:passthrough", "targetField": "sample_id"},
-    # "file_name": {"route": "api:passthrough", "targetField": "file_name"},
     "primary_diagnosis": {
         "route": "sagemaker:primary",
         "targetField": "primary_diagnosis",
@@ -57,18 +45,6 @@ _COLUMN_METADATA: Final[dict[str, dict[str, object]]] = {
         "cdeId": -201,
         "cde_id": -201,
     },
-    # "tissue_or_organ_of_origin": {
-    #     "route": "sagemaker:tissue_origin",
-    #     "targetField": "tissue_or_organ_of_origin",
-    #     "cdeId": -204,
-    #     "cde_id": -204,
-    # },
-    # "site_of_resection_or_biopsy": {
-    #     "route": "sagemaker:sample_anatomic_site",
-    #     "targetField": "site_of_resection_or_biopsy",
-    #     "cdeId": -202,
-    #     "cde_id": -202,
-    # },
 }
 
 
@@ -262,8 +238,9 @@ def _cde_candidate(value: object) -> object | None:
 
 
 def _int_from_candidate(candidate: object) -> int | None:
+    # 'why': bool is a subclass of int in Python, but True/False are not valid CDE IDs
     if isinstance(candidate, bool):
-        return int(candidate)
+        return None
     if isinstance(candidate, (int, float)):
         return _int_from_number(candidate)
     if isinstance(candidate, str):
@@ -272,9 +249,10 @@ def _int_from_candidate(candidate: object) -> int | None:
 
 
 def _int_from_number(value: int | float) -> int | None:
+    # 'why': OverflowError raised for float('inf') and float('nan')
     try:
         return int(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
 
 

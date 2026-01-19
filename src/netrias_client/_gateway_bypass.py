@@ -12,9 +12,7 @@ import logging
 from collections.abc import Mapping, Sequence
 from typing import Callable, IO, Protocol, cast
 
-
-class GatewayBypassError(RuntimeError):
-    """Raised when the direct Lambda invocation fails."""
+from ._errors import GatewayBypassError
 
 
 class _LambdaClient(Protocol):
@@ -39,6 +37,7 @@ class _SessionProtocol(Protocol):
 
 def invoke_cde_recommendation_alias(
     target_schema: str,
+    target_version: str,
     columns: Mapping[str, Sequence[object]],
     function_name: str = "cde-recommendation",
     alias: str = "prod",
@@ -46,6 +45,7 @@ def invoke_cde_recommendation_alias(
     timeout_seconds: float | None = None,
     profile_name: str | None = None,
     logger: logging.Logger | None = None,
+    top_k: int | None = None,
 ) -> Mapping[str, object]:
     """Call the CDE recommendation Lambda alias directly and return its parsed payload.
 
@@ -58,7 +58,14 @@ def invoke_cde_recommendation_alias(
         timeout_seconds=timeout_seconds,
     )
     normalized_columns = _normalized_columns(columns)
-    body = json.dumps({"target_schema": target_schema, "data": normalized_columns})
+    body_dict: dict[str, object] = {
+        "target_schema": target_schema,
+        "target_version": target_version,
+        "data": normalized_columns,
+    }
+    if top_k is not None:
+        body_dict["top_k"] = top_k
+    body = json.dumps(body_dict)
     event = {"body": body, "isBase64Encoded": False}
 
     active_logger = logger or logging.getLogger("netrias_client")
@@ -132,7 +139,7 @@ def _build_lambda_client(
     return _lambda_client_from_factory(factory, region_name=region_name, config=config)
 
 
-def _load_boto_dependencies():
+def _load_boto_dependencies() -> tuple[object, type]:
     try:
         import boto3  # pyright: ignore[reportMissingTypeStubs]
         from botocore.config import Config  # pyright: ignore[reportMissingTypeStubs]

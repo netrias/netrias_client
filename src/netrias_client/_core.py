@@ -14,7 +14,8 @@ from typing import Final, TypeAlias, cast
 
 import httpx
 
-from ._errors import NetriasAPIUnavailable
+from ._async_utils import run_sync
+from ._errors import HarmonizationJobError, NetriasAPIUnavailable
 from ._http import build_harmonize_payload, fetch_job_status, submit_harmonize_job
 from ._io import stream_download_to_file
 from ._models import HarmonizationResult, Settings
@@ -30,10 +31,6 @@ _MESSAGE_KEYS: Final[tuple[str, ...]] = (
     "description",
     "statusMessage",
 )
-
-
-class HarmonizationJobError(RuntimeError):
-    """Raised when the harmonization job fails before producing a result."""
 
 
 async def _harmonize_async(
@@ -101,9 +98,12 @@ def harmonize(
     manifest_output_path: Path | None = None,
     logger: logging.Logger | None = None,
 ) -> HarmonizationResult:
-    """Sync wrapper: run the async harmonize workflow and block until completion."""
+    """Sync wrapper: run the async harmonize workflow and block until completion.
 
-    return asyncio.run(
+    'why': use run_sync to handle existing event loops (Jupyter, FastAPI)
+    """
+
+    return run_sync(
         _harmonize_async(
             settings=settings,
             source_path=source_path,
@@ -546,7 +546,7 @@ def _formatted_string_body(raw: str) -> str:
 def _try_parse_json(raw: str) -> JSONValue | None:
     try:
         return cast(JSONValue, json.loads(raw))
-    except Exception:
+    except (json.JSONDecodeError, ValueError):
         return None
 
 
