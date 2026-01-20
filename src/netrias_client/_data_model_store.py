@@ -14,7 +14,7 @@ from ._async_utils import run_sync
 from ._errors import DataModelStoreError, NetriasAPIUnavailable
 from ._http import fetch_cdes, fetch_data_models, fetch_pvs
 from ._logging import LOGGER_NAMESPACE
-from ._models import CDE, DataModel, DataModelStoreEndpoints, PermissibleValue, Settings
+from ._models import CDE, DataModel, DataModelStoreEndpoints, DataModelVersion, PermissibleValue, Settings
 
 _logger = logging.getLogger(LOGGER_NAMESPACE)
 
@@ -331,6 +331,7 @@ def _parse_data_models(body: Mapping[str, object]) -> tuple[DataModel, ...]:
     for item in items:
         if not isinstance(item, dict):
             continue
+        versions = _parse_versions(item.get("versions"))
         models.append(
             DataModel(
                 data_commons_id=int(item.get("data_commons_id", 0)),
@@ -338,10 +339,28 @@ def _parse_data_models(body: Mapping[str, object]) -> tuple[DataModel, ...]:
                 name=str(item.get("name", "")),
                 description=item.get("description") if item.get("description") else None,
                 is_active=bool(item.get("is_active", True)),
+                versions=versions,
             )
         )
 
     return tuple(models)
+
+
+def _parse_versions(raw: object) -> tuple[DataModelVersion, ...] | None:
+    """Extract version list from API response."""
+    if not isinstance(raw, list):
+        return None
+    versions = [v for item in raw if (v := _parse_version_item(item)) is not None]
+    return tuple(versions) if versions else None
+
+
+def _parse_version_item(item: object) -> DataModelVersion | None:
+    if not isinstance(item, dict):
+        return None
+    label = item.get("version_label")
+    if isinstance(label, str) and label:
+        return DataModelVersion(version_label=label)
+    return None
 
 
 def _parse_cdes(body: Mapping[str, object]) -> tuple[CDE, ...]:

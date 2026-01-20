@@ -15,7 +15,7 @@ from ._errors import (
     NetriasClientError,
     OutputLocationError,
 )
-from ._models import CDE, DataModel, HarmonizationResult, PermissibleValue
+from ._models import CDE, DataModel, DataModelVersion, HarmonizationResult, PermissibleValue
 
 __all__ = [
     # Client
@@ -23,6 +23,7 @@ __all__ = [
     "NetriasClient",
     # Data models
     "DataModel",
+    "DataModelVersion",
     "CDE",
     "PermissibleValue",
     "HarmonizationResult",
@@ -40,4 +41,4 @@ __all__ = [
     "__version__",
 ]
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"

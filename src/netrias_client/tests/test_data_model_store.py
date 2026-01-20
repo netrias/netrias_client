@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 
-from netrias_client import CDE, DataModel, DataModelStoreError, NetriasClient, PermissibleValue
+from netrias_client import CDE, DataModel, DataModelStoreError, DataModelVersion, NetriasClient, PermissibleValue
 from netrias_client._errors import NetriasAPIUnavailable
 
 from ._utils import install_mock_transport, json_failure, json_success, paginated_pv_responses
@@ -33,8 +33,47 @@ def test_list_data_models_success(configured_client: NetriasClient, monkeypatch:
     models = configured_client.list_data_models()
 
     assert len(models) == 2
-    assert models[0] == DataModel(data_commons_id=1, key="ccdi", name="CCDI Data Model", description="Test", is_active=True)
-    assert models[1] == DataModel(data_commons_id=2, key="gc", name="GC Model", description=None, is_active=True)
+    assert models[0] == DataModel(
+        data_commons_id=1, key="ccdi", name="CCDI Data Model", description="Test", is_active=True, versions=None
+    )
+    assert models[1] == DataModel(
+        data_commons_id=2, key="gc", name="GC Model", description=None, is_active=True, versions=None
+    )
+
+
+def test_list_data_models_with_versions(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Parse version data when include_versions is true.
+
+    'why': callers need version labels for CDE/PV queries
+    """
+
+    payload = {
+        "total": 1,
+        "items": [
+            {
+                "data_commons_id": 1,
+                "key": "ccdi",
+                "name": "CCDI Data Model",
+                "description": "Test",
+                "is_active": True,
+                "versions": [
+                    {"version_label": "v1"},
+                    {"version_label": "v2"},
+                ],
+            },
+        ],
+    }
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    models = configured_client.list_data_models(include_versions=True)
+
+    assert len(models) == 1
+    assert models[0].key == "ccdi"
+    assert models[0].versions is not None
+    assert len(models[0].versions) == 2
+    assert models[0].versions[0] == DataModelVersion(version_label="v1")
+    assert models[0].versions[1] == DataModelVersion(version_label="v2")
 
 
 def test_list_data_models_empty(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:

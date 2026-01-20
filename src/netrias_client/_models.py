@@ -112,6 +112,13 @@ class DataModelStoreEndpoints:
 
 
 @dataclass(frozen=True)
+class DataModelVersion:
+    """Represent a version of a data model."""
+
+    version_label: str
+
+
+@dataclass(frozen=True)
 class DataModel:
     """Represent a data commons/model from the Data Model Store."""
 
@@ -120,6 +127,7 @@ class DataModel:
     name: str
     description: str | None
     is_active: bool
+    versions: tuple[DataModelVersion, ...] | None = None
 
 
 @dataclass(frozen=True)
