@@ -20,7 +20,7 @@ jobs:
         run: uv sync --group dev
 
       - name: Run tests
-        run: uv run --script test
+        run: uv run pytest src/netrias_client/tests/ -v
 
       - name: Build distribution
         run: uv build
