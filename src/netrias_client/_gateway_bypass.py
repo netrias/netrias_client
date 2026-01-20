@@ -178,13 +178,47 @@ def _json_payload(raw_payload: bytes) -> Mapping[str, object]:
 
 
 def _extract_body_mapping(payload: Mapping[str, object]) -> Mapping[str, object]:
-    body = payload.get("body")
+    """Extract and parse the body from the Lambda proxy response.
+
+    'why': Lambda proxy responses wrap results in {statusCode, body}; we need to
+    check the status code and parse the JSON body
+    """
+    parsed_body = _parse_body(payload.get("body"))
+    _check_status_code(payload.get("statusCode"), parsed_body)
+    return parsed_body if parsed_body else payload
+
+
+def _parse_body(body: object) -> Mapping[str, object]:
+    """Parse the body field from a Lambda response."""
     if isinstance(body, str):
         try:
             return cast(Mapping[str, object], json.loads(body))
         except json.JSONDecodeError as exc:  # pragma: no cover - unexpected lambda output
             raise GatewayBypassError(f"lambda body was not valid JSON: {exc}") from exc
-    return payload
+    if isinstance(body, Mapping):
+        return cast(Mapping[str, object], body)
+    return {}
+
+
+def _check_status_code(status_code: object, parsed_body: Mapping[str, object]) -> None:
+    """Raise GatewayBypassError for 4xx/5xx Lambda status codes."""
+    if not isinstance(status_code, int):
+        return
+    if status_code >= 500:
+        error_msg = _extract_error_message(parsed_body)
+        raise GatewayBypassError(f"lambda returned server error ({status_code}): {error_msg}")
+    if status_code >= 400:
+        error_msg = _extract_error_message(parsed_body)
+        raise GatewayBypassError(f"lambda returned client error ({status_code}): {error_msg}")
+
+
+def _extract_error_message(body: Mapping[str, object]) -> str:
+    """Extract error message from Lambda response body."""
+    for key in ("error", "message", "detail"):
+        value = body.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return "unknown error"
 
 
 def _normalized_columns(columns: Mapping[str, Sequence[object]]) -> dict[str, list[str]]:
