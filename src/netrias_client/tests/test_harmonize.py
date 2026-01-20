@@ -48,7 +48,7 @@ def test_harmonize_streaming_success(
 
     assert submit_request.method == "POST"
     assert submit_request.url.path.endswith("/v1/jobs/harmonize")
-    assert submit_request.headers.get("authorization") == "Bearer test-api-key"
+    assert submit_request.headers.get("x-api-key") == "test-api-key"
     assert poll_request.method == "GET"
     assert "/v1/jobs/" in poll_request.url.path
     assert final_request.method == "GET"
