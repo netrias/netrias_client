@@ -5,6 +5,7 @@ DescribeExecution for results. Avoids API Gateway's 45-second timeout limit.
 """
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import time
@@ -28,6 +29,7 @@ def discover_via_step_functions(
     timeout: float,
     logger: logging.Logger,
     top_k: int = 3,
+    api_key: str | None = None,
 ) -> Mapping[str, object]:
     """POST to API Gateway, poll DescribeExecution, return results.
 
@@ -36,7 +38,7 @@ def discover_via_step_functions(
     NOTE: This is a blocking/synchronous function.
     Uses time.sleep for polling and httpx sync client.
     """
-    execution_arn = _start_execution(api_url, target_schema, target_version, columns, top_k, logger)
+    execution_arn = _start_execution(api_url, target_schema, target_version, columns, top_k, logger, api_key)
     return _poll_execution(execution_arn, timeout, logger)
 
 
@@ -47,6 +49,7 @@ def _start_execution(
     columns: Mapping[str, Sequence[str]],
     top_k: int,
     logger: logging.Logger,
+    api_key: str | None = None,
 ) -> str:
     """POST request body to API Gateway, get executionArn back."""
     payload = {
@@ -55,13 +58,19 @@ def _start_execution(
         "data": dict(columns),
         "top_k": top_k,
     }
+    # 'why': base64 encode payload to avoid VTL escaping issues with special characters
+    encoded_payload = base64.b64encode(json.dumps(payload).encode()).decode()
+    wrapper = {"encoded_payload": encoded_payload}
+
     url = f"{api_url.rstrip('/')}/recommend"
     logger.debug("async discovery: posting to %s", url)
 
     # 'why': cache-busting headers prevent API Gateway from returning stale responses
-    headers = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
+    headers: dict[str, str] = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
+    if api_key:
+        headers["x-api-key"] = api_key
     with httpx.Client(timeout=30.0) as client:
-        response = client.post(url, json=payload, headers=headers)
+        response = client.post(url, json=wrapper, headers=headers)
         response.raise_for_status()
         result = response.json()
 

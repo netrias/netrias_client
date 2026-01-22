@@ -66,8 +66,8 @@
 ## Harmonization Workflow
 1. Validate inputs (`validate_source_path`, `validate_manifest_path`, `validate_output_path`). Output validation automatically versions existing destinations (`.harmonized.v1.csv`, `.v2`, …) rather than overwriting.
 2. Build a gzip-compressed payload containing schema/document data plus the mapping manifest (`_http.build_harmonize_payload`). Hard fail if compression exceeds 10 MiB.
-3. Submit the job via `POST <harmonization_url>/v1/jobs/harmonize` with `Bearer` authentication; capture `jobId`.
-4. Poll `GET <harmonization_url>/v1/jobs/{jobId}` until the status is `SUCCEEDED` or `FAILED`. INFO logs include elapsed seconds per heartbeat; timeouts emit the accumulated duration before raising `HarmonizationJobError`.
+3. Submit the job via `POST <harmonization_url>/v1/jobs/harmonize` with `Bearer` authentication; capture `job_id`.
+4. Poll `GET <harmonization_url>/v1/jobs/{job_id}` until the status is `SUCCEEDED` or `FAILED`. INFO logs include elapsed seconds per heartbeat; timeouts emit the accumulated duration before raising `HarmonizationJobError`.
 5. Stream the final CSV via the signed `finalUrl`; successful downloads emit `HarmonizationResult(status="succeeded")`, while non-2xx responses return `status="failed"` with parsed error messaging. Transport errors raise `NetriasAPIUnavailable`.
 
 ## Data Model Store Workflow

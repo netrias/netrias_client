@@ -63,7 +63,7 @@ async def submit_harmonize_job(
 
     url = _build_job_submit_url(base_url)
     headers = {
-        "x-api-key": api_key,
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "Content-Encoding": "gzip",
     }
@@ -82,7 +82,7 @@ async def fetch_job_status(
     """Return the status response for a previously submitted harmonization job."""
 
     url = _build_job_status_url(base_url, job_id)
-    headers = {"x-api-key": api_key}
+    headers = {"Authorization": f"Bearer {api_key}"}
     async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
         return await client.get(url, headers=headers)
 

@@ -41,7 +41,7 @@ def build_settings(
 
     level = _normalized_level(log_level)
     timeout_value = _validated_timeout(timeout)
-    bypass_enabled = _normalized_bool(discovery_use_gateway_bypass, default=True)
+    bypass_enabled = _normalized_bool(discovery_use_gateway_bypass, default=False)
     async_api_enabled = _normalized_bool(discovery_use_async_api, default=False)
     directory = _validated_log_directory(log_directory)
 

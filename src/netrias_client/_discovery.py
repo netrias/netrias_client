@@ -181,6 +181,7 @@ async def _discover_with_backend(
             timeout=settings.timeout,
             logger=logger,
             top_k=top_k or 3,
+            api_key=settings.api_key,
         )
         return _result_from_payload(payload, schema)
 
@@ -377,7 +378,8 @@ def _samples_from_csv(csv_path: Path, sample_limit: int) -> dict[str, list[str]]
 def _read_limited_rows(dataset: Path, sample_limit: int) -> tuple[list[str], list[dict[str, str | None]]]:
     headers: list[str] = []
     rows: list[dict[str, str | None]] = []
-    with dataset.open("r", encoding="utf-8", newline="") as handle:
+    # 'why': utf-8-sig strips BOM if present; BOM in column names causes Step Functions SerializationException
+    with dataset.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
         headers = [header for header in reader.fieldnames or [] if header]
         for index, row in enumerate(reader):

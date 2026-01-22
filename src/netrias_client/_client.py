@@ -84,8 +84,8 @@ class NetriasClient:
             Logging verbosity: ``"CRITICAL"``, ``"ERROR"``, ``"WARNING"``,
             ``"INFO"`` (default), or ``"DEBUG"``.
         discovery_use_gateway_bypass:
-            When ``True`` (default) calls the temporary Lambda bypass instead of
-            API Gateway.
+            When ``True`` calls the temporary Lambda bypass instead of
+            API Gateway. Default: ``False``.
         discovery_use_async_api:
             When ``True`` uses the async API Gateway + Step Functions pattern for
             CDE discovery. Takes precedence over gateway bypass. Default: ``False``.

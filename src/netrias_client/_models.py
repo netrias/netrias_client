@@ -71,6 +71,7 @@ class HarmonizationResult:
     status: Literal["succeeded", "failed", "timeout"]
     description: str
     mapping_id: str | None = None
+    manifest_path: Path | None = None
 
 
 @dataclass(frozen=True)

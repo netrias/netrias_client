@@ -148,7 +148,7 @@ def _job_submit_response(request: httpx.Request, job_id: str) -> httpx.Response 
         return None
     if not request.url.path.endswith("/v1/jobs/harmonize"):
         return None
-    return httpx.Response(202, json={"jobId": job_id}, request=request)
+    return httpx.Response(202, json={"job_id": job_id}, request=request)
 
 
 def _job_status_response(
