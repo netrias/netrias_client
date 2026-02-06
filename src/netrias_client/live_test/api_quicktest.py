@@ -274,7 +274,7 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
         if discovered_manifest is None:
             raise RuntimeError("Discovery test must run first to produce manifest")
 
-        result = client.harmonize(source_path=CSV_PATH, manifest=discovered_manifest)
+        result = client.harmonize(source_path=CSV_PATH, manifest=discovered_manifest, data_commons_key=MODEL_KEY)
         print(f"  harmonize({CSV_PATH.name})")
         print(f"    - Status: {result.status}")
         print(f"    - Description: {result.description}")

@@ -23,6 +23,7 @@ MAX_COMPRESSED_BYTES: Final[int] = 10 * 1024 * 1024
 def build_harmonize_payload(
     csv_path: Path,
     manifest: Path | Mapping[str, object] | None,
+    data_commons_key: str,
     model_version: str = DEFAULT_MODEL_VERSION,
 ) -> bytes:
     """Return gzip-compressed harmonization payload for the given CSV and manifest."""
@@ -34,6 +35,7 @@ def build_harmonize_payload(
     envelope: dict[str, object] = {
         "schemaVersion": SCHEMA_VERSION,
         "modelVersion": model_version,
+        "data_commons_key": data_commons_key,
         "document": {
             "name": csv_path.name,
             "sheetName": None,

@@ -220,6 +220,7 @@ class NetriasClient:
         self,
         source_path: Path,
         manifest: Path | Mapping[str, object],
+        data_commons_key: str,
         output_path: Path | None = None,
         manifest_output_path: Path | None = None,
     ) -> HarmonizationResult:
@@ -229,6 +230,19 @@ class NetriasClient:
         writes the harmonized CSV to the resolved output location (which may be
         auto-versioned). A :class:`HarmonizationResult` is always returned even on
         failure, allowing callers to inspect status and description.
+
+        Parameters
+        ----------
+        source_path:
+            Path to the source CSV or TSV file.
+        manifest:
+            Column mapping manifest — either a file path or a dict.
+        data_commons_key:
+            Target data commons identifier (e.g., ``"ccdi"``).
+        output_path:
+            Optional output directory or file path.
+        manifest_output_path:
+            Optional path to persist the manifest JSON.
         """
 
         ctx = self._snapshot_context()
@@ -237,6 +251,7 @@ class NetriasClient:
             settings=ctx.settings,
             source_path=source_path,
             manifest=manifest,
+            data_commons_key=data_commons_key,
             output_path=output_path,
             manifest_output_path=manifest_output_path,
             logger=ctx.logger,
@@ -246,10 +261,25 @@ class NetriasClient:
         self,
         source_path: Path,
         manifest: Path | Mapping[str, object],
+        data_commons_key: str,
         output_path: Path | None = None,
         manifest_output_path: Path | None = None,
     ) -> HarmonizationResult:
-        """Async counterpart to :meth:`harmonize` with identical semantics."""
+        """Async counterpart to :meth:`harmonize` with identical semantics.
+
+        Parameters
+        ----------
+        source_path:
+            Path to the source CSV or TSV file.
+        manifest:
+            Column mapping manifest — either a file path or a dict.
+        data_commons_key:
+            Target data commons identifier (e.g., ``"ccdi"``).
+        output_path:
+            Optional output directory or file path.
+        manifest_output_path:
+            Optional path to persist the manifest JSON.
+        """
 
         ctx = self._snapshot_context()
 
@@ -257,6 +287,7 @@ class NetriasClient:
             settings=ctx.settings,
             source_path=source_path,
             manifest=manifest,
+            data_commons_key=data_commons_key,
             output_path=output_path,
             manifest_output_path=manifest_output_path,
             logger=ctx.logger,

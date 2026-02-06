@@ -37,6 +37,7 @@ async def _harmonize_async(
     settings: Settings,
     source_path: Path,
     manifest: Path | Mapping[str, object],
+    data_commons_key: str,
     output_path: Path | None = None,
     manifest_output_path: Path | None = None,
     logger: logging.Logger | None = None,
@@ -53,7 +54,7 @@ async def _harmonize_async(
     logger.info("harmonize start: file=%s", csv_path)
 
     try:
-        payload = build_harmonize_payload(csv_path, manifest_input)
+        payload = build_harmonize_payload(csv_path, manifest_input, data_commons_key)
         job_payload = await _submit_job_response(
             base_url=settings.harmonization_url,
             api_key=settings.api_key,
@@ -98,6 +99,7 @@ def harmonize(
     settings: Settings,
     source_path: Path,
     manifest: Path | Mapping[str, object],
+    data_commons_key: str,
     output_path: Path | None = None,
     manifest_output_path: Path | None = None,
     logger: logging.Logger | None = None,
@@ -112,6 +114,7 @@ def harmonize(
             settings=settings,
             source_path=source_path,
             manifest=manifest,
+            data_commons_key=data_commons_key,
             output_path=output_path,
             manifest_output_path=manifest_output_path,
             logger=logger,
@@ -123,6 +126,7 @@ async def harmonize_async(
     settings: Settings,
     source_path: Path,
     manifest: Path | Mapping[str, object],
+    data_commons_key: str,
     output_path: Path | None = None,
     manifest_output_path: Path | None = None,
     logger: logging.Logger | None = None,
@@ -133,6 +137,7 @@ async def harmonize_async(
         settings=settings,
         source_path=source_path,
         manifest=manifest,
+        data_commons_key=data_commons_key,
         output_path=output_path,
         manifest_output_path=manifest_output_path,
         logger=logger,

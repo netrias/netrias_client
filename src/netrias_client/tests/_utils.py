@@ -162,7 +162,7 @@ def _job_status_response(
     if not request.url.path.endswith(f"/v1/jobs/{job_id}"):
         return None
     state.status_served = True
-    payload = {"status": "SUCCEEDED", "finalUrl": final_url}
+    payload = {"status": "SUCCEEDED", "final_url": final_url}
     return httpx.Response(200, json=payload, request=request)
 
 
