@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from ._errors import ClientConfigurationError
@@ -11,7 +12,12 @@ from ._models import DataModelStoreEndpoints, LogLevel, Settings
 
 
 DISCOVERY_BASE_URL = "https://api.netriasbdf.cloud"
-HARMONIZATION_BASE_URL = "https://tbdxz7nffi.execute-api.us-east-2.amazonaws.com"
+# why: default to prod; set HARMONIZATION_URL env var to override (e.g. staging)
+HARMONIZATION_BASE_URL = os.environ.get(
+    "HARMONIZATION_URL",
+    "https://aeqbpnbej5.execute-api.us-east-2.amazonaws.com",
+)
+STAGING_HARMONIZATION_URL = "https://tbdxz7nffi.execute-api.us-east-2.amazonaws.com"
 DATA_MODEL_STORE_BASE_URL = "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default"
 # TODO: remove once API Gateway latency constraints are resolved.
 BYPASS_FUNCTION = "cde-recommend-prod"

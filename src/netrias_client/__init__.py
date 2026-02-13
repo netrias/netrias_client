@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ._client import NetriasClient
+from ._config import STAGING_HARMONIZATION_URL
 from ._logging import LOGGER_NAMESPACE
 from ._errors import (
     ClientConfigurationError,
@@ -21,6 +22,7 @@ __all__ = [
     # Client
     "LOGGER_NAMESPACE",
     "NetriasClient",
+    "STAGING_HARMONIZATION_URL",
     # Data models
     "DataModel",
     "DataModelVersion",
