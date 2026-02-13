@@ -111,9 +111,8 @@ async def request_mapping_discovery(
     }
     if top_k is not None:
         body["top_k"] = top_k
-    payload = {"body": json.dumps(body)}
     async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
-        return await client.post(url, headers=headers, json=payload)
+        return await client.post(url, headers=headers, json=body)
 
 
 async def fetch_data_models(
@@ -224,7 +223,7 @@ def _build_job_status_url(base_url: str, job_id: str) -> str:
 
 def _build_discovery_url(base_url: str) -> str:
     base = base_url.rstrip("/")
-    return f"{base}/cde-recommendation"
+    return f"{base}/recommend"
 
 def _read_tabular(path: Path) -> list[list[str]]:
     if not path.exists():

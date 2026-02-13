@@ -61,13 +61,9 @@ def test_discover_mapping_from_csv_success(
 
     request = capture.requests[0]
     assert request.headers.get("x-api-key") == "test-api-key"
-    payload_raw = cast(object, json.loads(request.content.decode("utf-8")))
-    assert isinstance(payload_raw, dict)
-    payload_sent = cast(dict[str, object], payload_raw)
-    body_raw = payload_sent.get("body")
-    assert isinstance(body_raw, str)
-    assert "\"target_schema\": \"ccdi\"" in body_raw
-    assert "\"target_version\": \"v1\"" in body_raw
+    content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
+    assert content.get("target_schema") == "ccdi"
+    assert content.get("target_version") == "v1"
 
 
 def test_discover_mapping_from_csv_parses_dict_body(
@@ -123,8 +119,7 @@ def test_discover_mapping_from_csv_samples_csv_data(
 
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    body = cast(dict[str, object], json.loads(cast(str, content["body"])))
-    data_section = cast(dict[str, object], body.get("data", {}))
+    data_section = cast(dict[str, object], content.get("data", {}))
     assert any(column in data_section for column in ("a", "b", "c"))
     assert isinstance(manifest.get("column_mappings"), dict)
 
@@ -271,8 +266,7 @@ def test_discover_mapping_from_csv_sends_top_k_parameter(
     # Then: the request body should include top_k
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    body = cast(dict[str, object], json.loads(cast(str, content["body"])))
-    assert body.get("top_k") == 5
+    assert content.get("top_k") == 5
 
 
 @pytest.mark.asyncio
@@ -302,5 +296,4 @@ async def test_discover_mapping_from_csv_async_includes_version(
     assert isinstance(manifest.get("column_mappings"), dict)
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    body = cast(dict[str, object], json.loads(cast(str, content["body"])))
-    assert body.get("target_version") == "v1"
+    assert content.get("target_version") == "v1"

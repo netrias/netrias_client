@@ -14,8 +14,8 @@ DISCOVERY_BASE_URL = "https://api.netriasbdf.cloud"
 HARMONIZATION_BASE_URL = "https://tbdxz7nffi.execute-api.us-east-2.amazonaws.com"
 DATA_MODEL_STORE_BASE_URL = "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default"
 # TODO: remove once API Gateway latency constraints are resolved.
-BYPASS_FUNCTION = "cde-recommendation"
-BYPASS_ALIAS = "prod"
+BYPASS_FUNCTION = "cde-recommend-prod"
+BYPASS_ALIAS: str | None = None
 BYPASS_REGION = "us-east-2"
 # Async Step Functions API Gateway endpoint
 ASYNC_API_URL = "https://6ueocdz4mc.execute-api.us-east-2.amazonaws.com/staging"

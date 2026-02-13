@@ -19,8 +19,8 @@ class _LambdaClient(Protocol):
     def invoke(
         self,
         FunctionName: str,
-        Qualifier: str,
         Payload: bytes,
+        Qualifier: str = ...,
     ) -> Mapping[str, object]:
         ...
 
@@ -40,7 +40,7 @@ def invoke_cde_recommendation_alias(
     target_version: str,
     columns: Mapping[str, Sequence[object]],
     function_name: str = "cde-recommendation",
-    alias: str = "prod",
+    alias: str | None = None,
     region_name: str = "us-east-2",
     timeout_seconds: float | None = None,
     profile_name: str | None = None,
@@ -78,12 +78,20 @@ def invoke_cde_recommendation_alias(
         len(columns),
     )
 
+    payload_bytes = json.dumps(event).encode("utf-8")
+
     try:
-        response = client.invoke(
-            FunctionName=function_name,
-            Qualifier=alias,
-            Payload=json.dumps(event).encode("utf-8"),
-        )
+        if alias is not None:
+            response = client.invoke(
+                FunctionName=function_name,
+                Qualifier=alias,
+                Payload=payload_bytes,
+            )
+        else:
+            response = client.invoke(
+                FunctionName=function_name,
+                Payload=payload_bytes,
+            )
     except Exception as exc:  # pragma: no cover - boto3 specific
         active_logger.error(
             "gateway bypass invoke failed: function=%s alias=%s err=%s",
