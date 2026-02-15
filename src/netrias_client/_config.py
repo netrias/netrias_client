@@ -15,9 +15,9 @@ DISCOVERY_BASE_URL = "https://api.netriasbdf.cloud"
 # why: default to prod; set HARMONIZATION_URL env var to override (e.g. staging)
 HARMONIZATION_BASE_URL = os.environ.get(
     "HARMONIZATION_URL",
-    "https://aeqbpnbej5.execute-api.us-east-2.amazonaws.com",
+    "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod",
 )
-STAGING_HARMONIZATION_URL = "https://tbdxz7nffi.execute-api.us-east-2.amazonaws.com"
+STAGING_HARMONIZATION_URL = "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging"
 DATA_MODEL_STORE_BASE_URL = "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default"
 # TODO: remove once API Gateway latency constraints are resolved.
 BYPASS_FUNCTION = "cde-recommend-prod"
