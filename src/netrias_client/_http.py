@@ -66,8 +66,7 @@ async def submit_harmonize_job(
     url = _build_job_submit_url(base_url)
     headers = {
         "x-api-key": api_key,
-        "Content-Type": "application/json",
-        "Content-Encoding": "gzip",
+        "Content-Type": "application/octet-stream",
     }
     if idempotency_key:
         headers["Idempotency-Key"] = idempotency_key
