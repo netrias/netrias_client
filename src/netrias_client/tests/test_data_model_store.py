@@ -76,6 +76,40 @@ def test_list_data_models_with_versions(configured_client: NetriasClient, monkey
     assert models[0].versions[1] == DataModelVersion(version_label="v2")
 
 
+def test_list_data_models_with_version_number(
+    configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Parse version_number (int) from the actual DMS API response format.
+
+    'why': the DMS API returns version_number (int), not version_label (str)
+    """
+
+    payload = {
+        "total": 1,
+        "items": [
+            {
+                "data_commons_id": 1,
+                "key": "ccdi",
+                "name": "CCDI Data Model",
+                "description": "Test",
+                "is_active": True,
+                "versions": [
+                    {"data_model_version_id": 1, "version_number": 1},
+                    {"data_model_version_id": 2, "version_number": 2},
+                ],
+            },
+        ],
+    }
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    models = configured_client.list_data_models(include_versions=True)
+
+    assert len(models[0].versions) == 2
+    assert models[0].versions[0] == DataModelVersion(version_label="1")
+    assert models[0].versions[1] == DataModelVersion(version_label="2")
+
+
 def test_list_data_models_empty(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
     """Return empty tuple when no models found.
 

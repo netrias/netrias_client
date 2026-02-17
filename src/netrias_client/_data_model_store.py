@@ -357,9 +357,12 @@ def _parse_versions(raw: object) -> tuple[DataModelVersion, ...] | None:
 def _parse_version_item(item: object) -> DataModelVersion | None:
     if not isinstance(item, dict):
         return None
-    label = item.get("version_label")
-    if isinstance(label, str) and label:
-        return DataModelVersion(version_label=label)
+    # API returns version_number (int); domain uses version_label (str)
+    raw = item.get("version_number")
+    if raw is None:
+        raw = item.get("version_label")
+    if raw is not None and str(raw):
+        return DataModelVersion(version_label=str(raw))
     return None
 
 
