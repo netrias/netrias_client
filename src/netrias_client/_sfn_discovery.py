@@ -1,4 +1,4 @@
-"""Async CDE discovery via API Gateway + Step Functions polling.
+"""Blocking CDE discovery via API Gateway + Step Functions polling.
 
 'why': API Gateway returns executionArn immediately (no timeout), then poll
 DescribeExecution for results. Avoids API Gateway's 45-second timeout limit.
@@ -15,7 +15,7 @@ from typing import Final
 import boto3  # pyright: ignore[reportMissingTypeStubs]
 import httpx
 
-from ._config import ASYNC_POLL_INTERVAL_SECONDS
+from ._config import ASYNC_POLL_INTERVAL_SECONDS, BYPASS_REGION
 from ._errors import AsyncDiscoveryError
 
 TERMINAL_STATES: Final[frozenset[str]] = frozenset({"SUCCEEDED", "FAILED", "TIMED_OUT", "ABORTED"})
@@ -121,17 +121,20 @@ def _poll_execution(
 
 
 def _extract_region_from_arn(arn: str) -> str:
-    """Extract AWS region from Step Functions execution ARN.
+    """Extract and validate AWS region from Step Functions execution ARN.
 
     ARN format: arn:aws:states:REGION:ACCOUNT:execution:STATE_MACHINE:EXECUTION_ID
 
-    'why': boto3 client needs region; ARN is authoritative source
+    'why': validate region matches expected deployment to prevent SSRF via malicious ARN
     """
 
     parts = arn.split(":")
     if len(parts) < 4:
         raise AsyncDiscoveryError(f"Invalid execution ARN format: {arn}")
-    return parts[3]
+    region = parts[3]
+    if region != BYPASS_REGION:
+        raise AsyncDiscoveryError(f"Unexpected region in ARN: {region} (expected {BYPASS_REGION})")
+    return region
 
 
 def _parse_output(output_str: str) -> Mapping[str, object]:

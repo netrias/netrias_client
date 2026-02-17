@@ -227,11 +227,10 @@ def _build_discovery_url(base_url: str) -> str:
 def _read_tabular(path: Path) -> list[list[str]]:
     if not path.exists():
         raise FileNotFoundError(path)
-    ext = path.suffix.lower()
-    if ext not in {".csv", ".tsv"}:
-        raise ValueError("harmonization only supports CSV or TSV inputs")
-    delimiter = "," if ext == ".csv" else "\t"
-    with path.open("r", encoding="utf-8", newline="") as handle:
-        reader = csv.reader(handle, delimiter=delimiter)
+    if path.suffix.lower() != ".csv":
+        raise ValueError("harmonization only supports CSV inputs")
+    # 'why': utf-8-sig strips BOM if present, consistent with discovery's _read_limited_rows
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.reader(handle)
         return [list(row) for row in reader]
 

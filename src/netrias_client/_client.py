@@ -240,7 +240,7 @@ class NetriasClient:
         Parameters
         ----------
         source_path:
-            Path to the source CSV or TSV file.
+            Path to the source CSV file.
         manifest:
             Column mapping manifest — either a file path or a dict.
         data_commons_key:
@@ -276,7 +276,7 @@ class NetriasClient:
         Parameters
         ----------
         source_path:
-            Path to the source CSV or TSV file.
+            Path to the source CSV file.
         manifest:
             Column mapping manifest — either a file path or a dict.
         data_commons_key:

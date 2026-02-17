@@ -122,6 +122,7 @@ Execute the harmonization workflow: submit job, poll for completion, download re
 result = client.harmonize(
     source_path=Path("data/patients.csv"),
     manifest=manifest,                           # from discover_*
+    data_commons_key="GC",                       # target data commons
     output_path=Path("output/harmonized.csv"),   # optional
     manifest_output_path=Path("output/manifest.json"),  # optional
 )
@@ -135,6 +136,7 @@ print(result.description)  # Human-readable status message
 |-----------|------|---------|-------------|
 | `source_path` | `Path` | — | **Required.** Path to the source CSV file. |
 | `manifest` | `Path \| Mapping[str, object]` | — | **Required.** Mapping manifest (from discovery) or path to a JSON manifest file. |
+| `data_commons_key` | `str` | — | **Required.** Target data commons identifier (e.g., `"GC"`). |
 | `output_path` | `Path \| None` | `None` | Where to write the harmonized CSV. Auto-generated if omitted (e.g., `source.harmonized.csv`). |
 | `manifest_output_path` | `Path \| None` | `None` | Where to write the manifest JSON for debugging. |
 
@@ -146,6 +148,7 @@ print(result.description)  # Human-readable status message
 | `status` | `"succeeded" \| "failed" \| "timeout"` | Job outcome. |
 | `description` | `str` | Human-readable status message. |
 | `mapping_id` | `str \| None` | Internal mapping identifier (if available). |
+| `manifest_path` | `Path \| None` | Path to the downloaded manifest parquet file (if available). |
 
 ---
 
@@ -373,7 +376,7 @@ manifest = client.discover_mapping_from_csv(
     source_csv=Path("data/patients.csv"),
     target_schema="ccdi",
 )
-result = client.harmonize(source_path=Path("data/patients.csv"), manifest=manifest)
+result = client.harmonize(source_path=Path("data/patients.csv"), manifest=manifest, data_commons_key="GC")
 
 # Async usage (FastAPI, async frameworks)
 async def process_file():
@@ -384,6 +387,7 @@ async def process_file():
     result = await client.harmonize_async(
         source_path=Path("data/patients.csv"),
         manifest=manifest,
+        data_commons_key="GC",
     )
     return result
 ```
@@ -421,7 +425,7 @@ The client raises typed exceptions that inherit from `NetriasClientError`:
 from netrias_client import NetriasClient, NetriasClientError, NetriasAPIUnavailable
 
 try:
-    result = client.harmonize(source_path=csv_path, manifest=manifest)
+    result = client.harmonize(source_path=csv_path, manifest=manifest, data_commons_key="GC")
 except NetriasAPIUnavailable as e:
     print(f"Service unavailable: {e}")
 except NetriasClientError as e:
@@ -436,7 +440,7 @@ Access the installed package version:
 
 ```python
 from netrias_client import __version__
-print(__version__)  # e.g., "0.2.0"
+print(__version__)  # e.g., "0.3.0"
 ```
 
 ---

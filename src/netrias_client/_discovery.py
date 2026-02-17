@@ -537,6 +537,9 @@ def _option_target(option: Mapping[str, object]) -> str | None:
 def _option_confidence(option: Mapping[str, object]) -> float | None:
     for key in ("similarity", "confidence", "score", "probability"):
         value = option.get(key)
+        # 'why': bool is subclass of int in Python; must guard before int/float check
+        if isinstance(value, bool):
+            continue
         if isinstance(value, (int, float)):
             return float(value)
     return None

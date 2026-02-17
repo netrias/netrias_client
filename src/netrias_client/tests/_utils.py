@@ -118,7 +118,6 @@ def install_mock_transport(monkeypatch: MonkeyPatch, capture: MockTransportCaptu
 
     monkeypatch.setattr("netrias_client._http.httpx.AsyncClient", _PatchedAsyncClient)
     monkeypatch.setattr("netrias_client._core.httpx.AsyncClient", _PatchedAsyncClient)
-    monkeypatch.setattr("netrias_client._data_model_store.httpx.AsyncClient", _PatchedAsyncClient)
     monkeypatch.setattr("netrias_client._sfn_discovery.httpx.Client", _PatchedSyncClient)
 
 

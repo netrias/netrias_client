@@ -39,7 +39,6 @@ test = "pytest:main"
 check = "netrias_client.scripts:check"
 live_check = "netrias_client.scripts:live_check"
 release = "netrias_client.scripts:release"
-associate_api_key = "netrias_client.associate_api_key:associate_api_key"
 
 
 [project.optional-dependencies]

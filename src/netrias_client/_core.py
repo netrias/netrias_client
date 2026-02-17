@@ -413,10 +413,9 @@ async def _download_manifest(
                     return manifest_dest
                 logger.warning("manifest download failed: status=%s", response.status_code)
                 return None
-    except Exception as exc:
+    except (httpx.HTTPError, OSError) as exc:
         logger.warning("manifest download error: %s", exc)
         return None
-
 
 
 async def _download_final(
@@ -433,7 +432,9 @@ async def _download_final(
                 if 200 <= response.status_code < 300:
                     _ = await stream_download_to_file(response, dest)
                     logger.info("harmonize complete: file=%s -> %s", csv_path, dest)
-                    return HarmonizationResult(file_path=dest, status="succeeded", description="harmonization succeeded", manifest_path=manifest_path)
+                    return HarmonizationResult(
+                        file_path=dest, status="succeeded", description="harmonization succeeded", manifest_path=manifest_path,
+                    )
 
                 body_bytes = await response.aread()
                 description = _download_error_message(response.status_code, body_bytes)

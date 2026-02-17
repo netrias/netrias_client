@@ -14,7 +14,7 @@ from typing import Callable, Final
 from dotenv import dotenv_values
 
 
-ENV_PATH: Final[Path] = Path("/Users/harman/PycharmProjects/netrias_client/.env")
+ENV_PATH: Final[Path] = Path(__file__).resolve().parent / ".env"
 DATA_DIR: Final[Path] = Path(__file__).resolve().parent / "data"
 CSV_PATH: Final[Path] = DATA_DIR / "primary_diagnosis_1.csv"
 
