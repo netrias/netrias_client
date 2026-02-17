@@ -33,6 +33,7 @@ def test_harmonize_streaming_success(
     result: HarmonizationResult = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
+        data_commons_key="ccdi",
         output_path=output_directory,
     )
 
@@ -48,7 +49,7 @@ def test_harmonize_streaming_success(
 
     assert submit_request.method == "POST"
     assert submit_request.url.path.endswith("/v1/jobs/harmonize")
-    assert submit_request.headers.get("authorization") == "Bearer test-api-key"
+    assert submit_request.headers.get("x-api-key") == "test-api-key"
     assert poll_request.method == "GET"
     assert "/v1/jobs/" in poll_request.url.path
     assert final_request.method == "GET"
@@ -69,6 +70,7 @@ def test_harmonize_handles_api_failure(
     result: HarmonizationResult = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
+        data_commons_key="ccdi",
         output_path=output_directory,
     )
 
@@ -96,6 +98,7 @@ def test_harmonize_raises_on_transport_error(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
+            data_commons_key="ccdi",
             output_path=output_directory,
         )
 
@@ -117,6 +120,7 @@ def test_harmonize_accepts_manifest_mapping(
     result: HarmonizationResult = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_mapping,
+        data_commons_key="ccdi",
         output_path=output_directory,
     )
 
@@ -144,6 +148,7 @@ def test_harmonize_writes_manifest_when_requested(
     _ = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_mapping,
+        data_commons_key="ccdi",
         output_path=output_directory,
         manifest_output_path=manifest_output,
     )
@@ -169,6 +174,7 @@ async def test_harmonize_async_success(
     result = await configured_client.harmonize_async(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
+        data_commons_key="ccdi",
         output_path=output_directory,
     )
 

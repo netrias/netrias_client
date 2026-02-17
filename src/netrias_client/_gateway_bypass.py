@@ -12,17 +12,15 @@ import logging
 from collections.abc import Mapping, Sequence
 from typing import Callable, IO, Protocol, cast
 
-
-class GatewayBypassError(RuntimeError):
-    """Raised when the direct Lambda invocation fails."""
+from ._errors import GatewayBypassError
 
 
 class _LambdaClient(Protocol):
     def invoke(
         self,
         FunctionName: str,
-        Qualifier: str,
         Payload: bytes,
+        Qualifier: str = ...,
     ) -> Mapping[str, object]:
         ...
 
@@ -39,13 +37,15 @@ class _SessionProtocol(Protocol):
 
 def invoke_cde_recommendation_alias(
     target_schema: str,
+    target_version: str,
     columns: Mapping[str, Sequence[object]],
     function_name: str = "cde-recommendation",
-    alias: str = "prod",
+    alias: str | None = None,
     region_name: str = "us-east-2",
     timeout_seconds: float | None = None,
     profile_name: str | None = None,
     logger: logging.Logger | None = None,
+    top_k: int | None = None,
 ) -> Mapping[str, object]:
     """Call the CDE recommendation Lambda alias directly and return its parsed payload.
 
@@ -58,7 +58,14 @@ def invoke_cde_recommendation_alias(
         timeout_seconds=timeout_seconds,
     )
     normalized_columns = _normalized_columns(columns)
-    body = json.dumps({"target_schema": target_schema, "data": normalized_columns})
+    body_dict: dict[str, object] = {
+        "target_schema": target_schema,
+        "target_version": target_version,
+        "data": normalized_columns,
+    }
+    if top_k is not None:
+        body_dict["top_k"] = top_k
+    body = json.dumps(body_dict)
     event = {"body": body, "isBase64Encoded": False}
 
     active_logger = logger or logging.getLogger("netrias_client")
@@ -71,12 +78,20 @@ def invoke_cde_recommendation_alias(
         len(columns),
     )
 
+    payload_bytes = json.dumps(event).encode("utf-8")
+
     try:
-        response = client.invoke(
-            FunctionName=function_name,
-            Qualifier=alias,
-            Payload=json.dumps(event).encode("utf-8"),
-        )
+        if alias is not None:
+            response = client.invoke(
+                FunctionName=function_name,
+                Qualifier=alias,
+                Payload=payload_bytes,
+            )
+        else:
+            response = client.invoke(
+                FunctionName=function_name,
+                Payload=payload_bytes,
+            )
     except Exception as exc:  # pragma: no cover - boto3 specific
         active_logger.error(
             "gateway bypass invoke failed: function=%s alias=%s err=%s",
@@ -132,7 +147,7 @@ def _build_lambda_client(
     return _lambda_client_from_factory(factory, region_name=region_name, config=config)
 
 
-def _load_boto_dependencies():
+def _load_boto_dependencies() -> tuple[object, type]:
     try:
         import boto3  # pyright: ignore[reportMissingTypeStubs]
         from botocore.config import Config  # pyright: ignore[reportMissingTypeStubs]
@@ -171,13 +186,47 @@ def _json_payload(raw_payload: bytes) -> Mapping[str, object]:
 
 
 def _extract_body_mapping(payload: Mapping[str, object]) -> Mapping[str, object]:
-    body = payload.get("body")
+    """Extract and parse the body from the Lambda proxy response.
+
+    'why': Lambda proxy responses wrap results in {statusCode, body}; we need to
+    check the status code and parse the JSON body
+    """
+    parsed_body = _parse_body(payload.get("body"))
+    _check_status_code(payload.get("statusCode"), parsed_body)
+    return parsed_body if parsed_body else payload
+
+
+def _parse_body(body: object) -> Mapping[str, object]:
+    """Parse the body field from a Lambda response."""
     if isinstance(body, str):
         try:
             return cast(Mapping[str, object], json.loads(body))
         except json.JSONDecodeError as exc:  # pragma: no cover - unexpected lambda output
             raise GatewayBypassError(f"lambda body was not valid JSON: {exc}") from exc
-    return payload
+    if isinstance(body, Mapping):
+        return cast(Mapping[str, object], body)
+    return {}
+
+
+def _check_status_code(status_code: object, parsed_body: Mapping[str, object]) -> None:
+    """Raise GatewayBypassError for 4xx/5xx Lambda status codes."""
+    if not isinstance(status_code, int):
+        return
+    if status_code >= 500:
+        error_msg = _extract_error_message(parsed_body)
+        raise GatewayBypassError(f"lambda returned server error ({status_code}): {error_msg}")
+    if status_code >= 400:
+        error_msg = _extract_error_message(parsed_body)
+        raise GatewayBypassError(f"lambda returned client error ({status_code}): {error_msg}")
+
+
+def _extract_error_message(body: Mapping[str, object]) -> str:
+    """Extract error message from Lambda response body."""
+    for key in ("error", "message", "detail"):
+        value = body.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return "unknown error"
 
 
 def _normalized_columns(columns: Mapping[str, Sequence[object]]) -> dict[str, list[str]]:

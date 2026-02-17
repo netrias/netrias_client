@@ -59,6 +59,25 @@ def validate_target_schema(schema: str) -> str:
     return candidate
 
 
+def validate_target_version(version: str) -> str:
+    """Ensure the target version identifier is a non-empty string."""
+
+    candidate = (version or "").strip()
+    if not candidate:
+        raise MappingValidationError("target_version must be a non-empty string")
+    return candidate
+
+
+def validate_top_k(top_k: int | None) -> int | None:
+    """Ensure top_k is a positive integer when provided."""
+
+    if top_k is None:
+        return None
+    if top_k < 1:
+        raise MappingValidationError("top_k must be a positive integer")
+    return top_k
+
+
 def validate_column_samples(columns: Mapping[str, Sequence[object]]) -> dict[str, list[str]]:
     """Normalize column sample data for mapping discovery."""
 
@@ -153,11 +172,17 @@ def _normalized_column_name(raw_name: object) -> str:
 
 
 def _normalized_samples(column_name: str, values: Sequence[object] | None) -> list[str]:
+    """Normalize and deduplicate sample values for a column.
+
+    'why': duplicate values waste API bandwidth and don't improve recommendations
+    """
+
     sequence = _require_sequence(column_name, values)
-    samples = [sample for sample in (_coerced_sample(value) for value in sequence) if sample]
-    if not samples:
+    coerced = [sample for sample in (_coerced_sample(value) for value in sequence) if sample]
+    if not coerced:
         raise MappingValidationError(f"column '{column_name}' must include at least one non-empty sample value")
-    return samples
+    # Deduplicate while preserving order
+    return list(dict.fromkeys(coerced))
 
 
 def _require_sequence(column_name: str, values: Sequence[object] | None) -> Sequence[object]:

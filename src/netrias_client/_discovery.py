@@ -5,56 +5,61 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import csv
+import json
+import logging
 import time
-from pathlib import Path
 from collections.abc import Mapping, Sequence
-from typing import cast
+from pathlib import Path
+from typing import NoReturn, cast
 
 import httpx
-import logging
 
 from ._adapter import build_column_mapping_payload
-from ._config import BYPASS_ALIAS, BYPASS_FUNCTION, BYPASS_REGION
-from ._errors import MappingDiscoveryError, NetriasAPIUnavailable
-from ._gateway_bypass import GatewayBypassError, invoke_cde_recommendation_alias
+from ._async_utils import run_sync
+from ._config import ASYNC_API_URL, BYPASS_ALIAS, BYPASS_FUNCTION, BYPASS_REGION, validated_confidence_threshold
+from ._errors import AsyncDiscoveryError, GatewayBypassError, MappingDiscoveryError, NetriasAPIUnavailable
+from ._gateway_bypass import invoke_cde_recommendation_alias
 from ._http import request_mapping_discovery
-from ._models import MappingDiscoveryResult, MappingRecommendationOption, MappingSuggestion, Settings
-from ._validators import validate_column_samples, validate_target_schema, validate_source_path
-
-
-ManifestPayload = dict[str, dict[str, dict[str, object]]]
+from ._models import ManifestPayload, MappingDiscoveryResult, MappingRecommendationOption, MappingSuggestion, Settings
+from ._sfn_discovery import discover_via_step_functions
+from ._validators import validate_column_samples, validate_source_path, validate_target_schema, validate_target_version, validate_top_k
 
 
 async def _discover_mapping_async(
     settings: Settings,
     target_schema: str,
+    target_version: str,
     column_samples: Mapping[str, Sequence[object]],
     logger: logging.Logger,
+    top_k: int | None = None,
+    confidence_threshold: float | None = None,
 ) -> ManifestPayload:
     """Perform mapping discovery via the recommendation endpoint."""
 
     schema = validate_target_schema(target_schema)
+    version = validate_target_version(target_version)
+    validated_top_k = validate_top_k(top_k)
+    threshold = validated_confidence_threshold(confidence_threshold)
     samples: dict[str, list[str]] = validate_column_samples(column_samples)
     started = time.perf_counter()
-    logger.info("discover mapping start: schema=%s columns=%s", schema, len(samples))
+    logger.info("discover mapping start: schema=%s version=%s columns=%s", schema, version, len(samples))
 
     try:
-        result = await _discover_with_backend(settings, schema, samples, logger)
-    except (httpx.TimeoutException, httpx.HTTPError, GatewayBypassError) as exc:
+        result = await _discover_with_backend(settings, schema, version, samples, logger, validated_top_k)
+    except (httpx.TimeoutException, httpx.HTTPError, GatewayBypassError, AsyncDiscoveryError) as exc:
         _handle_discovery_error(schema, started, exc, logger)
-        raise AssertionError("_handle_discovery_error should raise") from exc
 
     manifest = build_column_mapping_payload(
         result,
-        threshold=settings.confidence_threshold,
+        threshold=threshold,
         logger=logger,
     )
     elapsed = time.perf_counter() - started
     logger.info(
-        "discover mapping complete: schema=%s columns=%s duration=%.2fs",
+        "discover mapping complete: schema=%s version=%s columns=%s duration=%.2fs",
         schema,
+        version,
         len(manifest.get("column_mappings", {})),
         elapsed,
     )
@@ -64,17 +69,23 @@ async def _discover_mapping_async(
 def discover_mapping(
     settings: Settings,
     target_schema: str,
+    target_version: str,
     column_samples: Mapping[str, Sequence[object]],
     logger: logging.Logger,
+    top_k: int | None = None,
+    confidence_threshold: float | None = None,
 ) -> ManifestPayload:
     """Sync wrapper around `_discover_mapping_async`."""
 
-    return asyncio.run(
+    return run_sync(
         _discover_mapping_async(
             settings=settings,
             target_schema=target_schema,
+            target_version=target_version,
             column_samples=column_samples,
             logger=logger,
+            top_k=top_k,
+            confidence_threshold=confidence_threshold,
         )
     )
 
@@ -82,16 +93,22 @@ def discover_mapping(
 async def discover_mapping_async(
     settings: Settings,
     target_schema: str,
+    target_version: str,
     column_samples: Mapping[str, Sequence[object]],
     logger: logging.Logger,
+    top_k: int | None = None,
+    confidence_threshold: float | None = None,
 ) -> ManifestPayload:
     """Async entry point mirroring `discover_mapping` semantics."""
 
     return await _discover_mapping_async(
         settings=settings,
         target_schema=target_schema,
+        target_version=target_version,
         column_samples=column_samples,
         logger=logger,
+        top_k=top_k,
+        confidence_threshold=confidence_threshold,
     )
 
 
@@ -99,8 +116,11 @@ def discover_cde_mapping(
     settings: Settings,
     source_csv: Path,
     target_schema: str,
+    target_version: str,
     sample_limit: int,
     logger: logging.Logger,
+    top_k: int | None = None,
+    confidence_threshold: float | None = None,
 ) -> ManifestPayload:
     """Convenience wrapper that derives column samples from a CSV file."""
 
@@ -108,8 +128,11 @@ def discover_cde_mapping(
     return discover_mapping(
         settings=settings,
         target_schema=target_schema,
+        target_version=target_version,
         column_samples=samples,
         logger=logger,
+        top_k=top_k,
+        confidence_threshold=confidence_threshold,
     )
 
 
@@ -117,8 +140,11 @@ async def discover_mapping_from_csv_async(
     settings: Settings,
     source_csv: Path,
     target_schema: str,
+    target_version: str,
     sample_limit: int,
     logger: logging.Logger,
+    top_k: int | None = None,
+    confidence_threshold: float | None = None,
 ) -> ManifestPayload:
     """Async variant of `discover_mapping_from_csv`."""
 
@@ -126,37 +152,67 @@ async def discover_mapping_from_csv_async(
     return await discover_mapping_async(
         settings=settings,
         target_schema=target_schema,
+        target_version=target_version,
         column_samples=samples,
         logger=logger,
+        top_k=top_k,
+        confidence_threshold=confidence_threshold,
     )
 
 
 async def _discover_with_backend(
     settings: Settings,
     schema: str,
+    version: str,
     samples: Mapping[str, Sequence[str]],
     logger: logging.Logger,
+    top_k: int | None = None,
 ) -> MappingDiscoveryResult:
+    # Step Functions polling (highest priority when enabled)
+    # 'why': discover_via_step_functions uses blocking I/O; run in thread to avoid blocking event loop
+    if settings.discovery_use_async_api:
+        logger.debug("discover backend via Step Functions polling")
+        payload = await asyncio.to_thread(
+            discover_via_step_functions,
+            api_url=ASYNC_API_URL,
+            target_schema=schema,
+            target_version=version,
+            columns=samples,
+            timeout=settings.timeout,
+            logger=logger,
+            top_k=top_k or 3,
+            api_key=settings.api_key,
+        )
+        return _result_from_payload(payload, schema)
+
+    # Direct Lambda invocation (gateway bypass)
+    # 'why': invoke_cde_recommendation_alias uses boto3 blocking I/O; run in thread
     if settings.discovery_use_gateway_bypass:
         logger.debug("discover backend via bypass alias")
-        payload = invoke_cde_recommendation_alias(
+        payload = await asyncio.to_thread(
+            invoke_cde_recommendation_alias,
             target_schema=schema,
+            target_version=version,
             columns=samples,
             function_name=BYPASS_FUNCTION,
             alias=BYPASS_ALIAS,
             region_name=BYPASS_REGION,
             timeout_seconds=settings.timeout,
             logger=logger,
+            top_k=top_k,
         )
         return _result_from_payload(payload, schema)
 
+    # HTTP API (fallback)
     logger.debug("discover backend via HTTP API")
     response = await request_mapping_discovery(
         base_url=settings.discovery_url,
         api_key=settings.api_key,
         timeout=settings.timeout,
         schema=schema,
+        version=version,
         columns=samples,
+        top_k=top_k,
     )
     return _interpret_discovery_response(response, schema)
 
@@ -166,7 +222,7 @@ def _handle_discovery_error(
     started: float,
     exc: Exception,
     logger: logging.Logger,
-) -> None:
+) -> NoReturn:
     elapsed = time.perf_counter() - started
     if isinstance(exc, httpx.TimeoutException):  # pragma: no cover - exercised via integration tests
         logger.error("discover mapping timeout: schema=%s duration=%.2fs err=%s", schema, elapsed, exc)
@@ -179,6 +235,14 @@ def _handle_discovery_error(
             exc,
         )
         raise NetriasAPIUnavailable(f"gateway bypass error: {exc}") from exc
+    if isinstance(exc, AsyncDiscoveryError):
+        logger.error(
+            "discover mapping async error: schema=%s duration=%.2fs err=%s",
+            schema,
+            elapsed,
+            exc,
+        )
+        raise NetriasAPIUnavailable(f"async discovery error: {exc}") from exc
 
     logger.error(
         "discover mapping transport error: schema=%s duration=%.2fs err=%s",
@@ -314,7 +378,8 @@ def _samples_from_csv(csv_path: Path, sample_limit: int) -> dict[str, list[str]]
 def _read_limited_rows(dataset: Path, sample_limit: int) -> tuple[list[str], list[dict[str, str | None]]]:
     headers: list[str] = []
     rows: list[dict[str, str | None]] = []
-    with dataset.open("r", encoding="utf-8", newline="") as handle:
+    # 'why': utf-8-sig strips BOM if present; BOM in column names causes Step Functions SerializationException
+    with dataset.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
         headers = [header for header in reader.fieldnames or [] if header]
         for index, row in enumerate(reader):
@@ -367,6 +432,12 @@ def _resolved_schema(payload: Mapping[str, object], requested_schema: str) -> st
 
 
 def _suggestions_from_payload(payload: Mapping[str, object]) -> tuple[MappingSuggestion, ...]:
+    # Try the new dict-based `results` format first
+    results_dict = _results_dict_from_payload(payload)
+    if results_dict:
+        return _suggestions_from_results_dict(results_dict)
+
+    # Fall back to the old array-based format
     raw_entries = _candidate_entries(payload)
     suggestions: list[MappingSuggestion] = []
     for entry in raw_entries:
@@ -378,6 +449,49 @@ def _suggestions_from_payload(payload: Mapping[str, object]) -> tuple[MappingSug
             MappingSuggestion(source_column=source, options=options, raw=entry)
         )
     return tuple(suggestions)
+
+
+def _results_dict_from_payload(payload: Mapping[str, object]) -> dict[str, list[object]] | None:
+    """Extract the new dict-based results structure if present."""
+
+    results = payload.get("results")
+    if not isinstance(results, dict):
+        return None
+    return cast(dict[str, list[object]], results)
+
+
+def _suggestions_from_results_dict(results: dict[str, list[object]]) -> tuple[MappingSuggestion, ...]:
+    """Convert dict-keyed results to MappingSuggestion tuples."""
+
+    suggestions: list[MappingSuggestion] = []
+    for column_name, options_list in results.items():
+        if not isinstance(options_list, list):
+            continue
+        options = _options_from_list(options_list)
+        raw_entry: dict[str, object] = {"column": column_name, "options": options_list}
+        suggestions.append(
+            MappingSuggestion(source_column=column_name, options=options, raw=raw_entry)
+        )
+    return tuple(suggestions)
+
+
+def _options_from_list(options_list: list[object]) -> tuple[MappingRecommendationOption, ...]:
+    """Convert a list of option dicts to MappingRecommendationOption tuples."""
+
+    options: list[MappingRecommendationOption] = []
+    for item in options_list:
+        if not isinstance(item, Mapping):
+            continue
+        mapping = cast(Mapping[str, object], item)
+        target = _option_target(mapping)
+        confidence = _option_confidence(mapping)
+        target_cde_id = _option_target_cde_id(mapping)
+        options.append(
+            MappingRecommendationOption(
+                target=target, confidence=confidence, target_cde_id=target_cde_id, raw=mapping
+            )
+        )
+    return tuple(options)
 
 
 def _candidate_entries(payload: Mapping[str, object]) -> tuple[Mapping[str, object], ...]:
@@ -407,16 +521,7 @@ def _options_from_entry(entry: Mapping[str, object]) -> tuple[MappingRecommendat
     raw_options = entry.get("suggestions") or entry.get("options") or entry.get("targets")
     if not isinstance(raw_options, list):
         return ()
-    options: list[MappingRecommendationOption] = []
-    items = cast(list[object], raw_options)
-    for item in items:
-        if not isinstance(item, Mapping):
-            continue
-        mapping = cast(Mapping[str, object], item)
-        target = _option_target(mapping)
-        confidence = _option_confidence(mapping)
-        options.append(MappingRecommendationOption(target=target, confidence=confidence, raw=mapping))
-    return tuple(options)
+    return _options_from_list(cast(list[object], raw_options))
 
 
 def _option_target(option: Mapping[str, object]) -> str | None:
@@ -430,8 +535,21 @@ def _option_target(option: Mapping[str, object]) -> str | None:
 
 
 def _option_confidence(option: Mapping[str, object]) -> float | None:
-    for key in ("confidence", "score", "probability"):
+    for key in ("similarity", "confidence", "score", "probability"):
         value = option.get(key)
+        # 'why': bool is subclass of int in Python; must guard before int/float check
+        if isinstance(value, bool):
+            continue
         if isinstance(value, (int, float)):
             return float(value)
+    return None
+
+
+def _option_target_cde_id(option: Mapping[str, object]) -> int | None:
+    value = option.get("target_cde_id")
+    # 'why': API may return float (e.g., 900.0) or int; normalize to int
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
     return None

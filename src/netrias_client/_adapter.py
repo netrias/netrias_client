@@ -8,7 +8,7 @@ import json
 import logging
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Final, cast
+from typing import cast
 
 from ._models import MappingDiscoveryResult, MappingRecommendationOption, MappingSuggestion
 
@@ -23,60 +23,14 @@ def build_column_mapping_payload(
 
     active_logger = logger or logging.getLogger("netrias_client")
     strongest = strongest_targets(result, threshold=threshold, logger=active_logger)
-    return {"column_mappings": _column_entries(strongest, active_logger)}
-
-
-_COLUMN_METADATA: Final[dict[str, dict[str, object]]] = {
-    # "study_name": {"route": "api:passthrough", "targetField": "study_name"},
-    # "number_of_participants": {"route": "api:passthrough", "targetField": "number_of_participants"},
-    # "number_of_samples": {"route": "api:passthrough", "targetField": "number_of_samples"},
-    # "study_data_types": {
-    #     "route": "api:passthrough",
-    #     "targetField": "study_data_types",
-    #     "cdeId": 12_571_096,
-    #     "cde_id": 12_571_096,
-    # },
-    # "participant_id": {"route": "api:passthrough", "targetField": "participant_id"},
-    # "sample_id": {"route": "api:passthrough", "targetField": "sample_id"},
-    # "file_name": {"route": "api:passthrough", "targetField": "file_name"},
-    "primary_diagnosis": {
-        "route": "sagemaker:primary",
-        "targetField": "primary_diagnosis",
-        "cdeId": -200,
-        "cde_id": -200,
-    },
-    "therapeutic_agents": {
-        "route": "sagemaker:therapeutic_agents",
-        "targetField": "therapeutic_agents",
-        "cdeId": -203,
-        "cde_id": -203,
-    },
-    "morphology": {
-        "route": "sagemaker:morphology",
-        "targetField": "morphology",
-        "cdeId": -201,
-        "cde_id": -201,
-    },
-    # "tissue_or_organ_of_origin": {
-    #     "route": "sagemaker:tissue_origin",
-    #     "targetField": "tissue_or_organ_of_origin",
-    #     "cdeId": -204,
-    #     "cde_id": -204,
-    # },
-    # "site_of_resection_or_biopsy": {
-    #     "route": "sagemaker:sample_anatomic_site",
-    #     "targetField": "site_of_resection_or_biopsy",
-    #     "cdeId": -202,
-    #     "cde_id": -202,
-    # },
-}
+    return {"column_mappings": _column_entries(strongest)}
 
 
 def strongest_targets(
     result: MappingDiscoveryResult,
     threshold: float,
     logger: logging.Logger,
-) -> dict[str, str]:
+) -> dict[str, MappingRecommendationOption]:
     """Return the highest-confidence target per column, filtered by threshold."""
 
     if result.suggestions:
@@ -85,69 +39,42 @@ def strongest_targets(
         selected = _from_raw_payload(result.raw, threshold)
 
     if selected:
-        logger.info("adapter strongest targets: %s", selected)
+        logger.info("adapter strongest targets: %s", {k: v.target for k, v in selected.items()})
     else:
         logger.warning("adapter strongest targets empty after filtering")
     return selected
 
 
-def _column_entries(
-    strongest: Mapping[str, str],
-    logger: logging.Logger,
-) -> dict[str, dict[str, object]]:
+def _column_entries(strongest: Mapping[str, MappingRecommendationOption]) -> dict[str, dict[str, object]]:
     entries: dict[str, dict[str, object]] = {}
-    missing_cde: dict[str, str] = {}
-    for source, target in strongest.items():
-        entry = _initial_entry(source, target)
-        if _needs_cde(entry):
-            missing_cde[source] = target
+    for source, option in strongest.items():
+        entry: dict[str, object] = {"targetField": option.target}
+        if option.target_cde_id is not None:
+            entry["cde_id"] = option.target_cde_id
         entries[source] = entry
-
-    _apply_metadata_defaults(entries)
-
-    if missing_cde:
-        logger.info("adapter unresolved targets (no CDE id mapping): %s", missing_cde)
     return entries
-
-
-def _initial_entry(source: str, target: str) -> dict[str, object]:
-    metadata = _COLUMN_METADATA.get(source)
-    if metadata is None:
-        return {"targetField": target}
-    # Preserve configured targetField when metadata defines it.
-    return dict(metadata)
-
-
-def _needs_cde(entry: Mapping[str, object]) -> bool:
-    return "cdeId" not in entry
-
-
-def _apply_metadata_defaults(entries: dict[str, dict[str, object]]) -> None:
-    for source, metadata in _COLUMN_METADATA.items():
-        if source not in entries:
-            entries[source] = dict(metadata)
 
 
 def _from_suggestions(
     suggestions: Iterable[MappingSuggestion], threshold: float
-) -> dict[str, str]:
-    strongest: dict[str, str] = {}
+) -> dict[str, MappingRecommendationOption]:
+    strongest: dict[str, MappingRecommendationOption] = {}
     for suggestion in suggestions:
         option = _top_option(suggestion.options, threshold)
         if option is None or option.target is None:
             continue
-        strongest[suggestion.source_column] = option.target
+        strongest[suggestion.source_column] = option
     return strongest
 
 
-def _from_raw_payload(payload: Mapping[str, object], threshold: float) -> dict[str, str]:
-    strongest: dict[str, str] = {}
+def _from_raw_payload(payload: Mapping[str, object], threshold: float) -> dict[str, MappingRecommendationOption]:
+    strongest: dict[str, MappingRecommendationOption] = {}
     for column, value in payload.items():
         options = _coerce_options(value)
         option = _top_option(options, threshold)
         if option is None or option.target is None:
             continue
-        strongest[column] = option.target
+        strongest[column] = option
     return strongest
 
 
@@ -174,7 +101,20 @@ def _option_from_mapping(item: Mapping[str, object]) -> MappingRecommendationOpt
     score: float | None = None
     if isinstance(similarity, (float, int)):
         score = float(similarity)
-    return MappingRecommendationOption(target=target, confidence=score, raw=item)
+    cde_id = _extract_cde_id(item)
+    return MappingRecommendationOption(target=target, confidence=score, target_cde_id=cde_id, raw=item)
+
+
+def _extract_cde_id(item: Mapping[str, object]) -> int | None:
+    """Extract target_cde_id from recommendation, handling numeric types."""
+    value = item.get("target_cde_id")
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    return None
 
 
 def _top_option(
@@ -262,8 +202,9 @@ def _cde_candidate(value: object) -> object | None:
 
 
 def _int_from_candidate(candidate: object) -> int | None:
+    # 'why': bool is a subclass of int in Python, but True/False are not valid CDE IDs
     if isinstance(candidate, bool):
-        return int(candidate)
+        return None
     if isinstance(candidate, (int, float)):
         return _int_from_number(candidate)
     if isinstance(candidate, str):
@@ -272,9 +213,10 @@ def _int_from_candidate(candidate: object) -> int | None:
 
 
 def _int_from_number(value: int | float) -> int | None:
+    # 'why': OverflowError raised for float('inf') and float('nan')
     try:
         return int(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
 
 

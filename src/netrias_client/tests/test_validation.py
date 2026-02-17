@@ -11,7 +11,7 @@ import pytest
 
 from netrias_client import NetriasClient
 from netrias_client._errors import FileValidationError, OutputLocationError
-from netrias_client._validators import HARD_MAX_CSV_BYTES
+from netrias_client._validators import HARD_MAX_CSV_BYTES, validate_column_samples
 
 
 def test_missing_source_file_raises(
@@ -32,6 +32,7 @@ def test_missing_source_file_raises(
         _ = configured_client.harmonize(
             source_path=missing_path,
             manifest=sample_manifest_path,
+            data_commons_key="ccdi",
             output_path=output_directory,
         )
 
@@ -57,6 +58,7 @@ def test_directory_source_path_rejected(
         _ = configured_client.harmonize(
             source_path=directory_path,
             manifest=sample_manifest_path,
+            data_commons_key="ccdi",
             output_path=output_directory,
         )
 
@@ -84,6 +86,7 @@ def test_invalid_source_extension_rejected(
         _ = configured_client.harmonize(
             source_path=wrong_extension,
             manifest=sample_manifest_path,
+            data_commons_key="ccdi",
             output_path=output_directory,
         )
 
@@ -116,6 +119,7 @@ def test_source_file_too_large(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
+            data_commons_key="ccdi",
             output_path=output_directory,
         )
 
@@ -143,6 +147,7 @@ def test_manifest_must_be_json(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=bad_manifest,
+            data_commons_key="ccdi",
             output_path=output_directory,
         )
 
@@ -173,6 +178,7 @@ def test_output_path_existing_file_versioned(
     result = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
+        data_commons_key="ccdi",
         output_path=output_directory,
     )
 
@@ -214,8 +220,25 @@ def test_output_directory_must_be_writable(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
+            data_commons_key="ccdi",
             output_path=target,
         )
 
     # Then an OutputLocationError is raised with a helpful message
     assert "not writable" in str(exc.value)
+
+
+def test_column_samples_are_deduplicated() -> None:
+    """Column samples are deduplicated while preserving order.
+
+    'why': duplicate values waste API bandwidth without improving recommendations
+    """
+
+    # Given column samples with duplicates
+    columns = {"col": ["a", "b", "a", "c", "b", "a"]}
+
+    # When validating the samples
+    result = validate_column_samples(columns)
+
+    # Then duplicates are removed and order is preserved
+    assert result["col"] == ["a", "b", "c"]

@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
-from typing import Final
+from typing import cast, Final
 
 from dotenv import dotenv_values
 
@@ -13,17 +12,21 @@ from .. import NetriasClient
 
 ROOT: Final[Path] = Path(__file__).resolve().parent
 ENV = dotenv_values(ROOT / ".env")
-csv_path = ROOT / "data" / "primary_diagnosis_1.csv"
+CSV_PATH: Final[Path] = ROOT / "data" / "primary_diagnosis_1.csv"
 
 
-api_key = ENV.get("NETRIAS_API_KEY")
+def main() -> None:
+    api_key = cast(str, ENV.get("NETRIAS_API_KEY"))
 
-client = NetriasClient()
-client.configure(api_key=cast(str, api_key))
+    client = NetriasClient(api_key=api_key)
 
-cde_mapping = client.discover_cde_mapping(source_csv=csv_path, target_schema="ccdi")
+    manifest = client.discover_mapping_from_csv(source_csv=CSV_PATH, target_schema="ccdi", target_version="v1")
 
-result = client.harmonize(source_path=csv_path, manifest=cde_mapping)
+    result = client.harmonize(source_path=CSV_PATH, manifest=manifest, data_commons_key="ccdi")
 
-print(f"Harmonize status: {result.status}")
-print(f"Harmonized file: {result.file_path}")
+    print(f"Harmonize status: {result.status}")
+    print(f"Harmonized file: {result.file_path}")
+
+
+if __name__ == "__main__":
+    main()
