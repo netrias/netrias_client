@@ -20,16 +20,14 @@ class Environment(str, Enum):
 
 _ENVIRONMENT_URLS: dict[Environment, dict[str, str]] = {
     Environment.PROD: {
-        "discovery": "https://api.netriasbdf.cloud",
+        "discovery": "https://6lvkljeyod.execute-api.us-east-2.amazonaws.com/prod",
         "harmonization": "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod",
         "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
-        "cde_recommend": "https://6lvkljeyod.execute-api.us-east-2.amazonaws.com/prod",
     },
     Environment.STAGING: {
-        "discovery": "https://api.netriasbdf.cloud",
+        "discovery": "https://s7a8ekw0yd.execute-api.us-east-2.amazonaws.com",
         "harmonization": "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging",
         "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
-        "cde_recommend": "https://s7a8ekw0yd.execute-api.us-east-2.amazonaws.com",
     },
 }
 
