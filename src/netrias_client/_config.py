@@ -4,20 +4,38 @@
 """
 from __future__ import annotations
 
-import os
+from enum import Enum
 from pathlib import Path
 
 from ._errors import ClientConfigurationError
 from ._models import DataModelStoreEndpoints, LogLevel, Settings
 
 
+class Environment(str, Enum):
+    """Target deployment environment for URL resolution."""
+
+    PROD = "prod"
+    STAGING = "staging"
+
+
+_ENVIRONMENT_URLS: dict[Environment, dict[str, str]] = {
+    Environment.PROD: {
+        "discovery": "https://api.netriasbdf.cloud",
+        "harmonization": "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod",
+        "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
+        "cde_recommend": "https://6lvkljeyod.execute-api.us-east-2.amazonaws.com/prod",
+    },
+    Environment.STAGING: {
+        "discovery": "https://api.netriasbdf.cloud",
+        "harmonization": "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging",
+        "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
+        "cde_recommend": "https://s7a8ekw0yd.execute-api.us-east-2.amazonaws.com",
+    },
+}
+
+# Legacy constants preserved for backward compatibility
 DISCOVERY_BASE_URL = "https://api.netriasbdf.cloud"
-# why: default to prod; set HARMONIZATION_URL env var to override (e.g. staging)
-HARMONIZATION_BASE_URL = os.environ.get(
-    "HARMONIZATION_URL",
-    "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod",
-)
-STAGING_HARMONIZATION_URL = "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging"
+HARMONIZATION_BASE_URL = "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod"
 DATA_MODEL_STORE_BASE_URL = "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default"
 # TODO: remove once API Gateway latency constraints are resolved.
 BYPASS_FUNCTION = "cde-recommend-prod"
@@ -38,8 +56,12 @@ def build_settings(
     discovery_url: str | None = None,
     harmonization_url: str | None = None,
     data_model_store_url: str | None = None,
+    environment: Environment | None = None,
 ) -> Settings:
-    """Return a validated Settings snapshot for the provided configuration."""
+    """Return a validated Settings snapshot for the provided configuration.
+
+    'why': environment param selects a URL set; individual URL params still override
+    """
 
     key = (api_key or "").strip()
     if not key:
@@ -51,9 +73,10 @@ def build_settings(
     async_api_enabled = _normalized_bool(discovery_use_async_api, default=False)
     directory = _validated_log_directory(log_directory)
 
-    resolved_discovery_url = discovery_url or DISCOVERY_BASE_URL
-    resolved_harmonization_url = harmonization_url or HARMONIZATION_BASE_URL
-    resolved_dms_url = data_model_store_url or DATA_MODEL_STORE_BASE_URL
+    env_urls = _ENVIRONMENT_URLS.get(environment) if environment else None
+    resolved_discovery_url = discovery_url or (env_urls or {}).get("discovery", DISCOVERY_BASE_URL)
+    resolved_harmonization_url = harmonization_url or (env_urls or {}).get("harmonization", HARMONIZATION_BASE_URL)
+    resolved_dms_url = data_model_store_url or (env_urls or {}).get("data_model_store", DATA_MODEL_STORE_BASE_URL)
 
     data_model_store_endpoints = DataModelStoreEndpoints(
         base_url=resolved_dms_url,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from ._client import NetriasClient
-from ._config import STAGING_HARMONIZATION_URL
+from ._config import Environment
 from ._logging import LOGGER_NAMESPACE
 from ._errors import (
     ClientConfigurationError,
@@ -20,9 +20,9 @@ from ._models import CDE, DataModel, DataModelVersion, HarmonizationResult, Perm
 
 __all__ = [
     # Client
+    "Environment",
     "LOGGER_NAMESPACE",
     "NetriasClient",
-    "STAGING_HARMONIZATION_URL",
     # Data models
     "DataModel",
     "DataModelVersion",
@@ -43,4 +43,4 @@ __all__ = [
     "__version__",
 ]
 
-__version__ = "0.2.2"
+__version__ = "0.3.0"

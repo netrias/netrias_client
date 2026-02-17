@@ -8,7 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from netrias_client import NetriasClient
+from netrias_client import Environment, NetriasClient
+from netrias_client._config import (
+    DATA_MODEL_STORE_BASE_URL,
+    DISCOVERY_BASE_URL,
+    HARMONIZATION_BASE_URL,
+    _ENVIRONMENT_URLS,
+    build_settings,
+)
 from netrias_client._errors import ClientConfigurationError
 
 
@@ -118,3 +125,78 @@ def test_configure_preserves_unspecified_settings() -> None:
     assert client.settings.timeout == 100.0
     assert client.settings.discovery_use_gateway_bypass is False
     assert client.settings.log_level.value == "DEBUG"
+
+
+# ---------------------------------------------------------------------------
+# TS-7: Environment URL resolution
+# ---------------------------------------------------------------------------
+
+
+def test_environment_prod_resolves_urls() -> None:
+    """Environment.PROD selects prod URL defaults.
+
+    Given: No individual URL overrides provided
+    When: build_settings() is called with environment=PROD
+    Then: URLs match the prod environment registry
+    """
+    # Given / When
+    settings = build_settings(api_key="key", environment=Environment.PROD)
+
+    # Then
+    prod = _ENVIRONMENT_URLS[Environment.PROD]
+    assert settings.harmonization_url == prod["harmonization"]
+    assert settings.discovery_url == prod["discovery"]
+    assert settings.data_model_store_endpoints is not None
+    assert settings.data_model_store_endpoints.base_url == prod["data_model_store"]
+
+
+def test_environment_staging_resolves_urls() -> None:
+    """Environment.STAGING selects staging URL defaults."""
+    settings = build_settings(api_key="key", environment=Environment.STAGING)
+
+    staging = _ENVIRONMENT_URLS[Environment.STAGING]
+    assert settings.harmonization_url == staging["harmonization"]
+    assert settings.discovery_url == staging["discovery"]
+
+
+def test_environment_url_overridden_by_explicit_param() -> None:
+    """Individual URL params take precedence over environment defaults."""
+    custom = "https://custom.example.com"
+    settings = build_settings(
+        api_key="key",
+        environment=Environment.STAGING,
+        harmonization_url=custom,
+    )
+
+    assert settings.harmonization_url == custom
+    # Other URLs still come from staging
+    staging = _ENVIRONMENT_URLS[Environment.STAGING]
+    assert settings.discovery_url == staging["discovery"]
+
+
+def test_client_init_with_environment() -> None:
+    """NetriasClient accepts environment param and resolves URLs accordingly."""
+    client = NetriasClient(api_key="key", environment=Environment.PROD)
+
+    prod = _ENVIRONMENT_URLS[Environment.PROD]
+    assert client.settings.harmonization_url == prod["harmonization"]
+
+
+# ---------------------------------------------------------------------------
+# TS-8: Backward compatibility — no environment param
+# ---------------------------------------------------------------------------
+
+
+def test_no_environment_preserves_defaults() -> None:
+    """No environment parameter preserves current default URLs (backward compatible).
+
+    Given: No environment parameter passed
+    When: build_settings() is called
+    Then: URLs match the legacy module-level constants (no behavior change)
+    """
+    settings = build_settings(api_key="key")
+
+    assert settings.discovery_url == DISCOVERY_BASE_URL
+    assert settings.harmonization_url == HARMONIZATION_BASE_URL
+    assert settings.data_model_store_endpoints is not None
+    assert settings.data_model_store_endpoints.base_url == DATA_MODEL_STORE_BASE_URL

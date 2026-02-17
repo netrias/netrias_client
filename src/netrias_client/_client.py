@@ -28,7 +28,7 @@ from ._discovery import (
     discover_cde_mapping as _discover_cde_mapping,
     discover_mapping_from_csv_async as _discover_mapping_from_csv_async,
 )
-from ._config import build_settings
+from ._config import Environment, build_settings
 from ._logging import configure_logger, LOGGER_NAMESPACE
 from ._models import CDE, DataModel, HarmonizationResult, ManifestPayload, OperationContext, PermissibleValue, Settings
 
@@ -42,19 +42,24 @@ class NetriasClient:
     to adjust non-default settings.
     """
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, environment: Environment | None = None) -> None:
         """Initialize the client with an API key and default settings.
 
         Parameters
         ----------
         api_key:
             Netrias API bearer token used for authentication.
+        environment:
+            Optional deployment environment for URL resolution.
+            When set, uses the environment's URL defaults. Individual
+            URL overrides via :meth:`configure` still take precedence.
         """
 
         self._lock: threading.Lock = threading.Lock()
         self._logger_name: str = f"{LOGGER_NAMESPACE}.instance.{uuid4().hex[:8]}"
+        self._environment: Environment | None = environment
 
-        settings = build_settings(api_key=api_key)
+        settings = build_settings(api_key=api_key, environment=environment)
         logger = configure_logger(
             self._logger_name,
             settings.log_level,
@@ -127,6 +132,7 @@ class NetriasClient:
             discovery_url=discovery_url if discovery_url is not None else current.discovery_url,
             harmonization_url=harmonization_url if harmonization_url is not None else current.harmonization_url,
             data_model_store_url=data_model_store_url if data_model_store_url is not None else current_dms_url,
+            environment=self._environment,
         )
         logger = configure_logger(
             self._logger_name,

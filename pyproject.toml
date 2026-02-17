@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "netrias_client"
-version = "0.2.3"
+version = "0.3.0"
 description = "Python client for the Netrias harmonization API"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -39,6 +39,7 @@ test = "pytest:main"
 check = "netrias_client.scripts:check"
 live_check = "netrias_client.scripts:live_check"
 release = "netrias_client.scripts:release"
+associate_api_key = "netrias_client.associate_api_key:associate_api_key"
 
 
 [project.optional-dependencies]
@@ -62,6 +63,7 @@ include = [
 exclude = [
     "src/netrias_client/tests/**",
     "src/netrias_client/live_test/**",
+    "src/netrias_client/associate_api_key.py",
     "architecture.md",
     "uv.lock",
     "*.env",
@@ -72,12 +74,16 @@ exclude = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/netrias_client"]
-exclude = ["src/netrias_client/tests/**"]
+exclude = [
+    "src/netrias_client/tests/**",
+    "src/netrias_client/associate_api_key.py",
+]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
     "src/netrias_client/tests/**",
     "src/netrias_client/live_test/**",
+    "src/netrias_client/associate_api_key.py",
     "architecture.md",
     "uv.lock",
     "*.env",
