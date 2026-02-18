@@ -23,7 +23,8 @@ def build_column_mapping_payload(
 
     active_logger = logger or logging.getLogger("netrias_client")
     strongest = strongest_targets(result, threshold=threshold, logger=active_logger)
-    return {"column_mappings": _column_entries(strongest)}
+    all_options = _all_options_by_column(result)
+    return {"column_mappings": _column_entries(strongest, all_options)}
 
 
 def strongest_targets(
@@ -45,14 +46,42 @@ def strongest_targets(
     return selected
 
 
-def _column_entries(strongest: Mapping[str, MappingRecommendationOption]) -> dict[str, dict[str, object]]:
+def _all_options_by_column(
+    result: MappingDiscoveryResult,
+) -> dict[str, tuple[MappingRecommendationOption, ...]]:
+    """Downstream consumers display ranked alternatives alongside the top pick."""
+    return {s.source_column: s.options for s in result.suggestions}
+
+
+def _column_entries(
+    strongest: Mapping[str, MappingRecommendationOption],
+    all_options: Mapping[str, tuple[MappingRecommendationOption, ...]],
+) -> dict[str, dict[str, object]]:
     entries: dict[str, dict[str, object]] = {}
     for source, option in strongest.items():
         entry: dict[str, object] = {"targetField": option.target}
         if option.target_cde_id is not None:
             entry["cde_id"] = option.target_cde_id
+        entry["alternatives"] = _format_alternatives(all_options.get(source, ()))
         entries[source] = entry
     return entries
+
+
+def _format_alternatives(
+    options: tuple[MappingRecommendationOption, ...],
+) -> list[dict[str, object]]:
+    """Sorted by confidence descending; includes all options regardless of threshold."""
+    sorted_options = sorted(options, key=lambda o: o.confidence or 0.0, reverse=True)
+    return [_format_alternative(opt) for opt in sorted_options if opt.target is not None]
+
+
+def _format_alternative(option: MappingRecommendationOption) -> dict[str, object]:
+    alt: dict[str, object] = {"target": option.target}
+    if option.confidence is not None:
+        alt["similarity"] = option.confidence
+    if option.target_cde_id is not None:
+        alt["cde_id"] = option.target_cde_id
+    return alt
 
 
 def _from_suggestions(
