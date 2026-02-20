@@ -59,6 +59,12 @@ def test_discover_mapping_from_csv_success(
     assert "a" in column_mappings
     assert column_mappings["a"]["targetField"] == "Sample.name"
 
+    # Alternatives include all suggestions sorted by confidence
+    alternatives = column_mappings["a"]["alternatives"]
+    assert len(alternatives) == 2
+    assert alternatives[0]["target"] == "Sample.name"
+    assert alternatives[1]["target"] == "Sample.display_name"
+
     request = capture.requests[0]
     assert request.headers.get("x-api-key") == "test-api-key"
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
@@ -238,6 +244,18 @@ def test_discover_mapping_from_csv_handles_new_results_dict_format(
     assert column_mappings["a"]["targetField"] == "age"
     assert "b" in column_mappings
     assert column_mappings["b"]["targetField"] == "sex"
+
+    # Then: alternatives should include all candidates sorted by confidence descending
+    alternatives_a = column_mappings["a"]["alternatives"]
+    assert len(alternatives_a) == 2
+    assert alternatives_a[0]["target"] == "age"
+    assert alternatives_a[0]["similarity"] == 1.0
+    assert alternatives_a[1]["target"] == "ageUnit"
+    assert alternatives_a[1]["similarity"] == 0.1
+
+    alternatives_b = column_mappings["b"]["alternatives"]
+    assert len(alternatives_b) == 1
+    assert alternatives_b[0]["target"] == "sex"
 
 
 def test_discover_mapping_from_csv_sends_top_k_parameter(
