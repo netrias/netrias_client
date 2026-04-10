@@ -18,6 +18,7 @@ dependencies = [
     "jaraco-context>=6.1.0",  # CVE-2026-23949
     "pygments>=2.20.0",  # CVE-2026-4539
     "requests>=2.33.0",  # CVE-2026-25645
+    "cryptography>=46.0.7",  # CVE-2026-26007, CVE-2026-34073, CVE-2026-39892
     "urllib3>=2.6.3",  # CVE-2025-66418, CVE-2025-66471, CVE-2026-21441
 ]
 license = { file = "LICENSE" }
