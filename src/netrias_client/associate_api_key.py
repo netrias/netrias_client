@@ -2,6 +2,109 @@
 
 Axis of change: CLI interface and boto3 wiring for key–plan association.
 Excluded from PyPI builds — dev/admin tool only.
+
+## Key Minting Guide
+
+"Key minting" is the process of creating an API Gateway key in AWS and then
+associating it with the correct usage plans so the key holder can call our APIs.
+
+### Prerequisites
+
+1. **AWS CLI credentials** configured for the Netrias account in us-east-2.
+   Run `aws sts get-caller-identity` to verify. You need permissions for
+   `apigateway:GET` and `apigateway:POST` actions.
+
+2. **uv** installed (https://docs.astral.sh/uv/).
+
+3. This repository cloned and dependencies synced (`uv sync`).
+
+### Step 1: Create the API key in AWS
+
+Go to the AWS Console → API Gateway → API Keys → Create API Key, or use the CLI:
+
+    aws apigateway create-api-key \
+        --name "DESCRIPTIVE_NAME" \
+        --description "Who/what this key is for" \
+        --enabled \
+        --region us-east-2
+
+The response includes an `"id"` field (e.g. `6nmgeolldd`). This is the key_id
+you pass to this script. Save it — you'll need it below.
+
+### Step 2: Identify the usage plans for your target environment
+
+Each API (discovery, harmonization, etc.) has a usage plan per environment.
+List them with:
+
+    aws apigateway get-usage-plans --region us-east-2
+
+Look for plans tagged with the environment you want. As of 2026-02-20:
+
+**Staging plans:**
+
+    Plan ID   Name                                  API service
+    --------  ------------------------------------  -------------------------
+    4pcdp7    harmonization-pipeline-staging-plan    Harmonization (staging)
+    8fr3fm    cde-recommend-staging                  Discovery / CDE recommend (staging)
+    h8daoc    cde-recommendation-staging-plan        Async discovery via Step Functions (staging)
+    772ahq    Usage plan                             Data Model Store (shared, both envs)
+
+**Production plans:**
+
+    Plan ID   Name                                  API service
+    --------  ------------------------------------  -------------------------
+    0mmoxo    harmonization-pipeline-prod-plan       Harmonization (prod)
+    2bywoq    cde-recommend-prod                     Discovery / CDE recommend (prod)
+    772ahq    Usage plan                             Data Model Store (shared, both envs)
+
+The Data Model Store plan (772ahq) is shared across staging and production.
+
+### Step 3: Dry-run the association
+
+Always dry-run first to verify what will happen:
+
+    uv run associate_api_key <key_id> <plan_id_1> <plan_id_2> ... --dry-run
+
+Example for staging:
+
+    uv run associate_api_key 6nmgeolldd 4pcdp7 8fr3fm h8daoc 772ahq --dry-run
+
+The output shows `[dry-run]` for each plan that would be associated, and
+`[skip]` for any plans the key already belongs to.
+
+### Step 4: Run for real
+
+Drop the --dry-run flag:
+
+    uv run associate_api_key 6nmgeolldd 4pcdp7 8fr3fm h8daoc 772ahq
+
+Each plan prints `[done]` on success.
+
+### Step 5: Distribute the key value
+
+The key *value* (the actual secret token callers use in the x-api-key header)
+is different from the key *id* you've been using above. Retrieve it with:
+
+    aws apigateway get-api-key --api-key <key_id> --include-value --region us-east-2
+
+The `"value"` field is the bearer token. Give this to the key holder. They use
+it as:
+
+    from netrias_client import NetriasClient
+    from netrias_client._config import Environment
+
+    client = NetriasClient(api_key="<the value>", environment=Environment.STAGING)
+
+### Troubleshooting
+
+- **"API key not found"**: Double-check the key_id and region. Keys are
+  regional — ours are all in us-east-2.
+- **"Access denied"**: Your AWS credentials lack apigateway permissions.
+  Ask for IAM access to the apigateway:* actions.
+- **Key exists but API calls return 403**: The key is not associated with the
+  right usage plan(s). Re-run this script with the missing plan IDs.
+- **"already associated"**: Harmless — the script skips plans the key already
+  belongs to.
 """
 from __future__ import annotations
 

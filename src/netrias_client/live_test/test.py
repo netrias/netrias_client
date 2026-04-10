@@ -8,6 +8,7 @@ from typing import cast, Final
 from dotenv import dotenv_values
 
 from .. import NetriasClient
+from .._config import Environment
 
 
 ROOT: Final[Path] = Path(__file__).resolve().parent
@@ -18,7 +19,7 @@ CSV_PATH: Final[Path] = ROOT / "data" / "primary_diagnosis_1.csv"
 def main() -> None:
     api_key = cast(str, ENV.get("NETRIAS_API_KEY"))
 
-    client = NetriasClient(api_key=api_key)
+    client = NetriasClient(api_key=api_key, environment=Environment.PROD)
 
     manifest = client.discover_mapping_from_csv(source_csv=CSV_PATH, target_schema="ccdi", target_version="v1")
 
