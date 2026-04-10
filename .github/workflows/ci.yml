@@ -24,3 +24,6 @@ jobs:
 
       - name: Build distribution
         run: uv build
+
+      - name: Audit dependencies
+        run: uv run pip-audit
