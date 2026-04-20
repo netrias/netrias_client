@@ -12,25 +12,17 @@ from dataclasses import replace
 from pathlib import Path
 from uuid import uuid4
 
-from ._core import harmonize as _harmonize
+from ._async_utils import run_sync
+from ._config import Environment, build_settings
 from ._core import harmonize_async as _harmonize_async
 from ._data_model_store import (
-    get_pv_set as _get_pv_set,
     get_pv_set_async as _get_pv_set_async,
-    list_cdes as _list_cdes,
     list_cdes_async as _list_cdes_async,
-    list_data_models as _list_data_models,
     list_data_models_async as _list_data_models_async,
-    list_pvs as _list_pvs,
-    list_pvs_async as _list_pvs_async,
 )
-from ._discovery import (
-    discover_cde_mapping as _discover_cde_mapping,
-    discover_mapping_from_csv_async as _discover_mapping_from_csv_async,
-)
-from ._config import Environment, build_settings
-from ._logging import configure_logger, LOGGER_NAMESPACE
-from ._models import CDE, DataModel, HarmonizationResult, ManifestPayload, OperationContext, PermissibleValue, Settings
+from ._discovery import discover_mapping_from_csv_async as _discover_mapping_from_csv_async
+from ._logging import LOGGER_NAMESPACE, configure_logger
+from ._models import CDE, DataModel, HarmonizationResult, ManifestPayload, OperationContext, Settings
 
 
 class NetriasClient:
@@ -43,17 +35,7 @@ class NetriasClient:
     """
 
     def __init__(self, api_key: str, environment: Environment | None = None) -> None:
-        """Initialize the client with an API key and default settings.
-
-        Parameters
-        ----------
-        api_key:
-            Netrias API bearer token used for authentication.
-        environment:
-            Optional deployment environment for URL resolution.
-            When set, uses the environment's URL defaults. Individual
-            URL overrides via :meth:`configure` still take precedence.
-        """
+        """Initialize the client with an API key and default settings."""
 
         self._lock: threading.Lock = threading.Lock()
         self._logger_name: str = f"{LOGGER_NAMESPACE}.instance.{uuid4().hex[:8]}"
@@ -79,35 +61,7 @@ class NetriasClient:
         harmonization_url: str | None = None,
         data_model_store_url: str | None = None,
     ) -> None:
-        """Update settings with new values.
-
-        Parameters
-        ----------
-        timeout:
-            Overall request timeout in seconds (default: 20 minutes).
-        log_level:
-            Logging verbosity: ``"CRITICAL"``, ``"ERROR"``, ``"WARNING"``,
-            ``"INFO"`` (default), or ``"DEBUG"``.
-        discovery_use_gateway_bypass:
-            When ``True`` calls the temporary Lambda bypass instead of
-            API Gateway. Default: ``False``.
-        discovery_use_async_api:
-            When ``True`` uses the async API Gateway + Step Functions pattern for
-            CDE discovery. Takes precedence over gateway bypass. Default: ``False``.
-        log_directory:
-            Optional directory where this client's log files should be written.
-            When omitted, logging remains stream-only.
-        discovery_url:
-            Override the discovery API base URL (for testing/staging).
-        harmonization_url:
-            Override the harmonization API base URL (for testing/staging).
-        data_model_store_url:
-            Override the Data Model Store API base URL (for testing/staging).
-
-        Calling this method replaces the active settings snapshot and
-        reconfigures the package logger. Unspecified parameters preserve
-        their current values rather than resetting to defaults.
-        """
+        """Update settings; unspecified parameters preserve their current value."""
 
         current = self._settings
         current_dms_url = (
@@ -152,46 +106,6 @@ class NetriasClient:
 
         return self._snapshot_settings()
 
-    def discover_mapping_from_csv(
-        self,
-        source_csv: Path,
-        target_schema: str,
-        target_version: str = "latest",
-        sample_limit: int = 25,
-        top_k: int = 3,
-        confidence_threshold: float | None = None,
-    ) -> ManifestPayload:
-        """Derive column samples from a CSV file then perform mapping discovery.
-
-        Parameters
-        ----------
-        source_csv:
-            Path to the CSV file containing source data.
-        target_schema:
-            Target schema key (e.g., 'ccdi', 'sage_rnaseq_template').
-        target_version:
-            Schema version (default: 'latest').
-        sample_limit:
-            Maximum number of rows to sample from the CSV.
-        top_k:
-            Number of top recommendations per column (default: 3).
-        confidence_threshold:
-            Minimum confidence score (0–1) for keeping recommendations.
-            Default: 0.8. Lower values capture more tentative matches.
-        """
-        ctx = self._snapshot_context()
-
-        return _discover_cde_mapping(
-            settings=ctx.settings,
-            source_csv=source_csv,
-            target_schema=target_schema,
-            target_version=target_version,
-            sample_limit=sample_limit,
-            logger=ctx.logger,
-            top_k=top_k,
-            confidence_threshold=confidence_threshold,
-        )
-
     async def discover_mapping_from_csv_async(
         self,
         source_csv: Path,
@@ -201,16 +115,9 @@ class NetriasClient:
         top_k: int = 3,
         confidence_threshold: float | None = None,
     ) -> ManifestPayload:
-        """Async variant of :meth:`discover_mapping_from_csv`.
+        """Derive column samples from a CSV file then perform mapping discovery."""
 
-        Parameters
-        ----------
-        confidence_threshold:
-            Minimum confidence score (0–1) for keeping recommendations.
-            Default: 0.8. Lower values capture more tentative matches.
-        """
         ctx = self._snapshot_context()
-
         return await _discover_mapping_from_csv_async(
             settings=ctx.settings,
             source_csv=source_csv,
@@ -222,45 +129,26 @@ class NetriasClient:
             confidence_threshold=confidence_threshold,
         )
 
-    def harmonize(
+    def discover_mapping_from_csv(
         self,
-        source_path: Path,
-        manifest: Path | Mapping[str, object],
-        data_commons_key: str,
-        output_path: Path | None = None,
-        manifest_output_path: Path | None = None,
-    ) -> HarmonizationResult:
-        """Execute the harmonization workflow synchronously and block.
+        source_csv: Path,
+        target_schema: str,
+        target_version: str = "latest",
+        sample_limit: int = 25,
+        top_k: int = 3,
+        confidence_threshold: float | None = None,
+    ) -> ManifestPayload:
+        """Sync delegate for :meth:`discover_mapping_from_csv_async`."""
 
-        The method accepts either a manifest mapping or a JSON file path and
-        writes the harmonized CSV to the resolved output location (which may be
-        auto-versioned). A :class:`HarmonizationResult` is always returned even on
-        failure, allowing callers to inspect status and description.
-
-        Parameters
-        ----------
-        source_path:
-            Path to the source CSV file.
-        manifest:
-            Column mapping manifest — either a file path or a dict.
-        data_commons_key:
-            Target data commons identifier (e.g., ``"ccdi"``).
-        output_path:
-            Optional output directory or file path.
-        manifest_output_path:
-            Optional path to persist the manifest JSON.
-        """
-
-        ctx = self._snapshot_context()
-
-        return _harmonize(
-            settings=ctx.settings,
-            source_path=source_path,
-            manifest=manifest,
-            data_commons_key=data_commons_key,
-            output_path=output_path,
-            manifest_output_path=manifest_output_path,
-            logger=ctx.logger,
+        return run_sync(
+            self.discover_mapping_from_csv_async(
+                source_csv=source_csv,
+                target_schema=target_schema,
+                target_version=target_version,
+                sample_limit=sample_limit,
+                top_k=top_k,
+                confidence_threshold=confidence_threshold,
+            )
         )
 
     async def harmonize_async(
@@ -271,24 +159,9 @@ class NetriasClient:
         output_path: Path | None = None,
         manifest_output_path: Path | None = None,
     ) -> HarmonizationResult:
-        """Async counterpart to :meth:`harmonize` with identical semantics.
-
-        Parameters
-        ----------
-        source_path:
-            Path to the source CSV file.
-        manifest:
-            Column mapping manifest — either a file path or a dict.
-        data_commons_key:
-            Target data commons identifier (e.g., ``"ccdi"``).
-        output_path:
-            Optional output directory or file path.
-        manifest_output_path:
-            Optional path to persist the manifest JSON.
-        """
+        """Execute the harmonization workflow asynchronously."""
 
         ctx = self._snapshot_context()
-
         return await _harmonize_async(
             settings=ctx.settings,
             source_path=source_path,
@@ -299,41 +172,24 @@ class NetriasClient:
             logger=ctx.logger,
         )
 
-    # ---- Data Model Store methods ----
-
-    def list_data_models(
+    def harmonize(
         self,
-        query: str | None = None,
-        include_versions: bool = False,
-        include_counts: bool = False,
-        limit: int | None = None,
-        offset: int = 0,
-    ) -> tuple[DataModel, ...]:
-        """Fetch data models from the Data Model Store.
+        source_path: Path,
+        manifest: Path | Mapping[str, object],
+        data_commons_key: str,
+        output_path: Path | None = None,
+        manifest_output_path: Path | None = None,
+    ) -> HarmonizationResult:
+        """Sync delegate for :meth:`harmonize_async`."""
 
-        Parameters
-        ----------
-        query:
-            Substring search on model key or name.
-        include_versions:
-            Include version metadata per model.
-        include_counts:
-            Include CDE/PV counts per version.
-        limit:
-            Maximum number of results to return.
-        offset:
-            Number of results to skip.
-        """
-
-        settings = self._snapshot_settings()
-
-        return _list_data_models(
-            settings=settings,
-            query=query,
-            include_versions=include_versions,
-            include_counts=include_counts,
-            limit=limit,
-            offset=offset,
+        return run_sync(
+            self.harmonize_async(
+                source_path=source_path,
+                manifest=manifest,
+                data_commons_key=data_commons_key,
+                output_path=output_path,
+                manifest_output_path=manifest_output_path,
+            )
         )
 
     async def list_data_models_async(
@@ -344,15 +200,56 @@ class NetriasClient:
         limit: int | None = None,
         offset: int = 0,
     ) -> tuple[DataModel, ...]:
-        """Async variant of :meth:`list_data_models`."""
+        """Fetch data models from the Data Model Store."""
 
         settings = self._snapshot_settings()
-
         return await _list_data_models_async(
             settings=settings,
             query=query,
             include_versions=include_versions,
             include_counts=include_counts,
+            limit=limit,
+            offset=offset,
+        )
+
+    def list_data_models(
+        self,
+        query: str | None = None,
+        include_versions: bool = False,
+        include_counts: bool = False,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> tuple[DataModel, ...]:
+        """Sync delegate for :meth:`list_data_models_async`."""
+
+        return run_sync(
+            self.list_data_models_async(
+                query=query,
+                include_versions=include_versions,
+                include_counts=include_counts,
+                limit=limit,
+                offset=offset,
+            )
+        )
+
+    async def list_cdes_async(
+        self,
+        model_key: str,
+        version: str,
+        include_description: bool = False,
+        query: str | None = None,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> tuple[CDE, ...]:
+        """Fetch CDEs for a data model version from the Data Model Store."""
+
+        settings = self._snapshot_settings()
+        return await _list_cdes_async(
+            settings=settings,
+            model_key=model_key,
+            version=version,
+            include_description=include_description,
+            query=query,
             limit=limit,
             offset=offset,
         )
@@ -366,158 +263,17 @@ class NetriasClient:
         limit: int | None = None,
         offset: int = 0,
     ) -> tuple[CDE, ...]:
-        """Fetch CDEs for a data model version from the Data Model Store.
+        """Sync delegate for :meth:`list_cdes_async`."""
 
-        Parameters
-        ----------
-        model_key:
-            Data model key (e.g., 'ccdi').
-        version:
-            Version label (e.g., 'v1').
-        include_description:
-            Include CDE descriptions.
-        query:
-            Substring search on cde_key.
-        limit:
-            Maximum number of results to return.
-        offset:
-            Number of results to skip.
-        """
-
-        settings = self._snapshot_settings()
-
-        return _list_cdes(
-            settings=settings,
-            model_key=model_key,
-            version=version,
-            include_description=include_description,
-            query=query,
-            limit=limit,
-            offset=offset,
-        )
-
-    async def list_cdes_async(
-        self,
-        model_key: str,
-        version: str,
-        include_description: bool = False,
-        query: str | None = None,
-        limit: int | None = None,
-        offset: int = 0,
-    ) -> tuple[CDE, ...]:
-        """Async variant of :meth:`list_cdes`."""
-
-        settings = self._snapshot_settings()
-
-        return await _list_cdes_async(
-            settings=settings,
-            model_key=model_key,
-            version=version,
-            include_description=include_description,
-            query=query,
-            limit=limit,
-            offset=offset,
-        )
-
-    def list_pvs(
-        self,
-        model_key: str,
-        version: str,
-        cde_key: str,
-        include_inactive: bool = False,
-        query: str | None = None,
-        limit: int | None = None,
-        offset: int = 0,
-    ) -> tuple[PermissibleValue, ...]:
-        """Fetch permissible values for a CDE from the Data Model Store.
-
-        Parameters
-        ----------
-        model_key:
-            Data model key (e.g., 'ccdi').
-        version:
-            Version label (e.g., 'v1').
-        cde_key:
-            CDE key (e.g., 'sex_at_birth').
-        include_inactive:
-            Include inactive permissible values.
-        query:
-            Substring search on PV value.
-        limit:
-            Maximum number of results to return.
-        offset:
-            Number of results to skip.
-        """
-
-        settings = self._snapshot_settings()
-
-        return _list_pvs(
-            settings=settings,
-            model_key=model_key,
-            version=version,
-            cde_key=cde_key,
-            include_inactive=include_inactive,
-            query=query,
-            limit=limit,
-            offset=offset,
-        )
-
-    async def list_pvs_async(
-        self,
-        model_key: str,
-        version: str,
-        cde_key: str,
-        include_inactive: bool = False,
-        query: str | None = None,
-        limit: int | None = None,
-        offset: int = 0,
-    ) -> tuple[PermissibleValue, ...]:
-        """Async variant of :meth:`list_pvs`."""
-
-        settings = self._snapshot_settings()
-
-        return await _list_pvs_async(
-            settings=settings,
-            model_key=model_key,
-            version=version,
-            cde_key=cde_key,
-            include_inactive=include_inactive,
-            query=query,
-            limit=limit,
-            offset=offset,
-        )
-
-    def get_pv_set(
-        self,
-        model_key: str,
-        version: str,
-        cde_key: str,
-        include_inactive: bool = False,
-    ) -> frozenset[str]:
-        """Return all permissible values for a CDE as a set for O(1) membership testing.
-
-        'why': validation use case requires efficient lookup; auto-paginates all results
-
-        Parameters
-        ----------
-        model_key:
-            Data model key (e.g., 'ccdi').
-        version:
-            Version label (e.g., 'v1').
-        cde_key:
-            CDE key (e.g., 'sex_at_birth').
-        include_inactive:
-            Include inactive permissible values.
-        """
-
-        settings = self._snapshot_settings()
-
-        return _get_pv_set(
-            settings=settings,
-            model_key=model_key,
-            version=version,
-            cde_key=cde_key,
-            include_inactive=include_inactive,
+        return run_sync(
+            self.list_cdes_async(
+                model_key=model_key,
+                version=version,
+                include_description=include_description,
+                query=query,
+                limit=limit,
+                offset=offset,
+            )
         )
 
     async def get_pv_set_async(
@@ -527,10 +283,9 @@ class NetriasClient:
         cde_key: str,
         include_inactive: bool = False,
     ) -> frozenset[str]:
-        """Async variant of :meth:`get_pv_set`."""
+        """Return permissible values for a CDE as a frozenset for O(1) membership."""
 
         settings = self._snapshot_settings()
-
         return await _get_pv_set_async(
             settings=settings,
             model_key=model_key,
@@ -539,56 +294,25 @@ class NetriasClient:
             include_inactive=include_inactive,
         )
 
-    def validate_value(
+    def get_pv_set(
         self,
-        value: str,
         model_key: str,
         version: str,
         cde_key: str,
-    ) -> bool:
-        """Check if a value is in the permissible values for a CDE.
+        include_inactive: bool = False,
+    ) -> frozenset[str]:
+        """Sync delegate for :meth:`get_pv_set_async`."""
 
-        'why': convenience wrapper for the common validation use case
-
-        NOTE: This method makes a network call to fetch all PVs on each invocation.
-        For validating multiple values against the same CDE, call :meth:`get_pv_set`
-        once and reuse the returned frozenset for better performance.
-
-        Parameters
-        ----------
-        value:
-            The value to validate.
-        model_key:
-            Data model key (e.g., 'ccdi').
-        version:
-            Version label (e.g., 'v1').
-        cde_key:
-            CDE key (e.g., 'sex_at_birth').
-        """
-
-        pv_set = self.get_pv_set(model_key, version, cde_key)
-        return value in pv_set
-
-    async def validate_value_async(
-        self,
-        value: str,
-        model_key: str,
-        version: str,
-        cde_key: str,
-    ) -> bool:
-        """Async variant of :meth:`validate_value`.
-
-        NOTE: This method makes a network call to fetch all PVs on each invocation.
-        For validating multiple values against the same CDE, call :meth:`get_pv_set_async`
-        once and reuse the returned frozenset for better performance.
-        """
-
-        pv_set = await self.get_pv_set_async(model_key, version, cde_key)
-        return value in pv_set
+        return run_sync(
+            self.get_pv_set_async(
+                model_key=model_key,
+                version=version,
+                cde_key=cde_key,
+                include_inactive=include_inactive,
+            )
+        )
 
     def _snapshot_settings(self) -> Settings:
-        """Return a copy of the current settings."""
-
         with self._lock:
             return replace(self._settings)
 

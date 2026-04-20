@@ -1,21 +1,29 @@
 """Test mapping discovery workflows.
 
-'why': guarantee recommendation calls integrate cleanly and surface results
+'why': guarantee recommendation calls integrate cleanly and preserve positional parity
 """
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import cast
 
 import httpx
 import pytest
 
-from pathlib import Path
-
 from netrias_client import NetriasClient
 from netrias_client._errors import MappingDiscoveryError, NetriasAPIUnavailable
 
 from ._utils import install_mock_transport, json_failure, json_success, transport_error
+
+
+def _array_payload(results: list[dict[str, object]]) -> dict[str, object]:
+    """Build an array-format discovery response body."""
+
+    return {
+        "statusCode": 200,
+        "body": json.dumps({"results": results}),
+    }
 
 
 def test_discover_mapping_from_csv_success(
@@ -25,27 +33,19 @@ def test_discover_mapping_from_csv_success(
 ) -> None:
     """Return structured recommendations when the API succeeds."""
 
-    payload = {
-        "statusCode": 200,
-        "body": json.dumps(
+    payload = _array_payload(
+        [
             {
-                "target_schema": "ccdi",
-                "recommendations": [
-                    {
-                        "column": "a",
-                        "suggestions": [
-                            {"target": "Sample.name", "confidence": 0.92},
-                            {"target": "Sample.display_name", "confidence": 0.5},
-                        ],
-                    },
-                    {
-                        "column": "b",
-                        "suggestions": [],
-                    },
+                "name": "a",
+                "matches": [
+                    {"target": "Sample.name", "similarity": 0.92},
+                    {"target": "Sample.display_name", "similarity": 0.5},
                 ],
-            }
-        ),
-    }
+            },
+            {"name": "b", "matches": []},
+            {"name": "c", "matches": []},
+        ]
+    )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
@@ -55,52 +55,27 @@ def test_discover_mapping_from_csv_success(
         target_version="v1",
     )
 
-    column_mappings = manifest.get("column_mappings", {})
-    assert "a" in column_mappings
-    assert column_mappings["a"]["targetField"] == "Sample.name"
+    column_mappings = manifest["column_mappings"]
+    assert isinstance(column_mappings, list)
+    assert len(column_mappings) == 3
+    first = column_mappings[0]
+    assert first is not None
+    assert first["name"] == "a"
+    assert first["targetField"] == "Sample.name"
 
-    # Alternatives include all suggestions sorted by confidence
-    alternatives = column_mappings["a"]["alternatives"]
+    alternatives = first["alternatives"]
     assert len(alternatives) == 2
     assert alternatives[0]["target"] == "Sample.name"
     assert alternatives[1]["target"] == "Sample.display_name"
+
+    assert column_mappings[1] is None
+    assert column_mappings[2] is None
 
     request = capture.requests[0]
     assert request.headers.get("x-api-key") == "test-api-key"
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     assert content.get("target_schema") == "ccdi"
     assert content.get("target_version") == "v1"
-
-
-def test_discover_mapping_from_csv_parses_dict_body(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """Handle responses that already present body as a JSON object."""
-
-    payload = {
-        "schema": "sage_rnaseq",
-        "columns": [
-            {
-                "source_column": "a",
-                "targets": [
-                    {"field": "biospecimen.sample_id", "score": 0.88},
-                ],
-            }
-        ],
-    }
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = configured_client.discover_mapping_from_csv(
-        source_csv=sample_csv_path,
-        target_schema="sage_rnaseq",
-        target_version="v1",
-    )
-
-    column_mappings = manifest.get("column_mappings", {})
-    assert column_mappings["a"]["targetField"] == "biospecimen.sample_id"
 
 
 def test_discover_mapping_from_csv_samples_csv_data(
@@ -110,9 +85,13 @@ def test_discover_mapping_from_csv_samples_csv_data(
 ) -> None:
     """CSV convenience wrapper derives samples and forwards to discovery API."""
 
-    payload = {
-        "body": json.dumps({"target_schema": "ccdi", "recommendations": []}),
-    }
+    payload = _array_payload(
+        [
+            {"name": "a", "matches": []},
+            {"name": "b", "matches": []},
+            {"name": "c", "matches": []},
+        ]
+    )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
@@ -125,9 +104,10 @@ def test_discover_mapping_from_csv_samples_csv_data(
 
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    data_section = cast(dict[str, object], content.get("data", {}))
-    assert any(column in data_section for column in ("a", "b", "c"))
-    assert isinstance(manifest.get("column_mappings"), dict)
+    columns_section = cast(list[dict[str, object]], content.get("columns", []))
+    column_names = [entry.get("name") for entry in columns_section]
+    assert column_names == ["a", "b", "c"]
+    assert isinstance(manifest["column_mappings"], list)
 
 
 def test_discover_mapping_from_csv_handles_api_error(
@@ -176,17 +156,13 @@ async def test_discover_mapping_from_csv_async(
 ) -> None:
     """Async variant yields the same structure as the sync function."""
 
-    payload = {
-        "statusCode": 200,
-        "body": json.dumps(
-            {
-                "target_schema": "ccdi",
-                "recommendations": [
-                    {"column": "a", "suggestions": []},
-                ],
-            }
-        ),
-    }
+    payload = _array_payload(
+        [
+            {"name": "a", "matches": []},
+            {"name": "b", "matches": []},
+            {"name": "c", "matches": []},
+        ]
+    )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
@@ -195,67 +171,7 @@ async def test_discover_mapping_from_csv_async(
         target_schema="ccdi",
         target_version="v1",
     )
-    column_mappings = manifest.get("column_mappings", {})
-    assert isinstance(column_mappings, dict)
-
-
-def test_discover_mapping_from_csv_handles_new_results_dict_format(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """Handle the new dict-keyed results format with similarity and target_cde_id.
-
-    'why': the updated CDE recommendation API returns results keyed by column name
-    """
-
-    payload = {
-        "statusCode": 200,
-        "body": json.dumps(
-            {
-                "target_schema": "gc",
-                "target_version": "v1",
-                "target_columns": 40,
-                "target_rows": 188,
-                "results": {
-                    "a": [
-                        {"target": "age", "target_cde_id": 900, "similarity": 1.0},
-                        {"target": "ageUnit", "target_cde_id": 904, "similarity": 0.1},
-                    ],
-                    "b": [
-                        {"target": "sex", "target_cde_id": 901, "similarity": 0.95},
-                    ],
-                },
-            }
-        ),
-    }
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = configured_client.discover_mapping_from_csv(
-        source_csv=sample_csv_path,
-        target_schema="gc",
-        target_version="v1",
-    )
-
-    # Then: the manifest should have mapped columns based on similarity threshold
-    column_mappings = manifest.get("column_mappings", {})
-    assert "a" in column_mappings
-    assert column_mappings["a"]["targetField"] == "age"
-    assert "b" in column_mappings
-    assert column_mappings["b"]["targetField"] == "sex"
-
-    # Then: alternatives should include all candidates sorted by confidence descending
-    alternatives_a = column_mappings["a"]["alternatives"]
-    assert len(alternatives_a) == 2
-    assert alternatives_a[0]["target"] == "age"
-    assert alternatives_a[0]["similarity"] == 1.0
-    assert alternatives_a[1]["target"] == "ageUnit"
-    assert alternatives_a[1]["similarity"] == 0.1
-
-    alternatives_b = column_mappings["b"]["alternatives"]
-    assert len(alternatives_b) == 1
-    assert alternatives_b[0]["target"] == "sex"
+    assert isinstance(manifest["column_mappings"], list)
 
 
 def test_discover_mapping_from_csv_sends_top_k_parameter(
@@ -263,14 +179,15 @@ def test_discover_mapping_from_csv_sends_top_k_parameter(
     monkeypatch: pytest.MonkeyPatch,
     sample_csv_path: Path,
 ) -> None:
-    """Verify top_k parameter is included in the request payload.
+    """Verify top_k parameter is included in the request payload."""
 
-    'why': callers need to limit recommendation count per column
-    """
-
-    payload = {
-        "body": json.dumps({"target_schema": "gc", "recommendations": []}),
-    }
+    payload = _array_payload(
+        [
+            {"name": "a", "matches": []},
+            {"name": "b", "matches": []},
+            {"name": "c", "matches": []},
+        ]
+    )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
@@ -281,7 +198,6 @@ def test_discover_mapping_from_csv_sends_top_k_parameter(
         top_k=5,
     )
 
-    # Then: the request body should include top_k
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     assert content.get("top_k") == 5
@@ -293,14 +209,15 @@ async def test_discover_mapping_from_csv_async_includes_version(
     monkeypatch: pytest.MonkeyPatch,
     sample_csv_path: Path,
 ) -> None:
-    """Async CSV discovery wrapper includes target_version in request.
+    """Async CSV discovery wrapper includes target_version in request."""
 
-    'why': ensure async variant sends version to discovery API
-    """
-
-    payload = {
-        "body": json.dumps({"target_schema": "ccdi", "recommendations": []}),
-    }
+    payload = _array_payload(
+        [
+            {"name": "a", "matches": []},
+            {"name": "b", "matches": []},
+            {"name": "c", "matches": []},
+        ]
+    )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
@@ -311,7 +228,184 @@ async def test_discover_mapping_from_csv_async_includes_version(
         sample_limit=1,
     )
 
-    assert isinstance(manifest.get("column_mappings"), dict)
+    assert isinstance(manifest["column_mappings"], list)
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     assert content.get("target_version") == "v1"
+
+
+def test_discover_mapping_handles_array_results_format(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_csv_path: Path,
+) -> None:
+    """Handle the canonical array-format results from the lambda."""
+
+    payload = _array_payload(
+        [
+            {
+                "name": "a",
+                "matches": [
+                    {"target": "age", "target_cde_id": 900, "similarity": 1.0},
+                    {"target": "ageUnit", "target_cde_id": 904, "similarity": 0.1},
+                ],
+            },
+            {
+                "name": "b",
+                "matches": [
+                    {"target": "sex", "target_cde_id": 901, "similarity": 0.95},
+                ],
+            },
+            {"name": "c", "matches": []},
+        ]
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    manifest = configured_client.discover_mapping_from_csv(
+        source_csv=sample_csv_path,
+        target_schema="gc",
+        target_version="v1",
+    )
+
+    column_mappings = manifest["column_mappings"]
+    assert len(column_mappings) == 3
+    first = column_mappings[0]
+    assert first is not None
+    assert first["name"] == "a"
+    assert first["targetField"] == "age"
+
+    second = column_mappings[1]
+    assert second is not None
+    assert second["name"] == "b"
+    assert second["targetField"] == "sex"
+
+    assert column_mappings[2] is None
+
+
+# ---- Positional parity tests (A/B/C) ----
+
+
+def test_positional_parity_all_columns_matched(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_csv_path: Path,
+) -> None:
+    """Trivial case: all three CSV columns match above threshold — length equals CSV column count."""
+
+    # Given a CSV with 3 columns, all with non-empty samples, and a response that
+    # covers all three. Before invocation no prior manifest exists.
+    assert sample_csv_path.read_text(encoding="utf-8").splitlines()[0] == "a,b,c"
+
+    payload = _array_payload(
+        [
+            {"name": "a", "matches": [{"target": "A_target", "similarity": 0.99}]},
+            {"name": "b", "matches": [{"target": "B_target", "similarity": 0.95}]},
+            {"name": "c", "matches": [{"target": "C_target", "similarity": 0.9}]},
+        ]
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    # When discover_mapping_from_csv runs
+    manifest = configured_client.discover_mapping_from_csv(
+        source_csv=sample_csv_path,
+        target_schema="ccdi",
+        target_version="v1",
+    )
+
+    # Then request length == 3, manifest length == 3, every entry is non-None with matching name
+    request = capture.requests[0]
+    content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
+    columns_section = cast(list[dict[str, object]], content.get("columns", []))
+    assert len(columns_section) == 3
+    assert [entry["name"] for entry in columns_section] == ["a", "b", "c"]
+
+    column_mappings = manifest["column_mappings"]
+    assert len(column_mappings) == 3
+    for index, header in enumerate(("a", "b", "c")):
+        entry = column_mappings[index]
+        assert entry is not None
+        assert entry["name"] == header
+
+
+def test_positional_parity_empty_column_preserved_and_mismatch_detected(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Empty-value columns are sent with values=[]; response mismatch fails fast."""
+
+    # Given a CSV where column 'b' has all-empty values
+    csv_path = tmp_path / "empty_middle.csv"
+    _ = csv_path.write_text("a,b,c\n1,,3\n4,,6\n", encoding="utf-8")
+
+    # Negative assertion: before discovery, column b has zero non-empty samples
+    lines = csv_path.read_text(encoding="utf-8").splitlines()
+    data_rows = [line.split(",") for line in lines[1:]]
+    assert sum(1 for row in data_rows if row[1].strip()) == 0
+
+    # Backend returns only 2 results (drops column 'b') — must raise
+    payload = _array_payload(
+        [
+            {"name": "a", "matches": [{"target": "A", "similarity": 0.9}]},
+            {"name": "c", "matches": [{"target": "C", "similarity": 0.9}]},
+        ]
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    # When discovery runs, it must raise rather than silently shift column_ids
+    with pytest.raises(MappingDiscoveryError) as exc:
+        _ = configured_client.discover_mapping_from_csv(
+            source_csv=csv_path,
+            target_schema="ccdi",
+            target_version="v1",
+        )
+
+    message = str(exc.value)
+    assert "expected 3" in message
+    assert "found 2" in message
+
+    # And the outbound request preserved the empty-value column at position 1
+    request = capture.requests[0]
+    content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
+    columns_section = cast(list[dict[str, object]], content.get("columns", []))
+    assert len(columns_section) == 3
+    assert columns_section[1] == {"name": "b", "values": []}
+
+
+def test_positional_parity_below_threshold_becomes_none(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_csv_path: Path,
+) -> None:
+    """Below-threshold columns keep their position with None; manifest length equals CSV column count."""
+
+    # Given a CSV with 3 columns where column 'b' has a top similarity of 0.2
+    # against a threshold of 0.8. Before: backend returns a result for 'b' but
+    # no option meets the threshold.
+    payload = _array_payload(
+        [
+            {"name": "a", "matches": [{"target": "A", "similarity": 0.95}]},
+            {"name": "b", "matches": [{"target": "weak", "similarity": 0.2}]},
+            {"name": "c", "matches": [{"target": "C", "similarity": 0.9}]},
+        ]
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    # When discovery runs with a strict threshold
+    manifest = configured_client.discover_mapping_from_csv(
+        source_csv=sample_csv_path,
+        target_schema="ccdi",
+        target_version="v1",
+        confidence_threshold=0.8,
+    )
+
+    # Then column_mappings has length 3 and the below-threshold slot is None
+    column_mappings = manifest["column_mappings"]
+    assert len(column_mappings) == 3
+    assert column_mappings[0] is not None
+    assert column_mappings[1] is None
+    assert column_mappings[2] is not None

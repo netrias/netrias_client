@@ -9,9 +9,37 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Literal, TypeAlias, override
+from typing import Literal, NotRequired, TypedDict, override
 
-ManifestPayload: TypeAlias = dict[str, dict[str, dict[str, object]]]
+
+class ColumnSamples(TypedDict):
+    """Outbound per-column request payload — one entry per CSV header position."""
+
+    name: str
+    values: list[str]
+
+
+class AlternativeEntry(TypedDict):
+    """A ranked candidate target for a source column, sorted by similarity."""
+
+    target: str
+    similarity: NotRequired[float]
+    cde_id: NotRequired[int]
+
+
+class ColumnMappingRecord(TypedDict):
+    """Manifest entry for a column matched above the confidence threshold."""
+
+    name: str
+    targetField: str
+    cde_id: NotRequired[int]
+    alternatives: list[AlternativeEntry]
+
+
+class ManifestPayload(TypedDict):
+    """JSON-on-disk manifest shape; list position encodes CSV column_id."""
+
+    column_mappings: list[ColumnMappingRecord | None]
 
 
 class LogLevel(str, Enum):
@@ -91,6 +119,7 @@ class MappingSuggestion:
     source_column: str
     options: tuple[MappingRecommendationOption, ...]
     raw: Mapping[str, object] | None = None
+    column_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -139,13 +168,3 @@ class CDE:
     cde_id: int
     cde_version_id: int
     description: str | None = None
-
-
-@dataclass(frozen=True)
-class PermissibleValue:
-    """Represent a permissible value for a CDE."""
-
-    pv_id: int
-    value: str
-    description: str | None
-    is_active: bool

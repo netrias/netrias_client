@@ -16,7 +16,16 @@ from ._errors import (
     NetriasClientError,
     OutputLocationError,
 )
-from ._models import CDE, DataModel, DataModelVersion, HarmonizationResult, PermissibleValue
+from ._models import (
+    CDE,
+    AlternativeEntry,
+    ColumnMappingRecord,
+    ColumnSamples,
+    DataModel,
+    DataModelVersion,
+    HarmonizationResult,
+    ManifestPayload,
+)
 
 __all__ = [
     # Client
@@ -27,8 +36,12 @@ __all__ = [
     "DataModel",
     "DataModelVersion",
     "CDE",
-    "PermissibleValue",
     "HarmonizationResult",
+    # Manifest wire shapes
+    "AlternativeEntry",
+    "ColumnMappingRecord",
+    "ColumnSamples",
+    "ManifestPayload",
     # Exceptions
     "NetriasClientError",
     "ClientConfigurationError",

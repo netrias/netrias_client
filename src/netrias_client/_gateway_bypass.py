@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Callable, IO, Protocol, cast
 
 from ._errors import GatewayBypassError
@@ -38,7 +38,7 @@ class _SessionProtocol(Protocol):
 def invoke_cde_recommendation_alias(
     target_schema: str,
     target_version: str,
-    columns: Mapping[str, Sequence[object]],
+    columns: list[dict[str, object]],
     function_name: str = "cde-recommendation",
     alias: str | None = None,
     region_name: str = "us-east-2",
@@ -57,11 +57,10 @@ def invoke_cde_recommendation_alias(
         profile_name=profile_name,
         timeout_seconds=timeout_seconds,
     )
-    normalized_columns = _normalized_columns(columns)
     body_dict: dict[str, object] = {
         "target_schema": target_schema,
         "target_version": target_version,
-        "data": normalized_columns,
+        "columns": columns,
     }
     if top_k is not None:
         body_dict["top_k"] = top_k
@@ -229,29 +228,3 @@ def _extract_error_message(body: Mapping[str, object]) -> str:
     return "unknown error"
 
 
-def _normalized_columns(columns: Mapping[str, Sequence[object]]) -> dict[str, list[str]]:
-    normalized: dict[str, list[str]] = {}
-    for key, values in columns.items():
-        name = _normalized_column_key(key)
-        if name is None:
-            continue
-        cleaned = _normalized_column_values(values)
-        if cleaned:
-            normalized[name] = cleaned
-    return normalized
-
-
-def _normalized_column_key(raw: str) -> str | None:
-    text = raw.strip()
-    return text or None
-
-
-def _normalized_column_values(values: Sequence[object]) -> list[str]:
-    return [text for text in (_normalized_column_value(value) for value in values) if text]
-
-
-def _normalized_column_value(value: object) -> str | None:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None

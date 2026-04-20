@@ -7,7 +7,7 @@ from __future__ import annotations
 import csv
 import gzip
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Final
 from urllib.parse import quote
@@ -44,9 +44,9 @@ def build_harmonize_payload(
         },
     }
 
-    mapping = normalize_manifest_mapping(manifest)
-    if mapping:
-        envelope["mapping"] = mapping
+    column_mappings = normalize_manifest_mapping(manifest)
+    if column_mappings:
+        envelope["column_mappings"] = column_mappings
 
     raw = json.dumps(envelope, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     compressed = gzip.compress(raw)
@@ -93,7 +93,7 @@ async def request_mapping_discovery(
     timeout: float,
     schema: str,
     version: str,
-    columns: Mapping[str, Sequence[str]],
+    columns: list[dict[str, object]],
     top_k: int | None = None,
 ) -> httpx.Response:
     """Submit column samples for mapping recommendations."""
@@ -106,7 +106,7 @@ async def request_mapping_discovery(
     body: dict[str, object] = {
         "target_schema": schema,
         "target_version": version,
-        "data": columns,
+        "columns": columns,
     }
     if top_k is not None:
         body["top_k"] = top_k

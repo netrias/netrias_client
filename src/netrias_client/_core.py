@@ -14,7 +14,6 @@ from typing import Final, TypeAlias, cast
 
 import httpx
 
-from ._async_utils import run_sync
 from ._errors import HarmonizationJobError, NetriasAPIUnavailable
 from ._http import build_harmonize_payload, fetch_job_status, submit_harmonize_job
 from ._io import stream_download_to_file
@@ -33,7 +32,7 @@ _MESSAGE_KEYS: Final[tuple[str, ...]] = (
 )
 
 
-async def _harmonize_async(
+async def harmonize_async(
     settings: Settings,
     source_path: Path,
     manifest: Path | Mapping[str, object],
@@ -93,55 +92,6 @@ async def _harmonize_async(
             status_label,
             elapsed,
         )
-
-
-def harmonize(
-    settings: Settings,
-    source_path: Path,
-    manifest: Path | Mapping[str, object],
-    data_commons_key: str,
-    output_path: Path | None = None,
-    manifest_output_path: Path | None = None,
-    logger: logging.Logger | None = None,
-) -> HarmonizationResult:
-    """Sync wrapper: run the async harmonize workflow and block until completion.
-
-    'why': use run_sync to handle existing event loops (Jupyter, FastAPI)
-    """
-
-    return run_sync(
-        _harmonize_async(
-            settings=settings,
-            source_path=source_path,
-            manifest=manifest,
-            data_commons_key=data_commons_key,
-            output_path=output_path,
-            manifest_output_path=manifest_output_path,
-            logger=logger,
-        )
-    )
-
-
-async def harmonize_async(
-    settings: Settings,
-    source_path: Path,
-    manifest: Path | Mapping[str, object],
-    data_commons_key: str,
-    output_path: Path | None = None,
-    manifest_output_path: Path | None = None,
-    logger: logging.Logger | None = None,
-) -> HarmonizationResult:
-    """Async counterpart to `harmonize` with identical validation and result semantics."""
-
-    return await _harmonize_async(
-        settings=settings,
-        source_path=source_path,
-        manifest=manifest,
-        data_commons_key=data_commons_key,
-        output_path=output_path,
-        manifest_output_path=manifest_output_path,
-        logger=logger,
-    )
 
 
 def _resolve_manifest(

@@ -7,14 +7,14 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Mapping
+from typing import cast
 
 import httpx
 
-from ._async_utils import run_sync
 from ._errors import DataModelStoreError, NetriasAPIUnavailable
 from ._http import fetch_cdes, fetch_data_models, fetch_pvs
 from ._logging import LOGGER_NAMESPACE
-from ._models import CDE, DataModel, DataModelStoreEndpoints, DataModelVersion, PermissibleValue, Settings
+from ._models import CDE, DataModel, DataModelStoreEndpoints, DataModelVersion, Settings
 
 _logger = logging.getLogger(LOGGER_NAMESPACE)
 
@@ -102,45 +102,6 @@ async def list_cdes_async(
     return _parse_cdes(body)
 
 
-async def list_pvs_async(
-    settings: Settings,
-    model_key: str,
-    version: str,
-    cde_key: str,
-    include_inactive: bool = False,
-    query: str | None = None,
-    limit: int | None = None,
-    offset: int = 0,
-) -> tuple[PermissibleValue, ...]:
-    """Fetch permissible values for a CDE from the Data Model Store.
-
-    'why': expose allowed values for validation
-    """
-
-    endpoints = _require_endpoints(settings)
-
-    try:
-        response = await fetch_pvs(
-            base_url=endpoints.base_url,
-            api_key=settings.api_key,
-            timeout=settings.timeout,
-            model_key=model_key,
-            version=version,
-            cde_key=cde_key,
-            include_inactive=include_inactive,
-            query=query,
-            limit=limit,
-            offset=offset,
-        )
-    except httpx.TimeoutException as exc:
-        raise NetriasAPIUnavailable("data model store request timed out") from exc
-    except httpx.HTTPError as exc:
-        raise NetriasAPIUnavailable(f"data model store request failed: {exc}") from exc
-
-    body = _interpret_response(response)
-    return _parse_pvs(body)
-
-
 async def get_pv_set_async(
     settings: Settings,
     model_key: str,
@@ -153,23 +114,25 @@ async def get_pv_set_async(
     'why': validation use case requires O(1) lookup; pagination is hidden
     """
 
+    endpoints = _require_endpoints(settings)
     all_values: list[str] = []
     offset = 0
     page_count = 0
 
     while page_count < MAX_PAGINATION_PAGES:
-        pvs = await list_pvs_async(
-            settings=settings,
+        page_values = await _fetch_pv_page_values(
+            endpoints=endpoints,
+            api_key=settings.api_key,
+            timeout=settings.timeout,
             model_key=model_key,
             version=version,
             cde_key=cde_key,
             include_inactive=include_inactive,
-            limit=PV_PAGE_SIZE,
             offset=offset,
         )
-        all_values.extend(pv.value for pv in pvs)
+        all_values.extend(page_values)
 
-        if len(pvs) < PV_PAGE_SIZE:
+        if len(page_values) < PV_PAGE_SIZE:
             break
         offset += PV_PAGE_SIZE
         page_count += 1
@@ -186,96 +149,72 @@ async def get_pv_set_async(
     return frozenset(all_values)
 
 
-def list_data_models(
-    settings: Settings,
-    query: str | None = None,
-    include_versions: bool = False,
-    include_counts: bool = False,
-    limit: int | None = None,
-    offset: int = 0,
-) -> tuple[DataModel, ...]:
-    """Synchronous wrapper for list_data_models_async."""
-
-    return run_sync(
-        list_data_models_async(
-            settings=settings,
-            query=query,
-            include_versions=include_versions,
-            include_counts=include_counts,
-            limit=limit,
-            offset=offset,
-        )
-    )
-
-
-def list_cdes(
-    settings: Settings,
-    model_key: str,
-    version: str,
-    include_description: bool = False,
-    query: str | None = None,
-    limit: int | None = None,
-    offset: int = 0,
-) -> tuple[CDE, ...]:
-    """Synchronous wrapper for list_cdes_async."""
-
-    return run_sync(
-        list_cdes_async(
-            settings=settings,
-            model_key=model_key,
-            version=version,
-            include_description=include_description,
-            query=query,
-            limit=limit,
-            offset=offset,
-        )
-    )
-
-
-def list_pvs(
-    settings: Settings,
+async def _fetch_pv_page_values(
+    endpoints: DataModelStoreEndpoints,
+    api_key: str,
+    timeout: float,
     model_key: str,
     version: str,
     cde_key: str,
-    include_inactive: bool = False,
-    query: str | None = None,
-    limit: int | None = None,
-    offset: int = 0,
-) -> tuple[PermissibleValue, ...]:
-    """Synchronous wrapper for list_pvs_async."""
+    include_inactive: bool,
+    offset: int,
+) -> list[str]:
+    """Fetch a single page of PV values, returning only the 'value' string from each item."""
 
-    return run_sync(
-        list_pvs_async(
-            settings=settings,
+    response = await _request_pv_page(
+        endpoints=endpoints,
+        api_key=api_key,
+        timeout=timeout,
+        model_key=model_key,
+        version=version,
+        cde_key=cde_key,
+        include_inactive=include_inactive,
+        offset=offset,
+    )
+    body = _interpret_response(response)
+    return _extract_pv_values(body)
+
+
+async def _request_pv_page(
+    endpoints: DataModelStoreEndpoints,
+    api_key: str,
+    timeout: float,
+    model_key: str,
+    version: str,
+    cde_key: str,
+    include_inactive: bool,
+    offset: int,
+) -> httpx.Response:
+    try:
+        return await fetch_pvs(
+            base_url=endpoints.base_url,
+            api_key=api_key,
+            timeout=timeout,
             model_key=model_key,
             version=version,
             cde_key=cde_key,
             include_inactive=include_inactive,
-            query=query,
-            limit=limit,
+            limit=PV_PAGE_SIZE,
             offset=offset,
         )
-    )
+    except httpx.TimeoutException as exc:
+        raise NetriasAPIUnavailable("data model store request timed out") from exc
+    except httpx.HTTPError as exc:
+        raise NetriasAPIUnavailable(f"data model store request failed: {exc}") from exc
 
 
-def get_pv_set(
-    settings: Settings,
-    model_key: str,
-    version: str,
-    cde_key: str,
-    include_inactive: bool = False,
-) -> frozenset[str]:
-    """Synchronous wrapper for get_pv_set_async."""
+def _extract_pv_values(body: Mapping[str, object]) -> list[str]:
+    items = body.get("items")
+    if not isinstance(items, list):
+        return []
+    return [value for item in cast(list[object], items) if (value := _value_from_item(item)) is not None]
 
-    return run_sync(
-        get_pv_set_async(
-            settings=settings,
-            model_key=model_key,
-            version=version,
-            cde_key=cde_key,
-            include_inactive=include_inactive,
-        )
-    )
+
+def _value_from_item(item: object) -> str | None:
+    if not isinstance(item, Mapping):
+        return None
+    value = cast(Mapping[str, object], item).get("value")
+    return value if isinstance(value, str) else None
 
 
 def _interpret_response(response: httpx.Response) -> Mapping[str, object]:
@@ -385,24 +324,3 @@ def _parse_cdes(body: Mapping[str, object]) -> tuple[CDE, ...]:
         )
 
     return tuple(cdes)
-
-
-def _parse_pvs(body: Mapping[str, object]) -> tuple[PermissibleValue, ...]:
-    items = body.get("items")
-    if not isinstance(items, list):
-        return ()
-
-    pvs: list[PermissibleValue] = []
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        pvs.append(
-            PermissibleValue(
-                pv_id=int(item.get("pv_id", 0)),
-                value=str(item.get("value", "")),
-                description=item.get("description") if item.get("description") else None,
-                is_active=bool(item.get("is_active", True)),
-            )
-        )
-
-    return tuple(pvs)

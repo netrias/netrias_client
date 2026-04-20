@@ -9,7 +9,7 @@ import base64
 import json
 import logging
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Final
 
 import boto3  # pyright: ignore[reportMissingTypeStubs]
@@ -25,7 +25,7 @@ def discover_via_step_functions(
     api_url: str,
     target_schema: str,
     target_version: str,
-    columns: Mapping[str, Sequence[str]],
+    columns: list[dict[str, object]],
     timeout: float,
     logger: logging.Logger,
     top_k: int = 3,
@@ -46,7 +46,7 @@ def _start_execution(
     api_url: str,
     schema: str,
     version: str,
-    columns: Mapping[str, Sequence[str]],
+    columns: list[dict[str, object]],
     top_k: int,
     logger: logging.Logger,
     api_key: str | None = None,
@@ -55,7 +55,7 @@ def _start_execution(
     payload = {
         "target_schema": schema,
         "target_version": version,
-        "data": dict(columns),
+        "columns": columns,
         "top_k": top_k,
     }
     # 'why': base64 encode payload to avoid VTL escaping issues with special characters
