@@ -302,7 +302,10 @@ def _coerce_mapping(obj: Mapping[object, object], strict: bool) -> dict[str, obj
 
 def _samples_from_csv(csv_path: Path, sample_limit: int) -> list[ColumnSamples]:
     """'why': emit one entry per CSV header position so array index == column_id downstream;
-    csv.DictReader would silently merge duplicate headers, so csv.reader is used."""
+    csv.DictReader would silently merge duplicate headers, so csv.reader is used.
+    Blank/whitespace-only headers get synthetic `_col_<i>` names so the backend's
+    non-empty-name validator accepts the payload; the synthetic column will not match
+    anything and lands as None in the manifest, preserving positional parity."""
     dataset = validate_source_path(csv_path)
     headers, rows = _read_limited_rows(dataset, sample_limit)
     column_count = len(headers)
@@ -314,9 +317,13 @@ def _samples_from_csv(csv_path: Path, sample_limit: int) -> list[ColumnSamples]:
             if value:
                 samples[i].append(value)
     return [
-        ColumnSamples(name=headers[i], values=samples[i])
+        ColumnSamples(name=_column_name_or_placeholder(headers[i], i), values=samples[i])
         for i in range(column_count)
     ]
+
+
+def _column_name_or_placeholder(header: str, index: int) -> str:
+    return header if header.strip() else f"_col_{index}"
 
 
 def _read_limited_rows(dataset: Path, sample_limit: int) -> tuple[list[str], list[list[str]]]:

@@ -25,7 +25,7 @@ _ENVIRONMENT_URLS: dict[Environment, dict[str, str]] = {
         "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
     },
     Environment.STAGING: {
-        "discovery": "https://s7a8ekw0yd.execute-api.us-east-2.amazonaws.com",
+        "discovery": "https://reyu82i72e.execute-api.us-east-2.amazonaws.com/staging",
         "harmonization": "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging",
         "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
     },

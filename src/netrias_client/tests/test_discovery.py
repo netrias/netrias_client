@@ -60,8 +60,8 @@ def test_discover_mapping_from_csv_success(
     assert len(column_mappings) == 3
     first = column_mappings[0]
     assert first is not None
-    assert first["name"] == "a"
-    assert first["targetField"] == "Sample.name"
+    assert first["column_name"] == "a"
+    assert "targetField" not in first
 
     alternatives = first["alternatives"]
     assert len(alternatives) == 2
@@ -272,15 +272,76 @@ def test_discover_mapping_handles_array_results_format(
     assert len(column_mappings) == 3
     first = column_mappings[0]
     assert first is not None
-    assert first["name"] == "a"
-    assert first["targetField"] == "age"
+    assert first["column_name"] == "a"
+    assert "targetField" not in first
 
     second = column_mappings[1]
     assert second is not None
-    assert second["name"] == "b"
-    assert second["targetField"] == "sex"
+    assert second["column_name"] == "b"
+    assert "targetField" not in second
 
     assert column_mappings[2] is None
+
+
+# ---- Wire-shape contract tests ----
+
+
+def test_discovery_entry_uses_column_name(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_csv_path: Path,
+) -> None:
+    """Mapped entries carry column_name (not the legacy 'name' key)."""
+
+    payload = _array_payload(
+        [
+            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "similarity": 0.95}]},
+            {"name": "b", "matches": []},
+            {"name": "c", "matches": []},
+        ]
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    manifest = configured_client.discover_mapping_from_csv(
+        source_csv=sample_csv_path,
+        target_schema="ccdi",
+        target_version="v1",
+    )
+
+    entry = manifest["column_mappings"][0]
+    assert entry is not None
+    # Renamed from legacy "name" — must use "column_name"
+    assert entry["column_name"] == "a"
+    assert "name" not in entry
+
+
+def test_discovery_entry_has_no_target_field(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_csv_path: Path,
+) -> None:
+    """targetField must not appear in any mapped entry — it was removed from _make_entry."""
+
+    payload = _array_payload(
+        [
+            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "similarity": 0.95}]},
+            {"name": "b", "matches": []},
+            {"name": "c", "matches": []},
+        ]
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    manifest = configured_client.discover_mapping_from_csv(
+        source_csv=sample_csv_path,
+        target_schema="ccdi",
+        target_version="v1",
+    )
+
+    entry = manifest["column_mappings"][0]
+    assert entry is not None
+    assert "targetField" not in entry
 
 
 # ---- Positional parity tests (A/B/C) ----
@@ -326,7 +387,7 @@ def test_positional_parity_all_columns_matched(
     for index, header in enumerate(("a", "b", "c")):
         entry = column_mappings[index]
         assert entry is not None
-        assert entry["name"] == header
+        assert entry["column_name"] == header
 
 
 def test_positional_parity_empty_column_preserved_and_mismatch_detected(

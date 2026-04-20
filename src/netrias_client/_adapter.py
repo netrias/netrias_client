@@ -77,8 +77,7 @@ def _make_entry(
 ) -> ColumnMappingRecord:
     assert option.target is not None
     entry: ColumnMappingRecord = {
-        "name": suggestion.source_column,
-        "targetField": option.target,
+        "column_name": suggestion.source_column,
         "alternatives": _format_alternatives(suggestion.options),
     }
     if option.target_cde_id is not None:

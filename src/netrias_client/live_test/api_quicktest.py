@@ -206,10 +206,9 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
         print(f"    - Column mappings: {len(mappings)} (including placeholders)")
         matched = [m for m in mappings if m is not None]
         for mapping_data in matched[:3]:
-            target = mapping_data.get("targetField", "N/A")
+            column_name = mapping_data.get("column_name", "N/A")
             cde_id = mapping_data.get("cde_id", "N/A")
-            name = mapping_data.get("name", "N/A")
-            print(f"      {name} -> {target} (cde_id={cde_id})")
+            print(f"      {column_name} (cde_id={cde_id})")
 
     results.append(run_test("discover_mapping_from_csv", test_discover_mapping_from_csv))
 

@@ -28,10 +28,13 @@ class AlternativeEntry(TypedDict):
 
 
 class ColumnMappingRecord(TypedDict):
-    """Manifest entry for a column matched above the confidence threshold."""
+    """Manifest entry for a column matched above the confidence threshold.
 
-    name: str
-    targetField: str
+    Example (position 0 of a 2-column CSV with header ["dx", "site"]):
+        {"column_name": "dx", "cde_id": 42, "alternatives": [{"target": "primary_diagnosis", "similarity": 0.91}]}
+    """
+
+    column_name: str
     cde_id: NotRequired[int]
     alternatives: list[AlternativeEntry]
 

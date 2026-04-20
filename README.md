@@ -95,16 +95,11 @@ manifest = client.discover_mapping_from_csv(
 
 ```python
 {
-    "column_mappings": {
-        "patient_id": {"targetField": "participant_id"},
-        "gender": {"targetField": "sex_at_birth"},
-        "diagnosis": {
-            "targetField": "primary_diagnosis",
-            "route": "sagemaker:primary",
-            "cdeId": -200,
-            "cde_id": -200
-        }
-    }
+    "column_mappings": [
+        {"column_name": "patient_id", "cde_id": 101, "alternatives": [{"target": "participant_id", "similarity": 0.95}]},
+        {"column_name": "gender", "cde_id": 102, "alternatives": [{"target": "sex_at_birth", "similarity": 0.88}]},
+        {"column_name": "diagnosis", "cde_id": -200, "alternatives": [{"target": "primary_diagnosis", "similarity": 0.97}]},
+    ]
 }
 ```
 
