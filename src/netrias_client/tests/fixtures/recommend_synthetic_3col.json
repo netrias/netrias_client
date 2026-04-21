@@ -1,0 +1,27 @@
+{
+  "target_schema": "gc",
+  "results": [
+    {
+      "name": "diagnosis",
+      "matches": [
+        {"target": "disease_type", "target_cde_id": 323, "confidence": 0.85, "rank": 1},
+        {"target": "primary_diagnosis", "target_cde_id": 512, "confidence": 0.72, "rank": 2},
+        {"target": "morphology", "target_cde_id": 488, "confidence": 0.41, "rank": 3}
+      ]
+    },
+    {
+      "name": "sample_type",
+      "matches": [
+        {"target": "specimen_type", "target_cde_id": 901, "confidence": 0.50, "rank": 1},
+        {"target": "tissue_source", "target_cde_id": 902, "confidence": 0.42, "rank": 2}
+      ]
+    },
+    {
+      "name": "random_noise",
+      "matches": [
+        {"target": "unknown_target", "target_cde_id": null, "confidence": 0.80, "rank": 1},
+        {"target": "another_unknown", "target_cde_id": null, "confidence": 0.75, "rank": 2}
+      ]
+    }
+  ]
+}

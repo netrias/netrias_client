@@ -62,11 +62,14 @@ def _build_manifest_entries(
 def _place_suggestion(
     suggestion: MappingSuggestion, threshold: float, column_count: int
 ) -> tuple[int, ColumnMappingRecord] | None:
+    """'why': drop the whole slot if the top option lacks target_cde_id so the
+    non-None entry invariant (cde_key + cde_id both populated) holds downstream.
+    """
     column_id = suggestion.column_id
     if column_id is None or not 0 <= column_id < column_count:
         return None
     option = _top_option(suggestion.options, threshold)
-    if option is None or option.target is None:
+    if option is None or option.target is None or option.target_cde_id is None:
         return None
     entry = _make_entry(suggestion, option)
     return column_id, entry
@@ -75,14 +78,17 @@ def _place_suggestion(
 def _make_entry(
     suggestion: MappingSuggestion, option: MappingRecommendationOption
 ) -> ColumnMappingRecord:
+    """'why': _place_suggestion guarantees both target and target_cde_id are present
+    on non-None entries, so cde_key and cde_id are always emitted together.
+    """
     assert option.target is not None
-    entry: ColumnMappingRecord = {
+    assert option.target_cde_id is not None
+    return {
         "column_name": suggestion.source_column,
+        "cde_key": option.target,
+        "cde_id": option.target_cde_id,
         "alternatives": _format_alternatives(suggestion.options),
     }
-    if option.target_cde_id is not None:
-        entry["cde_id"] = option.target_cde_id
-    return entry
 
 
 def _log_manifest_outcome(logger: logging.Logger, matched_names: list[str]) -> None:
@@ -95,16 +101,17 @@ def _log_manifest_outcome(logger: logging.Logger, matched_names: list[str]) -> N
 def _format_alternatives(
     options: tuple[MappingRecommendationOption, ...],
 ) -> list[AlternativeEntry]:
-    """Sorted by confidence descending; includes all options regardless of threshold."""
-    sorted_options = sorted(options, key=lambda o: o.confidence or 0.0, reverse=True)
-    return [_format_alternative(opt) for opt in sorted_options if opt.target is not None]
+    """Sorted by confidence descending; drops options lacking a target or confidence score."""
+    eligible = [opt for opt in options if opt.target is not None and opt.confidence is not None]
+    sorted_options = sorted(eligible, key=lambda o: o.confidence or 0.0, reverse=True)
+    return [_format_alternative(opt) for opt in sorted_options]
 
 
 def _format_alternative(option: MappingRecommendationOption) -> AlternativeEntry:
+    """'why': score key is 'confidence' end-to-end — same as the upstream API."""
     assert option.target is not None
-    alt: AlternativeEntry = {"target": option.target}
-    if option.confidence is not None:
-        alt["similarity"] = option.confidence
+    assert option.confidence is not None
+    alt: AlternativeEntry = {"target": option.target, "confidence": option.confidence}
     if option.target_cde_id is not None:
         alt["cde_id"] = option.target_cde_id
     return alt

@@ -38,8 +38,8 @@ def test_discover_mapping_from_csv_success(
             {
                 "name": "a",
                 "matches": [
-                    {"target": "Sample.name", "similarity": 0.92},
-                    {"target": "Sample.display_name", "similarity": 0.5},
+                    {"target": "Sample.name", "target_cde_id": 11, "confidence": 0.92},
+                    {"target": "Sample.display_name", "target_cde_id": 12, "confidence": 0.5},
                 ],
             },
             {"name": "b", "matches": []},
@@ -61,6 +61,8 @@ def test_discover_mapping_from_csv_success(
     first = column_mappings[0]
     assert first is not None
     assert first["column_name"] == "a"
+    assert first["cde_key"] == "Sample.name"
+    assert first["cde_id"] == 11
     assert "targetField" not in first
 
     alternatives = first["alternatives"]
@@ -246,14 +248,14 @@ def test_discover_mapping_handles_array_results_format(
             {
                 "name": "a",
                 "matches": [
-                    {"target": "age", "target_cde_id": 900, "similarity": 1.0},
-                    {"target": "ageUnit", "target_cde_id": 904, "similarity": 0.1},
+                    {"target": "age", "target_cde_id": 900, "confidence": 1.0},
+                    {"target": "ageUnit", "target_cde_id": 904, "confidence": 0.1},
                 ],
             },
             {
                 "name": "b",
                 "matches": [
-                    {"target": "sex", "target_cde_id": 901, "similarity": 0.95},
+                    {"target": "sex", "target_cde_id": 901, "confidence": 0.95},
                 ],
             },
             {"name": "c", "matches": []},
@@ -295,7 +297,7 @@ def test_discovery_entry_uses_column_name(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "similarity": 0.95}]},
+            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "confidence": 0.95}]},
             {"name": "b", "matches": []},
             {"name": "c", "matches": []},
         ]
@@ -325,7 +327,7 @@ def test_discovery_entry_has_no_target_field(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "similarity": 0.95}]},
+            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "confidence": 0.95}]},
             {"name": "b", "matches": []},
             {"name": "c", "matches": []},
         ]
@@ -360,9 +362,9 @@ def test_positional_parity_all_columns_matched(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A_target", "similarity": 0.99}]},
-            {"name": "b", "matches": [{"target": "B_target", "similarity": 0.95}]},
-            {"name": "c", "matches": [{"target": "C_target", "similarity": 0.9}]},
+            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 101, "confidence": 0.99}]},
+            {"name": "b", "matches": [{"target": "B_target", "target_cde_id": 102, "confidence": 0.95}]},
+            {"name": "c", "matches": [{"target": "C_target", "target_cde_id": 103, "confidence": 0.9}]},
         ]
     )
     capture = json_success(payload)
@@ -409,8 +411,8 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
     # Backend returns only 2 results (drops column 'b') — must raise
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A", "similarity": 0.9}]},
-            {"name": "c", "matches": [{"target": "C", "similarity": 0.9}]},
+            {"name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.9}]},
+            {"name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9}]},
         ]
     )
     capture = json_success(payload)
@@ -443,14 +445,14 @@ def test_positional_parity_below_threshold_becomes_none(
 ) -> None:
     """Below-threshold columns keep their position with None; manifest length equals CSV column count."""
 
-    # Given a CSV with 3 columns where column 'b' has a top similarity of 0.2
+    # Given a CSV with 3 columns where column 'b' has a top confidence of 0.2
     # against a threshold of 0.8. Before: backend returns a result for 'b' but
     # no option meets the threshold.
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A", "similarity": 0.95}]},
-            {"name": "b", "matches": [{"target": "weak", "similarity": 0.2}]},
-            {"name": "c", "matches": [{"target": "C", "similarity": 0.9}]},
+            {"name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.95}]},
+            {"name": "b", "matches": [{"target": "weak", "target_cde_id": 2, "confidence": 0.2}]},
+            {"name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9}]},
         ]
     )
     capture = json_success(payload)
@@ -470,3 +472,77 @@ def test_positional_parity_below_threshold_becomes_none(
     assert column_mappings[0] is not None
     assert column_mappings[1] is None
     assert column_mappings[2] is not None
+
+
+def test_parses_real_api_confidence_and_emits_cde_key(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Fixture-backed contract test: the SDK reads 'confidence' (the real API key),
+    emits 'cde_key' on every non-None entry, and drops slots missing target_cde_id.
+    """
+
+    # Given a hand-synthesized recorded API payload using the real key names
+    fixture_path = Path(__file__).parent / "fixtures" / "recommend_synthetic_3col.json"
+    csv_path = Path(__file__).parent / "fixtures" / "synthetic_3col.csv"
+    recorded = cast(dict[str, object], json.loads(fixture_path.read_text(encoding="utf-8")))
+
+    # Wrap the recorded body in the lambda's statusCode/body envelope
+    payload = {"statusCode": 200, "body": json.dumps(recorded)}
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    # When discovery runs
+    manifest = configured_client.discover_mapping_from_csv(
+        source_csv=csv_path,
+        target_schema="gc",
+        target_version="v1",
+        confidence_threshold=0.7,
+    )
+
+    # Then the manifest has length 3 and the slots reflect the three scenarios
+    column_mappings = manifest["column_mappings"]
+    assert len(column_mappings) == 3
+
+    # Column 0 — above threshold, has cde_id and cde_key
+    diagnosis_entry = column_mappings[0]
+    assert diagnosis_entry is not None
+    assert diagnosis_entry["column_name"] == "diagnosis"
+    assert diagnosis_entry["cde_key"] == "disease_type"
+    assert diagnosis_entry["cde_id"] == 323
+
+    # Column 1 — all matches below 0.7 threshold — slot is None
+    assert column_mappings[1] is None
+
+    # Column 2 — top match above threshold but missing target_cde_id — slot is None
+    assert column_mappings[2] is None
+
+
+def test_alternative_entries_preserve_confidence_field(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """AlternativeEntry values expose 'confidence' (not 'similarity') downstream."""
+
+    fixture_path = Path(__file__).parent / "fixtures" / "recommend_synthetic_3col.json"
+    csv_path = Path(__file__).parent / "fixtures" / "synthetic_3col.csv"
+    recorded = cast(dict[str, object], json.loads(fixture_path.read_text(encoding="utf-8")))
+    payload = {"statusCode": 200, "body": json.dumps(recorded)}
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    manifest = configured_client.discover_mapping_from_csv(
+        source_csv=csv_path,
+        target_schema="gc",
+        target_version="v1",
+        confidence_threshold=0.7,
+    )
+
+    diagnosis_entry = manifest["column_mappings"][0]
+    assert diagnosis_entry is not None
+    alternatives = diagnosis_entry["alternatives"]
+    assert len(alternatives) >= 1
+    top = alternatives[0]
+    assert top["target"] == "disease_type"
+    assert top["confidence"] == 0.85
+    assert "similarity" not in top

@@ -60,8 +60,21 @@
 4. Duration metrics are logged for success, transport errors, and bypass failures.
 
 ## Adapter Responsibilities
-- Discovery normalization extracts the highest-confidence target per source column, filters below the configured threshold, and merges static CDE metadata (route, target field, `cdeId`).
+- Discovery normalization extracts the highest-confidence target per source column, filters below the configured threshold, and emits the canonical column-mapping shape.
+- A slot is `None` whenever the top eligible option lacks a `target_cde_id`; non-`None` entries are guaranteed to carry both `cde_key` and `cde_id`.
 - Unresolved columns (missing CDE metadata) are logged for observability; downstream harmonization can still proceed with passthrough mappings when appropriate.
+
+## Column-mapping canonical shape
+The SDK is the canonical owner of the column-mapping wire shape. Consumers import these TypedDicts from `netrias_client` rather than redefining them.
+
+- **`ColumnMappingRecord`**: `{column_name: str, cde_key: str, cde_id: int, alternatives: list[AlternativeEntry]}`. Every non-None entry carries all four fields. `cde_key` is the ontology string identifier of the chosen CDE; `cde_id` is its numeric database id. At creation time both are derived from the top eligible alternative; consumers that let users override the choice rewrite `cde_key` / `cde_id` in place.
+- **`AlternativeEntry`**: `{target: str, confidence: float, cde_id: NotRequired[int]}`. The score field is named `confidence` — the same name the upstream API emits. There is no `similarity` alias at any layer.
+- **`ManifestPayload`**: `{column_mappings: list[ColumnMappingRecord | None]}`. `None` means "no mapping resolved for this CSV position" — either the top option fell below threshold or it lacked a `target_cde_id`. The list length equals the CSV column count; the array index is the canonical `column_id`.
+
+Invariants enforced by the adapter:
+1. `len(column_mappings) == column_count` (CSV position parity).
+2. Non-`None` entries always have a `cde_key: str` and `cde_id: int`.
+3. Alternatives are sorted by `confidence` descending; options lacking a `target` or `confidence` are filtered out.
 
 ## Harmonization Workflow
 1. Validate inputs (`validate_source_path`, `validate_manifest_path`, `validate_output_path`). Output validation automatically versions existing destinations (`.harmonized.v1.csv`, `.v2`, …) rather than overwriting.

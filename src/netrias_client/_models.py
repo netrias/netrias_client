@@ -20,22 +20,32 @@ class ColumnSamples(TypedDict):
 
 
 class AlternativeEntry(TypedDict):
-    """A ranked candidate target for a source column, sorted by similarity."""
+    """A ranked candidate target for a source column, sorted by confidence descending.
+
+    'why': the score key is 'confidence' end-to-end — same name as the upstream API,
+    no translation at the SDK boundary.
+    """
 
     target: str
-    similarity: NotRequired[float]
+    confidence: float
     cde_id: NotRequired[int]
 
 
 class ColumnMappingRecord(TypedDict):
     """Manifest entry for a column matched above the confidence threshold.
 
+    Every non-None entry carries both `cde_key` (the ontology string id) and
+    `cde_id` (the numeric CDE id). The adapter drops the slot entirely if the
+    top eligible option lacks a cde_id, so the invariant is real.
+
     Example (position 0 of a 2-column CSV with header ["dx", "site"]):
-        {"column_name": "dx", "cde_id": 42, "alternatives": [{"target": "primary_diagnosis", "similarity": 0.91}]}
+        {"column_name": "dx", "cde_key": "primary_diagnosis", "cde_id": 42,
+         "alternatives": [{"target": "primary_diagnosis", "confidence": 0.91, "cde_id": 42}]}
     """
 
     column_name: str
-    cde_id: NotRequired[int]
+    cde_key: str
+    cde_id: int
     alternatives: list[AlternativeEntry]
 
 

@@ -465,7 +465,8 @@ def _option_target(option: Mapping[str, object]) -> str | None:
 
 
 def _option_confidence(option: Mapping[str, object]) -> float | None:
-    value = option.get("similarity")
+    """'why': upstream API returns the score under 'confidence'; no other key is emitted."""
+    value = option.get("confidence")
     # 'why': bool is subclass of int in Python; must guard before int/float check
     if isinstance(value, bool):
         return None
