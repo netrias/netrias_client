@@ -546,3 +546,102 @@ def test_alternative_entries_preserve_confidence_field(
     assert top["target"] == "disease_type"
     assert top["confidence"] == 0.85
     assert "similarity" not in top
+
+
+# ---- Harmonization field tests ----
+
+
+def test_harmonization_surfaces_on_every_alternative_and_top_level(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Every non-None entry carries harmonization at the top level; every alternative carries it too.
+
+    The four-column fixture exercises all three harmonization values end-to-end
+    so a regression in any code path (boundary parse, adapter format, entry build)
+    surfaces as a failed assertion on the corresponding column.
+    """
+
+    fixture_path = Path(__file__).parent / "fixtures" / "recommend_synthetic_4col_harmonization.json"
+    csv_path = Path(__file__).parent / "fixtures" / "synthetic_4col_harmonization.csv"
+    recorded = cast(dict[str, object], json.loads(fixture_path.read_text(encoding="utf-8")))
+    payload = {"statusCode": 200, "body": json.dumps(recorded)}
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    # Precondition: the raw fixture contains the three distinct harmonization values
+    # on the four top-match slots so the assertions below are exercising real data.
+    raw_results = cast(list[dict[str, object]], recorded["results"])
+    raw_harmonizations: set[str] = set()
+    for result in raw_results:
+        matches = cast(list[dict[str, object]], result["matches"])
+        if matches:
+            raw_harmonizations.add(cast(str, matches[0]["harmonization"]))
+    assert raw_harmonizations == {"harmonizable", "no_permissible_values", "numeric"}
+
+    manifest = configured_client.discover_mapping_from_csv(
+        source_csv=csv_path,
+        target_schema="gc",
+        target_version="v1",
+        confidence_threshold=0.4,
+    )
+
+    column_mappings = manifest["column_mappings"]
+    assert len(column_mappings) == 4
+
+    # Every non-None entry must carry harmonization at the top level AND on every alternative.
+    for entry in column_mappings:
+        assert entry is not None, "all four columns are above threshold in this fixture"
+        entry_dict = cast(dict[str, object], entry)
+        assert "harmonization" in entry_dict
+        assert entry_dict["harmonization"] in {"harmonizable", "no_permissible_values", "numeric"}
+        alternatives = cast(list[dict[str, object]], entry_dict["alternatives"])
+        for alt in alternatives:
+            assert "harmonization" in alt
+            assert alt["harmonization"] in {"harmonizable", "no_permissible_values", "numeric"}
+
+    # Column-specific checks — top-level mirrors the top alternative per plan contract.
+    first = cast(dict[str, object], column_mappings[0])
+    third = cast(dict[str, object], column_mappings[2])
+    fourth = cast(dict[str, object], column_mappings[3])
+    assert first["harmonization"] == "harmonizable"
+    assert third["harmonization"] == "no_permissible_values"
+    assert third["cde_key"] == "middle_name"
+    assert fourth["harmonization"] == "numeric"
+
+
+def test_discovery_strict_rejects_response_missing_harmonization(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_csv_path: Path,
+) -> None:
+    """SDK must fail loudly when the API omits harmonization on a match.
+
+    Rationale: Phase A deploy precedes Phase B release, so by the time SDK 0.5.0
+    is pinned the Lambda always emits the field. A missing field therefore signals
+    a real Lambda regression, not rolling-deploy skew — must surface, not default.
+    """
+
+    payload = _array_payload(
+        [
+            {
+                "name": "a",
+                "matches": [
+                    {"target": "Sample.name", "target_cde_id": 11, "confidence": 0.92},
+                ],
+            },
+            {"name": "b", "matches": []},
+            {"name": "c", "matches": []},
+        ]
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    with pytest.raises(MappingDiscoveryError) as exc:
+        _ = configured_client.discover_mapping_from_csv(
+            source_csv=sample_csv_path,
+            target_schema="ccdi",
+            target_version="v1",
+        )
+
+    assert "harmonization" in str(exc.value)

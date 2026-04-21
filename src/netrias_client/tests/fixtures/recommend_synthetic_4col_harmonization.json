@@ -1,0 +1,31 @@
+{
+  "target_schema": "gc",
+  "results": [
+    {
+      "name": "diagnosis",
+      "matches": [
+        {"target": "disease_type", "target_cde_id": 323, "confidence": 0.85, "rank": 1, "harmonization": "harmonizable"},
+        {"target": "primary_diagnosis", "target_cde_id": 512, "confidence": 0.72, "rank": 2, "harmonization": "harmonizable"}
+      ]
+    },
+    {
+      "name": "sample_type",
+      "matches": [
+        {"target": "specimen_type", "target_cde_id": 901, "confidence": 0.50, "rank": 1, "harmonization": "harmonizable"}
+      ]
+    },
+    {
+      "name": "middle_name",
+      "matches": [
+        {"target": "middle_name", "target_cde_id": 316, "confidence": 1.0, "rank": 1, "harmonization": "no_permissible_values"},
+        {"target": "last_name", "target_cde_id": 317, "confidence": 0.6, "rank": 2, "harmonization": "no_permissible_values"}
+      ]
+    },
+    {
+      "name": "age_at_diagnosis",
+      "matches": [
+        {"target": "age_at_diagnosis", "target_cde_id": 359, "confidence": 1.0, "rank": 1, "harmonization": "numeric"}
+      ]
+    }
+  ]
+}
