@@ -87,6 +87,7 @@ def _make_entry(
         "column_name": suggestion.source_column,
         "cde_key": option.target,
         "cde_id": option.target_cde_id,
+        "harmonization": option.harmonization,
         "alternatives": _format_alternatives(suggestion.options),
     }
 
@@ -111,7 +112,11 @@ def _format_alternative(option: MappingRecommendationOption) -> AlternativeEntry
     """'why': score key is 'confidence' end-to-end — same as the upstream API."""
     assert option.target is not None
     assert option.confidence is not None
-    alt: AlternativeEntry = {"target": option.target, "confidence": option.confidence}
+    alt: AlternativeEntry = {
+        "target": option.target,
+        "confidence": option.confidence,
+        "harmonization": option.harmonization,
+    }
     if option.target_cde_id is not None:
         alt["cde_id"] = option.target_cde_id
     return alt

@@ -38,8 +38,8 @@ def test_discover_mapping_from_csv_success(
             {
                 "name": "a",
                 "matches": [
-                    {"target": "Sample.name", "target_cde_id": 11, "confidence": 0.92},
-                    {"target": "Sample.display_name", "target_cde_id": 12, "confidence": 0.5},
+                    {"target": "Sample.name", "target_cde_id": 11, "confidence": 0.92, "harmonization": "harmonizable"},
+                    {"target": "Sample.display_name", "target_cde_id": 12, "confidence": 0.5, "harmonization": "harmonizable"},
                 ],
             },
             {"name": "b", "matches": []},
@@ -248,14 +248,14 @@ def test_discover_mapping_handles_array_results_format(
             {
                 "name": "a",
                 "matches": [
-                    {"target": "age", "target_cde_id": 900, "confidence": 1.0},
-                    {"target": "ageUnit", "target_cde_id": 904, "confidence": 0.1},
+                    {"target": "age", "target_cde_id": 900, "confidence": 1.0, "harmonization": "numeric"},
+                    {"target": "ageUnit", "target_cde_id": 904, "confidence": 0.1, "harmonization": "harmonizable"},
                 ],
             },
             {
                 "name": "b",
                 "matches": [
-                    {"target": "sex", "target_cde_id": 901, "confidence": 0.95},
+                    {"target": "sex", "target_cde_id": 901, "confidence": 0.95, "harmonization": "harmonizable"},
                 ],
             },
             {"name": "c", "matches": []},
@@ -297,7 +297,7 @@ def test_discovery_entry_uses_column_name(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "confidence": 0.95}]},
+            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "confidence": 0.95, "harmonization": "harmonizable"}]},
             {"name": "b", "matches": []},
             {"name": "c", "matches": []},
         ]
@@ -327,7 +327,7 @@ def test_discovery_entry_has_no_target_field(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "confidence": 0.95}]},
+            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "confidence": 0.95, "harmonization": "harmonizable"}]},
             {"name": "b", "matches": []},
             {"name": "c", "matches": []},
         ]
@@ -362,9 +362,9 @@ def test_positional_parity_all_columns_matched(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 101, "confidence": 0.99}]},
-            {"name": "b", "matches": [{"target": "B_target", "target_cde_id": 102, "confidence": 0.95}]},
-            {"name": "c", "matches": [{"target": "C_target", "target_cde_id": 103, "confidence": 0.9}]},
+            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 101, "confidence": 0.99, "harmonization": "harmonizable"}]},
+            {"name": "b", "matches": [{"target": "B_target", "target_cde_id": 102, "confidence": 0.95, "harmonization": "harmonizable"}]},
+            {"name": "c", "matches": [{"target": "C_target", "target_cde_id": 103, "confidence": 0.9, "harmonization": "harmonizable"}]},
         ]
     )
     capture = json_success(payload)
@@ -411,8 +411,8 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
     # Backend returns only 2 results (drops column 'b') — must raise
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.9}]},
-            {"name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9}]},
+            {"name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.9, "harmonization": "harmonizable"}]},
+            {"name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9, "harmonization": "harmonizable"}]},
         ]
     )
     capture = json_success(payload)
@@ -450,9 +450,9 @@ def test_positional_parity_below_threshold_becomes_none(
     # no option meets the threshold.
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.95}]},
-            {"name": "b", "matches": [{"target": "weak", "target_cde_id": 2, "confidence": 0.2}]},
-            {"name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9}]},
+            {"name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.95, "harmonization": "harmonizable"}]},
+            {"name": "b", "matches": [{"target": "weak", "target_cde_id": 2, "confidence": 0.2, "harmonization": "harmonizable"}]},
+            {"name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9, "harmonization": "harmonizable"}]},
         ]
     )
     capture = json_success(payload)
@@ -551,6 +551,32 @@ def test_alternative_entries_preserve_confidence_field(
 # ---- Harmonization field tests ----
 
 
+_HARMONIZATION_ENUM: set[str] = {"harmonizable", "no_permissible_values", "numeric"}
+
+
+def _assert_entry_carries_harmonization(entry: object) -> None:
+    """Every non-None column entry and each of its alternatives must carry a valid harmonization."""
+    assert entry is not None, "all four columns are above threshold in this fixture"
+    entry_dict = cast(dict[str, object], entry)
+    assert "harmonization" in entry_dict
+    assert entry_dict["harmonization"] in _HARMONIZATION_ENUM
+    alternatives = cast(list[dict[str, object]], entry_dict["alternatives"])
+    for alt in alternatives:
+        assert "harmonization" in alt
+        assert alt["harmonization"] in _HARMONIZATION_ENUM
+
+
+def _raw_top_match_harmonizations(recorded: dict[str, object]) -> set[str]:
+    """Collect the top-match harmonization value from every result entry in a raw fixture."""
+    raw_results = cast(list[dict[str, object]], recorded["results"])
+    harmonizations: set[str] = set()
+    for result in raw_results:
+        matches = cast(list[dict[str, object]], result["matches"])
+        if matches:
+            harmonizations.add(cast(str, matches[0]["harmonization"]))
+    return harmonizations
+
+
 def test_harmonization_surfaces_on_every_alternative_and_top_level(
     configured_client: NetriasClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -571,13 +597,7 @@ def test_harmonization_surfaces_on_every_alternative_and_top_level(
 
     # Precondition: the raw fixture contains the three distinct harmonization values
     # on the four top-match slots so the assertions below are exercising real data.
-    raw_results = cast(list[dict[str, object]], recorded["results"])
-    raw_harmonizations: set[str] = set()
-    for result in raw_results:
-        matches = cast(list[dict[str, object]], result["matches"])
-        if matches:
-            raw_harmonizations.add(cast(str, matches[0]["harmonization"]))
-    assert raw_harmonizations == {"harmonizable", "no_permissible_values", "numeric"}
+    assert _raw_top_match_harmonizations(recorded) == _HARMONIZATION_ENUM
 
     manifest = configured_client.discover_mapping_from_csv(
         source_csv=csv_path,
@@ -588,22 +608,13 @@ def test_harmonization_surfaces_on_every_alternative_and_top_level(
 
     column_mappings = manifest["column_mappings"]
     assert len(column_mappings) == 4
-
-    # Every non-None entry must carry harmonization at the top level AND on every alternative.
     for entry in column_mappings:
-        assert entry is not None, "all four columns are above threshold in this fixture"
-        entry_dict = cast(dict[str, object], entry)
-        assert "harmonization" in entry_dict
-        assert entry_dict["harmonization"] in {"harmonizable", "no_permissible_values", "numeric"}
-        alternatives = cast(list[dict[str, object]], entry_dict["alternatives"])
-        for alt in alternatives:
-            assert "harmonization" in alt
-            assert alt["harmonization"] in {"harmonizable", "no_permissible_values", "numeric"}
+        _assert_entry_carries_harmonization(entry)
 
     # Column-specific checks — top-level mirrors the top alternative per plan contract.
-    first = cast(dict[str, object], column_mappings[0])
-    third = cast(dict[str, object], column_mappings[2])
-    fourth = cast(dict[str, object], column_mappings[3])
+    first = cast(dict[str, object], cast(object, column_mappings[0]))
+    third = cast(dict[str, object], cast(object, column_mappings[2]))
+    fourth = cast(dict[str, object], cast(object, column_mappings[3]))
     assert first["harmonization"] == "harmonizable"
     assert third["harmonization"] == "no_permissible_values"
     assert third["cde_key"] == "middle_name"

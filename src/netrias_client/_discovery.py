@@ -12,7 +12,7 @@ import logging
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import NoReturn, cast
+from typing import NoReturn, cast, get_args
 
 import httpx
 
@@ -23,6 +23,7 @@ from ._gateway_bypass import invoke_cde_recommendation_alias
 from ._http import request_mapping_discovery
 from ._models import (
     ColumnSamples,
+    Harmonization,
     ManifestPayload,
     MappingDiscoveryResult,
     MappingRecommendationOption,
@@ -438,6 +439,9 @@ def _require_entry_matches(entry_map: Mapping[str, object], index: int) -> list[
     )
 
 
+_HARMONIZATION_VALUES: frozenset[str] = frozenset(get_args(Harmonization))
+
+
 def _options_from_list(options_list: list[object]) -> tuple[MappingRecommendationOption, ...]:
     options: list[MappingRecommendationOption] = []
     for item in options_list:
@@ -447,12 +451,32 @@ def _options_from_list(options_list: list[object]) -> tuple[MappingRecommendatio
         target = _option_target(mapping)
         confidence = _option_confidence(mapping)
         target_cde_id = _option_target_cde_id(mapping)
+        harmonization = _require_option_harmonization(mapping)
         options.append(
             MappingRecommendationOption(
-                target=target, confidence=confidence, target_cde_id=target_cde_id, raw=mapping
+                target=target,
+                confidence=confidence,
+                harmonization=harmonization,
+                target_cde_id=target_cde_id,
+                raw=mapping,
             )
         )
     return tuple(options)
+
+
+def _require_option_harmonization(option: Mapping[str, object]) -> Harmonization:
+    """'why': harmonization is required on every match from the Lambda; missing or
+    unknown values mean the SDK is talking to an incompatible upstream — fail fast.
+    """
+    value = option.get("harmonization")
+    if isinstance(value, str) and value in _HARMONIZATION_VALUES:
+        return cast(Harmonization, value)
+    allowed = sorted(_HARMONIZATION_VALUES)
+    message = (
+        f"mapping discovery match missing required 'harmonization' value "
+        f"(expected one of {allowed}, found {value!r}), source=discovery response"
+    )
+    raise MappingDiscoveryError(message)
 
 
 def _option_target(option: Mapping[str, object]) -> str | None:

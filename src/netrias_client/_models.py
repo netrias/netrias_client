@@ -19,6 +19,14 @@ class ColumnSamples(TypedDict):
     values: list[str]
 
 
+Harmonization = Literal["harmonizable", "no_permissible_values", "numeric"]
+"""'why': mirrors the Lambda StrEnum; closed set so callers can exhaustively match.
+
+Canonical ownership lives in the recommendation Lambda's `Harmonization` StrEnum;
+this Literal is the SDK's boundary-adapted view of those values.
+"""
+
+
 class AlternativeEntry(TypedDict):
     """A ranked candidate target for a source column, sorted by confidence descending.
 
@@ -28,6 +36,7 @@ class AlternativeEntry(TypedDict):
 
     target: str
     confidence: float
+    harmonization: Harmonization
     cde_id: NotRequired[int]
 
 
@@ -40,12 +49,15 @@ class ColumnMappingRecord(TypedDict):
 
     Example (position 0 of a 2-column CSV with header ["dx", "site"]):
         {"column_name": "dx", "cde_key": "primary_diagnosis", "cde_id": 42,
-         "alternatives": [{"target": "primary_diagnosis", "confidence": 0.91, "cde_id": 42}]}
+         "harmonization": "harmonizable",
+         "alternatives": [{"target": "primary_diagnosis", "confidence": 0.91,
+                           "harmonization": "harmonizable", "cde_id": 42}]}
     """
 
     column_name: str
     cde_key: str
     cde_id: int
+    harmonization: Harmonization
     alternatives: list[AlternativeEntry]
 
 
@@ -121,6 +133,7 @@ class MappingRecommendationOption:
 
     target: str | None
     confidence: float | None
+    harmonization: Harmonization
     target_cde_id: int | None = None
     raw: Mapping[str, object] | None = None
 

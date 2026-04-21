@@ -67,14 +67,15 @@
 ## Column-mapping canonical shape
 The SDK is the canonical owner of the column-mapping wire shape. Consumers import these TypedDicts from `netrias_client` rather than redefining them.
 
-- **`ColumnMappingRecord`**: `{column_name: str, cde_key: str, cde_id: int, alternatives: list[AlternativeEntry]}`. Every non-None entry carries all four fields. `cde_key` is the ontology string identifier of the chosen CDE; `cde_id` is its numeric database id. At creation time both are derived from the top eligible alternative; consumers that let users override the choice rewrite `cde_key` / `cde_id` in place.
-- **`AlternativeEntry`**: `{target: str, confidence: float, cde_id: NotRequired[int]}`. The score field is named `confidence` — the same name the upstream API emits. There is no `similarity` alias at any layer.
+- **`ColumnMappingRecord`**: `{column_name: str, cde_key: str, cde_id: int, harmonization: Harmonization, alternatives: list[AlternativeEntry]}`. Every non-None entry carries all five fields. `cde_key` is the ontology string identifier of the chosen CDE; `cde_id` is its numeric database id. At creation time all three are derived from the top eligible alternative; consumers that let users override the choice rewrite `cde_key` / `cde_id` / `harmonization` in place.
+- **`AlternativeEntry`**: `{target: str, confidence: float, harmonization: Harmonization, cde_id: NotRequired[int]}`. The score field is named `confidence` — the same name the upstream API emits. There is no `similarity` alias at any layer.
+- **`Harmonization`**: `Literal["harmonizable", "no_permissible_values", "numeric"]`. Canonical ownership lives in the recommendation Lambda's `Harmonization` StrEnum; this Literal is the SDK's boundary-adapted view. Missing or unknown values from the upstream API raise `MappingDiscoveryError` — the field is required on every match.
 - **`ManifestPayload`**: `{column_mappings: list[ColumnMappingRecord | None]}`. `None` means "no mapping resolved for this CSV position" — either the top option fell below threshold or it lacked a `target_cde_id`. The list length equals the CSV column count; the array index is the canonical `column_id`.
 
 Invariants enforced by the adapter:
 1. `len(column_mappings) == column_count` (CSV position parity).
-2. Non-`None` entries always have a `cde_key: str` and `cde_id: int`.
-3. Alternatives are sorted by `confidence` descending; options lacking a `target` or `confidence` are filtered out.
+2. Non-`None` entries always have a `cde_key: str`, `cde_id: int`, and `harmonization: Harmonization`.
+3. Alternatives are sorted by `confidence` descending; options lacking a `target` or `confidence` are filtered out. Every alternative carries `harmonization` — the field is never optional on a wire-level match.
 
 ## Harmonization Workflow
 1. Validate inputs (`validate_source_path`, `validate_manifest_path`, `validate_output_path`). Output validation automatically versions existing destinations (`.harmonized.v1.csv`, `.v2`, …) rather than overwriting.
