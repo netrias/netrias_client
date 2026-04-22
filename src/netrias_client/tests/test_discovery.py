@@ -12,7 +12,7 @@ import httpx
 import pytest
 
 from netrias_client import NetriasClient
-from netrias_client._errors import MappingDiscoveryError, NetriasAPIUnavailable
+from netrias_client._errors import MappingDiscoveryError, MappingValidationError, NetriasAPIUnavailable
 
 from ._utils import install_mock_transport, json_failure, json_success, transport_error
 
@@ -669,6 +669,90 @@ def test_harmonization_surfaces_on_every_alternative_and_top_level(
     assert third["harmonization"] == "no_permissible_values"
     assert third["cde_key"] == "middle_name"
     assert fourth["harmonization"] == "numeric"
+
+
+def test_positional_parity_rejects_reordered_response_of_equal_length(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_csv_path: Path,
+) -> None:
+    """Equal-length but reordered responses must raise, not silently shift column_ids.
+
+    'why': the SDK uses the response array index as column_id. A backend regression
+    that sorts results alphabetically (or any other reorder) would keep the length
+    invariant intact but bind every CDE to the wrong source column. The parity
+    cross-check catches that by comparing response column_name against the
+    outbound column_name at each index.
+    """
+
+    # Given a CSV with headers [a, b, c] and a response that returns them in [c, a, b] order
+    assert sample_csv_path.read_text(encoding="utf-8").splitlines()[0] == "a,b,c"
+    payload = _array_payload(
+        [
+            {
+                "column_name": "c",
+                "matches": [
+                    {"target": "C", "target_cde_id": 3, "confidence": 0.9, "harmonization": "harmonizable"},
+                ],
+            },
+            {
+                "column_name": "a",
+                "matches": [
+                    {"target": "A", "target_cde_id": 1, "confidence": 0.9, "harmonization": "harmonizable"},
+                ],
+            },
+            {
+                "column_name": "b",
+                "matches": [
+                    {"target": "B", "target_cde_id": 2, "confidence": 0.9, "harmonization": "harmonizable"},
+                ],
+            },
+        ]
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    # When / Then — parity cross-check fails at the first mismatched slot (index 0: expected "a", found "c")
+    with pytest.raises(MappingDiscoveryError) as exc:
+        _ = configured_client.discover_mapping_from_csv(
+            source_csv=sample_csv_path,
+            target_schema="ccdi",
+            target_version="v1",
+        )
+
+    message = str(exc.value)
+    assert "column_name mismatch" in message
+    assert "'a'" in message
+    assert "'c'" in message
+
+
+def test_zero_column_csv_rejected_at_boundary(
+    configured_client: NetriasClient,
+    tmp_path: Path,
+) -> None:
+    """A CSV with no header row must raise MappingValidationError, not a phantom success.
+
+    'why': without this guard, an empty-header CSV would send columns=[] upstream,
+    receive an empty results array back, and the adapter would return a manifest
+    with column_mappings=[] — a trivially "successful" result for a degenerate input.
+    """
+
+    # Given a CSV with zero columns (entirely empty file)
+    csv_path = tmp_path / "empty.csv"
+    _ = csv_path.write_text("", encoding="utf-8")
+    assert csv_path.read_text(encoding="utf-8") == ""
+
+    # When / Then — _samples_from_csv rejects before any request goes out
+    with pytest.raises(MappingValidationError) as exc:
+        _ = configured_client.discover_mapping_from_csv(
+            source_csv=csv_path,
+            target_schema="ccdi",
+            target_version="v1",
+        )
+
+    message = str(exc.value)
+    assert "no header row" in message
+    assert "0 columns" in message
 
 
 def test_discovery_strict_rejects_response_missing_harmonization(

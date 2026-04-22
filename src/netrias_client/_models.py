@@ -9,7 +9,16 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Literal, NotRequired, TypedDict, override
+from typing import Final, Literal, NotRequired, TypedDict, get_args, override
+
+
+COLUMN_NAME_KEY: Final[str] = "column_name"
+"""Wire-format key for per-column identity across request, response, and manifest.
+
+'why': one owner for the string literal so request/response/manifest layers cannot
+drift from the TypedDict field name — boundary parsers and manifest writers both
+reference this constant instead of repeating the raw literal.
+"""
 
 
 class ColumnSamples(TypedDict):
@@ -24,6 +33,15 @@ Harmonization = Literal["harmonizable", "no_permissible_values", "numeric"]
 
 Canonical ownership lives in the recommendation Lambda's `Harmonization` StrEnum;
 this Literal is the SDK's boundary-adapted view of those values.
+"""
+
+
+HARMONIZATION_VALUES: Final[frozenset[str]] = frozenset(get_args(Harmonization))
+"""Runtime mirror of the `Harmonization` Literal's allowed strings.
+
+'why': boundary validators need a concrete membership set; deriving from
+`get_args(Harmonization)` keeps the Literal (compile-time) and the frozenset
+(runtime) from drifting — one source of truth for the allowed harmonization values.
 """
 
 

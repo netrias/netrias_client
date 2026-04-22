@@ -427,8 +427,8 @@ The client raises typed exceptions that inherit from `NetriasClientError`:
 |-----------|-------------|
 | `ClientConfigurationError` | Invalid configuration or `configure()` not called. |
 | `FileValidationError` | Source file doesn't exist or is invalid. |
-| `MappingDiscoveryError` | Discovery API returned a client error (4xx). |
-| `MappingValidationError` | Manifest validation failed. |
+| `MappingDiscoveryError` | Discovery API returned a client error (4xx), or the response violated the position-indexed contract (length mismatch, reordered columns, missing/invalid `harmonization`). |
+| `MappingValidationError` | Manifest validation failed (missing keys, wrong value types, or a CSV with no header row). |
 | `OutputLocationError` | Cannot write to the output path. |
 | `NetriasAPIUnavailable` | Network error, timeout, or server error (5xx). |
 | `HarmonizationJobError` | Harmonization job failed or timed out. |

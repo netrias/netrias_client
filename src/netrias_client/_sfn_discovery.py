@@ -17,6 +17,7 @@ import httpx
 
 from ._config import API_KEY_HEADER, ASYNC_POLL_INTERVAL_SECONDS, BYPASS_REGION
 from ._errors import AsyncDiscoveryError
+from ._models import ColumnSamples
 
 TERMINAL_STATES: Final[frozenset[str]] = frozenset({"SUCCEEDED", "FAILED", "TIMED_OUT", "ABORTED"})
 
@@ -25,7 +26,7 @@ def discover_via_step_functions(
     api_url: str,
     target_schema: str,
     target_version: str,
-    columns: list[dict[str, object]],
+    columns: list[ColumnSamples],
     timeout: float,
     logger: logging.Logger,
     top_k: int = 3,
@@ -46,7 +47,7 @@ def _start_execution(
     api_url: str,
     schema: str,
     version: str,
-    columns: list[dict[str, object]],
+    columns: list[ColumnSamples],
     top_k: int,
     logger: logging.Logger,
     api_key: str | None = None,

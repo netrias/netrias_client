@@ -14,6 +14,7 @@ from typing import Callable, IO, Protocol, cast
 
 from ._errors import GatewayBypassError
 from ._logging import LOGGER_NAMESPACE
+from ._models import ColumnSamples
 
 
 class _LambdaClient(Protocol):
@@ -39,7 +40,7 @@ class _SessionProtocol(Protocol):
 def invoke_cde_recommendation_alias(
     target_schema: str,
     target_version: str,
-    columns: list[dict[str, object]],
+    columns: list[ColumnSamples],
     function_name: str = "cde-recommendation",
     alias: str | None = None,
     region_name: str = "us-east-2",

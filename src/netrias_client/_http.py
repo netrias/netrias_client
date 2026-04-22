@@ -16,6 +16,7 @@ import httpx
 
 from ._adapter import MANIFEST_COLUMN_MAPPINGS_KEY, normalize_manifest_mapping
 from ._config import API_KEY_HEADER
+from ._models import ColumnSamples
 
 SCHEMA_VERSION: Final[str] = "1.0"
 DEFAULT_MODEL_VERSION: Final[str] = "v1"
@@ -94,7 +95,7 @@ async def request_mapping_discovery(
     timeout: float,
     schema: str,
     version: str,
-    columns: list[dict[str, object]],
+    columns: list[ColumnSamples],
     top_k: int | None = None,
 ) -> httpx.Response:
     """Submit column samples for mapping recommendations."""

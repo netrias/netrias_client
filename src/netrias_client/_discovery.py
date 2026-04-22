@@ -12,16 +12,24 @@ import logging
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import NoReturn, cast, get_args
+from typing import NoReturn, cast
 
 import httpx
 
 from ._adapter import build_column_mapping_payload
 from ._config import ASYNC_API_URL, BYPASS_ALIAS, BYPASS_FUNCTION, BYPASS_REGION, validated_confidence_threshold
-from ._errors import AsyncDiscoveryError, GatewayBypassError, MappingDiscoveryError, NetriasAPIUnavailable
+from ._errors import (
+    AsyncDiscoveryError,
+    GatewayBypassError,
+    MappingDiscoveryError,
+    MappingValidationError,
+    NetriasAPIUnavailable,
+)
 from ._gateway_bypass import invoke_cde_recommendation_alias
 from ._http import request_mapping_discovery
 from ._models import (
+    COLUMN_NAME_KEY,
+    HARMONIZATION_VALUES,
     ColumnSamples,
     Harmonization,
     ManifestPayload,
@@ -53,9 +61,10 @@ async def _discover_mapping_async(
     started = time.perf_counter()
     logger.info("discover mapping start: schema=%s version=%s columns=%s", schema, version, column_count)
 
+    outbound_names = tuple(column["column_name"] for column in columns)
     try:
         result = await _discover_with_backend(
-            settings, schema, version, columns, column_count, logger, validated_top_k
+            settings, schema, version, columns, outbound_names, logger, validated_top_k
         )
     except (httpx.TimeoutException, httpx.HTTPError, GatewayBypassError, AsyncDiscoveryError) as exc:
         _handle_discovery_error(schema, started, exc, logger)
@@ -106,12 +115,10 @@ async def _discover_with_backend(
     schema: str,
     version: str,
     columns: list[ColumnSamples],
-    column_count: int,
+    outbound_names: tuple[str, ...],
     logger: logging.Logger,
     top_k: int | None = None,
 ) -> MappingDiscoveryResult:
-    # 'why': all three backends return the same array-format payload, parsed uniformly
-    samples_for_wire = cast(list[dict[str, object]], columns)
     if settings.discovery_use_async_api:
         logger.debug("discover backend via Step Functions polling")
         # 'why': discover_via_step_functions uses blocking I/O; run in thread to avoid blocking event loop
@@ -120,13 +127,13 @@ async def _discover_with_backend(
             api_url=ASYNC_API_URL,
             target_schema=schema,
             target_version=version,
-            columns=samples_for_wire,
+            columns=columns,
             timeout=settings.timeout,
             logger=logger,
             top_k=top_k or 3,
             api_key=settings.api_key,
         )
-        return _result_from_payload(payload, schema, column_count)
+        return _result_from_payload(payload, schema, outbound_names)
 
     if settings.discovery_use_gateway_bypass:
         logger.debug("discover backend via bypass alias")
@@ -135,7 +142,7 @@ async def _discover_with_backend(
             invoke_cde_recommendation_alias,
             target_schema=schema,
             target_version=version,
-            columns=samples_for_wire,
+            columns=columns,
             function_name=BYPASS_FUNCTION,
             alias=BYPASS_ALIAS,
             region_name=BYPASS_REGION,
@@ -143,7 +150,7 @@ async def _discover_with_backend(
             logger=logger,
             top_k=top_k,
         )
-        return _result_from_payload(payload, schema, column_count)
+        return _result_from_payload(payload, schema, outbound_names)
 
     logger.debug("discover backend via HTTP API")
     response = await request_mapping_discovery(
@@ -152,10 +159,10 @@ async def _discover_with_backend(
         timeout=settings.timeout,
         schema=schema,
         version=version,
-        columns=samples_for_wire,
+        columns=columns,
         top_k=top_k,
     )
-    return _interpret_discovery_response(response, schema, column_count)
+    return _interpret_discovery_response(response, schema, outbound_names)
 
 
 def _handle_discovery_error(
@@ -195,7 +202,9 @@ def _handle_discovery_error(
 
 
 def _interpret_discovery_response(
-    response: httpx.Response, requested_schema: str, expected_length: int
+    response: httpx.Response,
+    requested_schema: str,
+    outbound_names: tuple[str, ...],
 ) -> MappingDiscoveryResult:
     if response.status_code >= 500:
         message = _error_message(response)
@@ -205,14 +214,16 @@ def _interpret_discovery_response(
         raise MappingDiscoveryError(message)
 
     payload = _load_payload(response)
-    return _result_from_payload(payload, requested_schema, expected_length)
+    return _result_from_payload(payload, requested_schema, outbound_names)
 
 
 def _result_from_payload(
-    payload: Mapping[str, object], requested_schema: str, expected_length: int
+    payload: Mapping[str, object],
+    requested_schema: str,
+    outbound_names: tuple[str, ...],
 ) -> MappingDiscoveryResult:
     schema = _resolved_schema(payload, requested_schema)
-    suggestions = _suggestions_from_payload(payload, expected_length)
+    suggestions = _suggestions_from_payload(payload, outbound_names)
     return MappingDiscoveryResult(schema=schema, suggestions=suggestions, raw=payload)
 
 
@@ -306,10 +317,34 @@ def _samples_from_csv(csv_path: Path, sample_limit: int) -> list[ColumnSamples]:
     csv.DictReader would silently merge duplicate headers, so csv.reader is used.
     Blank/whitespace-only headers get synthetic `_col_<i>` names so the backend's
     non-empty-column-name validator accepts the payload; the synthetic column will
-    not match anything and lands as None in the manifest, preserving positional parity."""
+    not match anything and lands as None in the manifest, preserving positional parity.
+    An empty header row yields zero columns, which the backend would 400 on or return
+    an empty results array — either way the manifest would be trivially "successful"
+    for a degenerate input, so reject it here at the boundary instead."""
     dataset = validate_source_path(csv_path)
     headers, rows = _read_limited_rows(dataset, sample_limit)
+    _require_nonempty_header(headers, dataset)
     column_count = len(headers)
+    samples = _collect_column_samples(rows, column_count)
+    return [
+        ColumnSamples(column_name=_column_name_or_placeholder(headers[i], i), values=samples[i])
+        for i in range(column_count)
+    ]
+
+
+def _require_nonempty_header(headers: list[str], dataset: Path) -> None:
+    """'why': an empty header row would produce a zero-column request that the
+    backend either 400s on or returns []; either way the SDK would advertise a
+    trivially-successful manifest for a degenerate input. Reject at the boundary."""
+    if headers:
+        return
+    raise MappingValidationError(
+        "source CSV has no header row: expected at least one column, "
+        + f"found 0 columns, source={dataset}"
+    )
+
+
+def _collect_column_samples(rows: list[list[str]], column_count: int) -> list[list[str]]:
     samples: list[list[str]] = [[] for _ in range(column_count)]
     for row in rows:
         padded = row + [""] * max(0, column_count - len(row))
@@ -317,10 +352,7 @@ def _samples_from_csv(csv_path: Path, sample_limit: int) -> list[ColumnSamples]:
             value = padded[i].strip()
             if value:
                 samples[i].append(value)
-    return [
-        ColumnSamples(column_name=_column_name_or_placeholder(headers[i], i), values=samples[i])
-        for i in range(column_count)
-    ]
+    return samples
 
 
 def _column_name_or_placeholder(header: str, index: int) -> str:
@@ -370,29 +402,33 @@ def _resolved_schema(payload: Mapping[str, object], requested_schema: str) -> st
 
 
 def _suggestions_from_payload(
-    payload: Mapping[str, object], expected_length: int
+    payload: Mapping[str, object], outbound_names: tuple[str, ...]
 ) -> tuple[MappingSuggestion, ...]:
-    """Boundary: validate response shape and length before admitting to domain."""
+    """Boundary: validate response shape, length, and per-index column identity."""
 
     results = payload.get("results")
     if not isinstance(results, list):
         raise MappingDiscoveryError(
             "mapping discovery response missing 'results' array, source=discovery response"
         )
-    return _suggestions_from_results_array(cast(list[object], results), expected_length)
+    return _suggestions_from_results_array(cast(list[object], results), outbound_names)
 
 
 def _suggestions_from_results_array(
-    results: list[object], expected_length: int
+    results: list[object], outbound_names: tuple[str, ...]
 ) -> tuple[MappingSuggestion, ...]:
     """Convert array-format results to MappingSuggestion tuples, preserving position.
 
-    'why': the consumer's column_id == array index; any silent drop or malformed
-    entry here shifts every subsequent column's identity downstream.
+    'why': the consumer's column_id == array index; a silent drop, malformed entry,
+    or reordered response here shifts every subsequent column's identity downstream.
+    Length *and* column_name parity are cross-checked against the outbound request
+    so reorder-with-equal-length cannot pass undetected.
     """
 
-    _require_expected_length(results, expected_length)
-    return tuple(_suggestion_from_entry(entry, i) for i, entry in enumerate(results))
+    _require_expected_length(results, len(outbound_names))
+    return tuple(
+        _suggestion_from_entry(entry, i, outbound_names[i]) for i, entry in enumerate(results)
+    )
 
 
 def _require_expected_length(results: list[object], expected_length: int) -> None:
@@ -405,12 +441,30 @@ def _require_expected_length(results: list[object], expected_length: int) -> Non
     raise MappingDiscoveryError(message)
 
 
-def _suggestion_from_entry(entry: object, index: int) -> MappingSuggestion:
+def _suggestion_from_entry(
+    entry: object, index: int, expected_column_name: str
+) -> MappingSuggestion:
     entry_map = _require_entry_mapping(entry, index)
     column_name = _require_entry_column_name(entry_map, index)
+    _require_column_name_parity(column_name, expected_column_name, index)
     matches = _require_entry_matches(entry_map, index)
     options = _options_from_list(matches)
     return MappingSuggestion(source_column=column_name, options=options, raw=dict(entry_map), column_id=index)
+
+
+def _require_column_name_parity(
+    received: str, expected: str, index: int
+) -> None:
+    """'why': the SDK uses the response array index as column_id; if the backend
+    reorders results (same length, different positions) the downstream manifest
+    silently binds the wrong CDE to every column. Reject a mismatch at the boundary.
+    """
+    if received == expected:
+        return
+    raise MappingDiscoveryError(
+        f"mapping discovery result at index {index} column_name mismatch: "
+        + f"expected {expected!r}, found {received!r}, source=discovery response"
+    )
 
 
 def _require_entry_mapping(entry: object, index: int) -> Mapping[str, object]:
@@ -422,7 +476,7 @@ def _require_entry_mapping(entry: object, index: int) -> Mapping[str, object]:
 
 
 def _require_entry_column_name(entry_map: Mapping[str, object], index: int) -> str:
-    column_name = entry_map.get("column_name")
+    column_name = entry_map.get(COLUMN_NAME_KEY)
     if isinstance(column_name, str):
         return column_name
     raise MappingDiscoveryError(
@@ -437,9 +491,6 @@ def _require_entry_matches(entry_map: Mapping[str, object], index: int) -> list[
     raise MappingDiscoveryError(
         f"mapping discovery result at index {index} missing 'matches' array, source=discovery response"
     )
-
-
-_HARMONIZATION_VALUES: frozenset[str] = frozenset(get_args(Harmonization))
 
 
 def _options_from_list(options_list: list[object]) -> tuple[MappingRecommendationOption, ...]:
@@ -469,9 +520,9 @@ def _require_option_harmonization(option: Mapping[str, object]) -> Harmonization
     unknown values mean the SDK is talking to an incompatible upstream — fail fast.
     """
     value = option.get("harmonization")
-    if isinstance(value, str) and value in _HARMONIZATION_VALUES:
+    if isinstance(value, str) and value in HARMONIZATION_VALUES:
         return cast(Harmonization, value)
-    allowed = sorted(_HARMONIZATION_VALUES)
+    allowed = sorted(HARMONIZATION_VALUES)
     message = (
         f"mapping discovery match missing required 'harmonization' value "
         f"(expected one of {allowed}, found {value!r}), source=discovery response"

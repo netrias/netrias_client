@@ -14,6 +14,8 @@ from typing import Final, cast
 from ._errors import MappingValidationError
 from ._logging import LOGGER_NAMESPACE
 from ._models import (
+    COLUMN_NAME_KEY,
+    HARMONIZATION_VALUES,
     AlternativeEntry,
     ColumnMappingRecord,
     ManifestPayload,
@@ -98,6 +100,8 @@ def _make_entry(
     """'why': _place_suggestion guarantees both target and target_cde_id are present
     on non-None entries, so cde_key and cde_id are always emitted together.
     """
+    # 'why': TypedDict fields must be literal keys for basedpyright; the constant
+    # is reused at the response/manifest lookup boundaries below instead.
     return {
         "column_name": suggestion.source_column,
         "cde_key": cast(str, option.target),
@@ -190,9 +194,11 @@ def normalize_manifest_mapping(
 def _coerce_entry(entry: object, index: int) -> ColumnMappingRecord | None:
     """Validate one manifest slot at the external boundary.
 
-    'why': three outcomes only — None passthrough, full Mapping to ColumnMappingRecord,
-    anything else a typed boundary error. The TypedDict is authoritative, so silent
-    coercion of partial/mistyped entries would hide the contract violation downstream.
+    'why': four outcomes only — None passthrough, full Mapping to ColumnMappingRecord,
+    missing-keys error, or wrong-value-type error. The TypedDict is authoritative, so
+    silent coercion of partial/mistyped entries would hide the contract violation
+    downstream; value-type checks prevent a string `cde_id` (or similar) from passing
+    as a valid record.
     """
     if entry is None:
         return None
@@ -202,13 +208,69 @@ def _coerce_entry(entry: object, index: int) -> ColumnMappingRecord | None:
     missing = [key for key in REQUIRED_RECORD_KEYS if key not in typed_entry]
     if missing:
         raise MappingValidationError(_missing_keys_message(typed_entry, missing, index))
+    _validate_entry_value_types(typed_entry, index)
     return cast(ColumnMappingRecord, cast(object, dict(typed_entry)))
+
+
+def _validate_entry_value_types(entry: Mapping[str, object], index: int) -> None:
+    """Assert each required field carries a value of the expected domain type.
+
+    'why': presence-only validation previously allowed `cde_id: "forty-two"` or
+    `harmonization: "bogus"` to pass through as a TypedDict that lies about its
+    fields; boundary validation must fail fast with a per-field message instead.
+    """
+    _require_string(entry, COLUMN_NAME_KEY, index)
+    _require_string(entry, "cde_key", index)
+    _require_int(entry, "cde_id", index)
+    _require_harmonization(entry, index)
+    _require_list(entry, "alternatives", index)
+
+
+def _require_string(entry: Mapping[str, object], key: str, index: int) -> None:
+    value = entry[key]
+    if isinstance(value, str):
+        return
+    raise MappingValidationError(_wrong_value_message(key, "str", value, index))
+
+
+def _require_int(entry: Mapping[str, object], key: str, index: int) -> None:
+    value = entry[key]
+    # 'why': bool is a subclass of int in Python; reject booleans before the int check
+    if isinstance(value, int) and not isinstance(value, bool):
+        return
+    raise MappingValidationError(_wrong_value_message(key, "int", value, index))
+
+
+def _require_list(entry: Mapping[str, object], key: str, index: int) -> None:
+    value = entry[key]
+    if isinstance(value, list):
+        return
+    raise MappingValidationError(_wrong_value_message(key, "list", value, index))
+
+
+def _require_harmonization(entry: Mapping[str, object], index: int) -> None:
+    value = entry["harmonization"]
+    if isinstance(value, str) and value in HARMONIZATION_VALUES:
+        return
+    allowed = sorted(HARMONIZATION_VALUES)
+    raise MappingValidationError(
+        f"manifest entry field 'harmonization' must be one of {allowed}, "
+        + f"found {value!r}, source={MANIFEST_COLUMN_MAPPINGS_KEY}[{index}]"
+    )
 
 
 def _wrong_type_message(entry: object, index: int) -> str:
     return (
         f"manifest entry must be a JSON object or null, found {type(entry).__name__}, "
         + f"source={MANIFEST_COLUMN_MAPPINGS_KEY}[{index}]"
+    )
+
+
+def _wrong_value_message(key: str, expected: str, value: object, index: int) -> str:
+    return (
+        f"manifest entry field {key!r} must be {expected}, "
+        + f"found {type(value).__name__} ({value!r}), "
+        + f"source={MANIFEST_COLUMN_MAPPINGS_KEY}[{index}].{key}"
     )
 
 

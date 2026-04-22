@@ -102,6 +102,43 @@ def test_sample_manifest_fixture_conforms_to_column_mapping_record() -> None:
             assert key in entry, f"fixture entry missing required key {key!r}"
 
 
+@pytest.mark.parametrize(
+    ("field", "bad_value", "expected_fragment"),
+    [
+        ("column_name", 42, "'column_name' must be str"),
+        ("cde_key", ["not", "a", "string"], "'cde_key' must be str"),
+        ("cde_id", "forty-two", "'cde_id' must be int"),
+        ("cde_id", True, "'cde_id' must be int"),
+        ("harmonization", "bogus", "'harmonization' must be one of"),
+        ("harmonization", 1, "'harmonization' must be one of"),
+        ("alternatives", "not-a-list", "'alternatives' must be list"),
+    ],
+)
+def test_entry_with_wrong_value_type_raises_boundary_error(
+    field: str, bad_value: object, expected_fragment: str
+) -> None:
+    """Presence alone is not enough — each field must carry a value of the declared type.
+
+    'why': the commit message's stated goal is that the boundary raises instead of
+    coercing to a TypedDict that lies about its fields. An entry with cde_id='forty-two'
+    or harmonization='bogus' would pass key-presence validation and produce a
+    structurally-typed record that misrepresents its payload.
+    """
+
+    # Given — a complete record with exactly one field replaced by a wrong-typed value
+    full: dict[str, object] = dict(_complete_entry())
+    full[field] = bad_value
+    manifest: dict[str, object] = {"column_mappings": [full]}
+    assert field in full
+
+    # When / Then — normalization raises naming the field and expected type
+    with pytest.raises(MappingValidationError) as exc_info:
+        _ = normalize_manifest_mapping(manifest)
+    message = str(exc_info.value)
+    assert expected_fragment in message
+    assert f"column_mappings[0].{field}" in message or "column_mappings[0]" in message
+
+
 @pytest.mark.parametrize("omitted_key", REQUIRED_RECORD_KEYS)
 def test_entry_missing_any_single_required_key_raises_boundary_error(omitted_key: str) -> None:
     """For every required key, omitting just that one must raise MappingValidationError.
