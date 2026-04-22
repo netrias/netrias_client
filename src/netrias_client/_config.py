@@ -6,9 +6,17 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
+from typing import Final
 
 from ._errors import ClientConfigurationError
 from ._models import DataModelStoreEndpoints, LogLevel, Settings
+
+API_KEY_HEADER: Final[str] = "x-api-key"
+"""Single owner of the Netrias API Gateway key header name.
+
+'why': repeated literal across _http.py and _sfn_discovery.py; centralizing
+here keeps one authority so header renames cannot drift.
+"""
 
 
 class Environment(str, Enum):
@@ -25,7 +33,7 @@ _ENVIRONMENT_URLS: dict[Environment, dict[str, str]] = {
         "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
     },
     Environment.STAGING: {
-        "discovery": "https://s7a8ekw0yd.execute-api.us-east-2.amazonaws.com",
+        "discovery": "https://reyu82i72e.execute-api.us-east-2.amazonaws.com/staging",
         "harmonization": "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging",
         "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
     },

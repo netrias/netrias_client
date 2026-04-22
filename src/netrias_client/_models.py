@@ -9,9 +9,80 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Literal, TypeAlias, override
+from typing import Final, Literal, NotRequired, TypedDict, get_args, override
 
-ManifestPayload: TypeAlias = dict[str, dict[str, dict[str, object]]]
+
+COLUMN_NAME_KEY: Final[str] = "column_name"
+"""Wire-format key for per-column identity across request, response, and manifest.
+
+'why': one owner for the string literal so request/response/manifest layers cannot
+drift from the TypedDict field name — boundary parsers and manifest writers both
+reference this constant instead of repeating the raw literal.
+"""
+
+
+class ColumnSamples(TypedDict):
+    """Outbound per-column request payload — one entry per CSV header position."""
+
+    column_name: str
+    values: list[str]
+
+
+Harmonization = Literal["harmonizable", "no_permissible_values", "numeric"]
+"""'why': mirrors the Lambda StrEnum; closed set so callers can exhaustively match.
+
+Canonical ownership lives in the recommendation Lambda's `Harmonization` StrEnum;
+this Literal is the SDK's boundary-adapted view of those values.
+"""
+
+
+HARMONIZATION_VALUES: Final[frozenset[str]] = frozenset(get_args(Harmonization))
+"""Runtime mirror of the `Harmonization` Literal's allowed strings.
+
+'why': boundary validators need a concrete membership set; deriving from
+`get_args(Harmonization)` keeps the Literal (compile-time) and the frozenset
+(runtime) from drifting — one source of truth for the allowed harmonization values.
+"""
+
+
+class AlternativeEntry(TypedDict):
+    """A ranked candidate target for a source column, sorted by confidence descending.
+
+    'why': the score key is 'confidence' end-to-end — same name as the upstream API,
+    no translation at the SDK boundary.
+    """
+
+    target: str
+    confidence: float
+    harmonization: Harmonization
+    cde_id: NotRequired[int]
+
+
+class ColumnMappingRecord(TypedDict):
+    """Manifest entry for a column matched above the confidence threshold.
+
+    Every non-None entry carries both `cde_key` (the ontology string id) and
+    `cde_id` (the numeric CDE id). The adapter drops the slot entirely if the
+    top eligible option lacks a cde_id, so the invariant is real.
+
+    Example (position 0 of a 2-column CSV with header ["dx", "site"]):
+        {"column_name": "dx", "cde_key": "primary_diagnosis", "cde_id": 42,
+         "harmonization": "harmonizable",
+         "alternatives": [{"target": "primary_diagnosis", "confidence": 0.91,
+                           "harmonization": "harmonizable", "cde_id": 42}]}
+    """
+
+    column_name: str
+    cde_key: str
+    cde_id: int
+    harmonization: Harmonization
+    alternatives: list[AlternativeEntry]
+
+
+class ManifestPayload(TypedDict):
+    """JSON-on-disk manifest shape; list position encodes CSV column_id."""
+
+    column_mappings: list[ColumnMappingRecord | None]
 
 
 class LogLevel(str, Enum):
@@ -80,6 +151,7 @@ class MappingRecommendationOption:
 
     target: str | None
     confidence: float | None
+    harmonization: Harmonization
     target_cde_id: int | None = None
     raw: Mapping[str, object] | None = None
 
@@ -91,6 +163,7 @@ class MappingSuggestion:
     source_column: str
     options: tuple[MappingRecommendationOption, ...]
     raw: Mapping[str, object] | None = None
+    column_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -139,13 +212,3 @@ class CDE:
     cde_id: int
     cde_version_id: int
     description: str | None = None
-
-
-@dataclass(frozen=True)
-class PermissibleValue:
-    """Represent a permissible value for a CDE."""
-
-    pv_id: int
-    value: str
-    description: str | None
-    is_active: bool

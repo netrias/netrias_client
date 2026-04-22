@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "netrias_client"
-version = "0.3.0"
+version = "0.5.0"
 description = "Python client for the Netrias harmonization API"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -49,13 +49,13 @@ release = "netrias_client.scripts:release"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7",
+    "pytest>=9.0.3",
     "pytest-asyncio>=0.23",
     "ruff>=0.5.0",
     "basedpyright",
     "typing-extensions",
     "ty",
-    "python-dotenv>=1.0",
+    "python-dotenv>=1.2.2",
     "twine>=5.0",
 ]
 
@@ -99,13 +99,13 @@ exclude = [
 
 [dependency-groups]
 dev = [
-    "pytest>=7",
+    "pytest>=9.0.3",
     "pytest-asyncio>=0.23",
     "ruff>=0.5.0",
     "basedpyright",
     "typing-extensions",
     "ty",
-    "python-dotenv>=1.0",
+    "python-dotenv>=1.2.2",
     "twine>=5.0",
     "pip-audit>=2.7.0",
 ]

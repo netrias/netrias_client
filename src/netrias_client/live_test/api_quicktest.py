@@ -157,33 +157,6 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
 
     results.append(run_test("list_cdes(pagination)", test_list_cdes_pagination))
 
-    # --- list_pvs ---
-
-    def test_list_pvs_basic() -> None:
-        pvs = client.list_pvs(model_key=MODEL_KEY, version=VERSION, cde_key=CDE_KEY, limit=10)
-        print(f"  list_pvs({MODEL_KEY}, {VERSION}, {CDE_KEY}) -> {len(pvs)} PVs")
-        assert len(pvs) > 0, "Expected at least one PV"
-        for pv in pvs[:5]:
-            print(f"    - value={pv.value!r}, pv_id={pv.pv_id}, is_active={pv.is_active}")
-
-    results.append(run_test("list_pvs(basic)", test_list_pvs_basic))
-
-    def test_list_pvs_include_inactive() -> None:
-        pvs = client.list_pvs(model_key=MODEL_KEY, version=VERSION, cde_key=CDE_KEY, include_inactive=True)
-        print(f"  list_pvs(include_inactive=True) -> {len(pvs)} PVs")
-        inactive = [pv for pv in pvs if not pv.is_active]
-        print(f"    - {len(inactive)} inactive PVs")
-
-    results.append(run_test("list_pvs(include_inactive)", test_list_pvs_include_inactive))
-
-    def test_list_pvs_query() -> None:
-        pvs = client.list_pvs(model_key=MODEL_KEY, version=VERSION, cde_key=CDE_KEY, query="male")
-        print(f"  list_pvs(query='male') -> {len(pvs)} PVs")
-        for pv in pvs:
-            print(f"    - {pv.value}")
-
-    results.append(run_test("list_pvs(query)", test_list_pvs_query))
-
     # --- get_pv_set ---
 
     def test_get_pv_set() -> None:
@@ -196,21 +169,13 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
 
     results.append(run_test("get_pv_set", test_get_pv_set))
 
-    # --- validate_value ---
+    def test_get_pv_set_membership() -> None:
+        pv_set = client.get_pv_set(model_key=MODEL_KEY, version=VERSION, cde_key=CDE_KEY)
+        print(f"  get_pv_set membership check -> 'Female' in pv_set == {'Female' in pv_set}")
+        print(f"  get_pv_set membership check -> 'InvalidValue123' in pv_set == {'InvalidValue123' in pv_set}")
+        assert "InvalidValue123" not in pv_set, "Expected 'InvalidValue123' to not be in PV set"
 
-    def test_validate_value_valid() -> None:
-        is_valid = client.validate_value("Female", model_key=MODEL_KEY, version=VERSION, cde_key=CDE_KEY)
-        print(f"  validate_value('Female', {CDE_KEY}) -> {is_valid}")
-        assert is_valid is True, "Expected 'Female' to be valid"
-
-    results.append(run_test("validate_value(valid)", test_validate_value_valid))
-
-    def test_validate_value_invalid() -> None:
-        is_valid = client.validate_value("InvalidValue123", model_key=MODEL_KEY, version=VERSION, cde_key=CDE_KEY)
-        print(f"  validate_value('InvalidValue123', {CDE_KEY}) -> {is_valid}")
-        assert is_valid is False, "Expected 'InvalidValue123' to be invalid"
-
-    results.append(run_test("validate_value(invalid)", test_validate_value_invalid))
+    results.append(run_test("get_pv_set(membership)", test_get_pv_set_membership))
 
     # =========================================================================
     # DISCOVERY API TESTS
@@ -220,7 +185,9 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
     print("DISCOVERY API")
     print("-" * 70)
 
-    discovered_manifest: dict[str, dict[str, dict[str, object]]] | None = None
+    from netrias_client import ManifestPayload
+
+    discovered_manifest: ManifestPayload | None = None
 
     def test_discover_mapping_from_csv() -> None:
         nonlocal discovered_manifest
@@ -235,13 +202,13 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
             top_k=3,
         )
         print(f"  discover_mapping_from_csv({CSV_PATH.name})")
-        mappings = discovered_manifest.get("column_mappings", {})
-        print(f"    - Column mappings: {len(mappings)}")
-        for key in list(mappings.keys())[:3]:
-            mapping_data = mappings[key]
-            target = mapping_data.get("targetField", "N/A")
+        mappings = discovered_manifest["column_mappings"]
+        print(f"    - Column mappings: {len(mappings)} (including placeholders)")
+        matched = [m for m in mappings if m is not None]
+        for mapping_data in matched[:3]:
+            column_name = mapping_data.get("column_name", "N/A")
             cde_id = mapping_data.get("cde_id", "N/A")
-            print(f"      {key} -> {target} (cde_id={cde_id})")
+            print(f"      {column_name} (cde_id={cde_id})")
 
     results.append(run_test("discover_mapping_from_csv", test_discover_mapping_from_csv))
 
@@ -254,9 +221,9 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
             top_k=3,
             confidence_threshold=0.5,
         )
-        mappings = manifest.get("column_mappings", {})
+        mappings = manifest["column_mappings"]
         print("  discover_mapping_from_csv(confidence_threshold=0.5)")
-        print(f"    - Column mappings: {len(mappings)}")
+        print(f"    - Column mappings: {len(mappings)} (including placeholders)")
 
     results.append(run_test("discover_mapping_from_csv(confidence_threshold)", test_discover_mapping_with_confidence_threshold))
 

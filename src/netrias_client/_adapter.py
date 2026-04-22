@@ -1,158 +1,151 @@
 """Translate discovery results into manifest-friendly mappings.
 
-'why': bridge API recommendations to harmonization manifests while respecting confidence bounds
+'why': bridge API recommendations to harmonization manifests while preserving
+position-wise parity — array index equals CSV column_id end to end
 """
 from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping
 from pathlib import Path
-from typing import cast
+from typing import Final, cast
 
-from ._models import MappingDiscoveryResult, MappingRecommendationOption, MappingSuggestion
+from ._errors import MappingValidationError
+from ._logging import LOGGER_NAMESPACE
+from ._models import (
+    COLUMN_NAME_KEY,
+    HARMONIZATION_VALUES,
+    AlternativeEntry,
+    ColumnMappingRecord,
+    ManifestPayload,
+    MappingDiscoveryResult,
+    MappingRecommendationOption,
+    MappingSuggestion,
+)
 
+MANIFEST_COLUMN_MAPPINGS_KEY: Final[str] = "column_mappings"
+"""Wire-format key for the position-indexed manifest list.
+
+'why': read by normalize_manifest_mapping, written by _http.build_harmonize_payload,
+surfaced in boundary error messages — one owner so the label never drifts from the key.
+"""
+
+REQUIRED_RECORD_KEYS: tuple[str, ...] = tuple(
+    key for key in ColumnMappingRecord.__annotations__ if key in ColumnMappingRecord.__required_keys__
+)
+"""Runtime mirror of ColumnMappingRecord's required fields.
+
+'why': derived from the TypedDict so the shape has one owner (_models.ColumnMappingRecord)
+and the validator cannot drift from the declared contract.
+"""
 
 
 def build_column_mapping_payload(
     result: MappingDiscoveryResult,
     threshold: float,
+    column_count: int,
     logger: logging.Logger | None = None,
-) -> dict[str, dict[str, dict[str, object]]]:
-    """Convert discovery output into the manifest structure expected by harmonization."""
+) -> ManifestPayload:
+    """Convert discovery output into a position-indexed manifest of length column_count."""
 
-    active_logger = logger or logging.getLogger("netrias_client")
-    strongest = strongest_targets(result, threshold=threshold, logger=active_logger)
-    all_options = _all_options_by_column(result)
-    return {"column_mappings": _column_entries(strongest, all_options)}
+    active_logger = logger or logging.getLogger(LOGGER_NAMESPACE)
+    entries = _build_manifest_entries(result.suggestions, threshold, column_count, active_logger)
+    return ManifestPayload(column_mappings=entries)
 
 
-def strongest_targets(
-    result: MappingDiscoveryResult,
+def _build_manifest_entries(
+    suggestions: tuple[MappingSuggestion, ...],
     threshold: float,
+    column_count: int,
     logger: logging.Logger,
-) -> dict[str, MappingRecommendationOption]:
-    """Return the highest-confidence target per column, filtered by threshold."""
+) -> list[ColumnMappingRecord | None]:
+    """Emit one slot per CSV column, with None where no option meets the threshold.
 
-    if result.suggestions:
-        selected = _from_suggestions(result.suggestions, threshold)
-    else:
-        selected = _from_raw_payload(result.raw, threshold)
+    'why': consumer uses array index as stable column_id; placeholders preserve that identity.
+    """
 
-    if selected:
-        logger.info("adapter strongest targets: %s", {k: v.target for k, v in selected.items()})
-    else:
-        logger.warning("adapter strongest targets empty after filtering")
-    return selected
-
-
-def _all_options_by_column(
-    result: MappingDiscoveryResult,
-) -> dict[str, tuple[MappingRecommendationOption, ...]]:
-    """Downstream consumers display ranked alternatives alongside the top pick."""
-    return {s.source_column: s.options for s in result.suggestions}
-
-
-def _column_entries(
-    strongest: Mapping[str, MappingRecommendationOption],
-    all_options: Mapping[str, tuple[MappingRecommendationOption, ...]],
-) -> dict[str, dict[str, object]]:
-    entries: dict[str, dict[str, object]] = {}
-    for source, option in strongest.items():
-        entry: dict[str, object] = {"targetField": option.target}
-        if option.target_cde_id is not None:
-            entry["cde_id"] = option.target_cde_id
-        entry["alternatives"] = _format_alternatives(all_options.get(source, ()))
-        entries[source] = entry
+    entries: list[ColumnMappingRecord | None] = [None] * column_count
+    matched_names: list[str] = []
+    for suggestion in suggestions:
+        placement = _place_suggestion(suggestion, threshold, column_count)
+        if placement is None:
+            continue
+        column_id, entry = placement
+        entries[column_id] = entry
+        matched_names.append(suggestion.source_column)
+    _log_manifest_outcome(logger, matched_names)
     return entries
+
+
+def _place_suggestion(
+    suggestion: MappingSuggestion, threshold: float, column_count: int
+) -> tuple[int, ColumnMappingRecord] | None:
+    """'why': drop the whole slot if the top option lacks target_cde_id so the
+    non-None entry invariant (cde_key + cde_id both populated) holds downstream.
+    """
+    column_id = suggestion.column_id
+    if column_id is None or not 0 <= column_id < column_count:
+        return None
+    option = _top_option(suggestion.options, threshold)
+    if option is None or option.target is None or option.target_cde_id is None:
+        return None
+    entry = _make_entry(suggestion, option)
+    return column_id, entry
+
+
+def _make_entry(
+    suggestion: MappingSuggestion, option: MappingRecommendationOption
+) -> ColumnMappingRecord:
+    """'why': _place_suggestion guarantees both target and target_cde_id are present
+    on non-None entries, so cde_key and cde_id are always emitted together.
+    """
+    # 'why': TypedDict fields must be literal keys for basedpyright; the constant
+    # is reused at the response/manifest lookup boundaries below instead.
+    return {
+        "column_name": suggestion.source_column,
+        "cde_key": cast(str, option.target),
+        "cde_id": cast(int, option.target_cde_id),
+        "harmonization": option.harmonization,
+        "alternatives": _format_alternatives(suggestion.options),
+    }
+
+
+def _log_manifest_outcome(logger: logging.Logger, matched_names: list[str]) -> None:
+    if matched_names:
+        logger.info("adapter manifest entries: %s", matched_names)
+    else:
+        logger.warning("adapter manifest entries empty after filtering")
 
 
 def _format_alternatives(
     options: tuple[MappingRecommendationOption, ...],
-) -> list[dict[str, object]]:
-    """Sorted by confidence descending; includes all options regardless of threshold."""
-    sorted_options = sorted(options, key=lambda o: o.confidence or 0.0, reverse=True)
-    return [_format_alternative(opt) for opt in sorted_options if opt.target is not None]
+) -> list[AlternativeEntry]:
+    """Sorted by confidence descending; drops options lacking a target or confidence score."""
+    eligible = [opt for opt in options if opt.target is not None and opt.confidence is not None]
+    sorted_options = sorted(eligible, key=lambda o: cast(float, o.confidence), reverse=True)
+    return [_format_alternative(opt) for opt in sorted_options]
 
 
-def _format_alternative(option: MappingRecommendationOption) -> dict[str, object]:
-    alt: dict[str, object] = {"target": option.target}
-    if option.confidence is not None:
-        alt["similarity"] = option.confidence
+def _format_alternative(option: MappingRecommendationOption) -> AlternativeEntry:
+    """'why': score key is 'confidence' end-to-end — same as the upstream API."""
+    alt: AlternativeEntry = {
+        "target": cast(str, option.target),
+        "confidence": cast(float, option.confidence),
+        "harmonization": option.harmonization,
+    }
     if option.target_cde_id is not None:
         alt["cde_id"] = option.target_cde_id
     return alt
 
 
-def _from_suggestions(
-    suggestions: Iterable[MappingSuggestion], threshold: float
-) -> dict[str, MappingRecommendationOption]:
-    strongest: dict[str, MappingRecommendationOption] = {}
-    for suggestion in suggestions:
-        option = _top_option(suggestion.options, threshold)
-        if option is None or option.target is None:
-            continue
-        strongest[suggestion.source_column] = option
-    return strongest
-
-
-def _from_raw_payload(payload: Mapping[str, object], threshold: float) -> dict[str, MappingRecommendationOption]:
-    strongest: dict[str, MappingRecommendationOption] = {}
-    for column, value in payload.items():
-        options = _coerce_options(value)
-        option = _top_option(options, threshold)
-        if option is None or option.target is None:
-            continue
-        strongest[column] = option
-    return strongest
-
-
-def _coerce_options(value: object) -> tuple[MappingRecommendationOption, ...]:
-    if not isinstance(value, list):
-        return ()
-    return tuple(_option_iterator(cast(list[object], value)))
-
-
-def _option_iterator(items: list[object]) -> Iterable[MappingRecommendationOption]:
-    for item in items:
-        if not isinstance(item, Mapping):
-            continue
-        option = _option_from_mapping(cast(Mapping[str, object], item))
-        if option is not None:
-            yield option
-
-
-def _option_from_mapping(item: Mapping[str, object]) -> MappingRecommendationOption | None:
-    target = item.get("target")
-    if not isinstance(target, str):
-        return None
-    similarity = item.get("similarity")
-    score: float | None = None
-    if isinstance(similarity, (float, int)):
-        score = float(similarity)
-    cde_id = _extract_cde_id(item)
-    return MappingRecommendationOption(target=target, confidence=score, target_cde_id=cde_id, raw=item)
-
-
-def _extract_cde_id(item: Mapping[str, object]) -> int | None:
-    """Extract target_cde_id from recommendation, handling numeric types."""
-    value = item.get("target_cde_id")
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float):
-        return int(value)
-    return None
-
-
 def _top_option(
-    options: Iterable[MappingRecommendationOption], threshold: float
+    options: tuple[MappingRecommendationOption, ...], threshold: float
 ) -> MappingRecommendationOption | None:
     eligible = [opt for opt in options if _meets_threshold(opt, threshold)]
     if not eligible:
         return None
-    return max(eligible, key=lambda opt: opt.confidence or float("-inf"))
+    return max(eligible, key=lambda opt: cast(float, opt.confidence))
 
 
 def _meets_threshold(option: MappingRecommendationOption, threshold: float) -> bool:
@@ -161,99 +154,132 @@ def _meets_threshold(option: MappingRecommendationOption, threshold: float) -> b
         return False
     return score >= threshold
 
+
+def load_manifest(path: Path) -> Mapping[str, object]:
+    """Boundary: read and parse manifest JSON, raising typed errors on failure."""
+
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise MappingValidationError(
+            f"manifest could not be read: expected readable JSON file, found {exc}, source={path}"
+        ) from exc
+    try:
+        parsed = cast(object, json.loads(content))
+    except json.JSONDecodeError as exc:
+        raise MappingValidationError(
+            f"manifest was not valid JSON: {exc}, source={path}"
+        ) from exc
+    if not isinstance(parsed, Mapping):
+        raise MappingValidationError(
+            f"manifest must be a JSON object, found {type(parsed).__name__}, source={path}"
+        )
+    return cast(Mapping[str, object], parsed)
+
+
 def normalize_manifest_mapping(
     manifest: Path | Mapping[str, object] | None,
-) -> dict[str, int]:
-    """Normalize manifest column→CDE entries for harmonization payloads."""
+) -> list[ColumnMappingRecord | None]:
+    """Return the position-indexed column_mappings list from a manifest input."""
 
     if manifest is None:
-        return {}
-    raw = _load_manifest_raw(manifest)
-    mapping = _mapping_dict(raw)
-    normalized: dict[str, int] = {}
-    for field, value in mapping.items():
-        _apply_cde_entry(normalized, field, value)
-    return normalized
+        return []
+    raw = load_manifest(manifest) if isinstance(manifest, Path) else manifest
+    column_mappings = raw.get(MANIFEST_COLUMN_MAPPINGS_KEY)
+    if not isinstance(column_mappings, list):
+        return []
+    return [_coerce_entry(entry, index) for index, entry in enumerate(cast(list[object], column_mappings))]
 
 
-def _load_manifest_raw(manifest: Path | Mapping[str, object]) -> Mapping[str, object]:
-    if isinstance(manifest, Path):
-        content = manifest.read_text(encoding="utf-8")
-        try:
-            return cast(Mapping[str, object], json.loads(content))
-        except json.JSONDecodeError as exc:
-            raise ValueError(f"manifest must be valid JSON: {exc}") from exc
-    return manifest
+def _coerce_entry(entry: object, index: int) -> ColumnMappingRecord | None:
+    """Validate one manifest slot at the external boundary.
+
+    'why': four outcomes only — None passthrough, full Mapping to ColumnMappingRecord,
+    missing-keys error, or wrong-value-type error. The TypedDict is authoritative, so
+    silent coercion of partial/mistyped entries would hide the contract violation
+    downstream; value-type checks prevent a string `cde_id` (or similar) from passing
+    as a valid record.
+    """
+    if entry is None:
+        return None
+    if not isinstance(entry, Mapping):
+        raise MappingValidationError(_wrong_type_message(entry, index))
+    typed_entry = cast(Mapping[str, object], entry)
+    missing = [key for key in REQUIRED_RECORD_KEYS if key not in typed_entry]
+    if missing:
+        raise MappingValidationError(_missing_keys_message(typed_entry, missing, index))
+    _validate_entry_value_types(typed_entry, index)
+    return cast(ColumnMappingRecord, cast(object, dict(typed_entry)))
 
 
-def _mapping_dict(raw: Mapping[str, object]) -> dict[str, object]:
-    mapping = _dict_if_str_mapping(raw)
-    if mapping is None:
-        return {}
-    candidate = _dict_if_str_mapping(mapping.get("column_mappings"))
-    return candidate if candidate is not None else mapping
+def _validate_entry_value_types(entry: Mapping[str, object], index: int) -> None:
+    """Assert each required field carries a value of the expected domain type.
+
+    'why': presence-only validation previously allowed `cde_id: "forty-two"` or
+    `harmonization: "bogus"` to pass through as a TypedDict that lies about its
+    fields; boundary validation must fail fast with a per-field message instead.
+    """
+    _require_string(entry, COLUMN_NAME_KEY, index)
+    _require_string(entry, "cde_key", index)
+    _require_int(entry, "cde_id", index)
+    _require_harmonization(entry, index)
+    _require_list(entry, "alternatives", index)
 
 
-def _dict_if_str_mapping(value: object) -> dict[str, object] | None:
-    if isinstance(value, Mapping):
-        typed = cast(Mapping[str, object], value)
-        return dict(typed)
-    return None
-
-
-def _apply_cde_entry(destination: dict[str, int], field: object, value: object) -> None:
-    name = _clean_field(field)
-    cde_id = _coerce_cde_id(value)
-    if name is None or cde_id is None:
+def _require_string(entry: Mapping[str, object], key: str, index: int) -> None:
+    value = entry[key]
+    if isinstance(value, str):
         return
-    destination[name] = cde_id
+    raise MappingValidationError(_wrong_value_message(key, "str", value, index))
 
 
-def _clean_field(field: object) -> str | None:
-    if not isinstance(field, str):
-        return None
-    name = field.strip()
-    return name or None
+def _require_int(entry: Mapping[str, object], key: str, index: int) -> None:
+    value = entry[key]
+    # 'why': bool is a subclass of int in Python; reject booleans before the int check
+    if isinstance(value, int) and not isinstance(value, bool):
+        return
+    raise MappingValidationError(_wrong_value_message(key, "int", value, index))
 
 
-def _coerce_cde_id(value: object) -> int | None:
-    candidate = _cde_candidate(value)
-    if candidate is None:
-        return None
-    return _int_from_candidate(candidate)
+def _require_list(entry: Mapping[str, object], key: str, index: int) -> None:
+    value = entry[key]
+    if isinstance(value, list):
+        return
+    raise MappingValidationError(_wrong_value_message(key, "list", value, index))
 
 
-def _cde_candidate(value: object) -> object | None:
-    mapping = _dict_if_str_mapping(value)
-    if mapping is not None:
-        return mapping.get("cdeId") or mapping.get("cde_id")
-    return value
+def _require_harmonization(entry: Mapping[str, object], index: int) -> None:
+    value = entry["harmonization"]
+    if isinstance(value, str) and value in HARMONIZATION_VALUES:
+        return
+    allowed = sorted(HARMONIZATION_VALUES)
+    raise MappingValidationError(
+        f"manifest entry field 'harmonization' must be one of {allowed}, "
+        + f"found {value!r}, source={MANIFEST_COLUMN_MAPPINGS_KEY}[{index}]"
+    )
 
 
-def _int_from_candidate(candidate: object) -> int | None:
-    # 'why': bool is a subclass of int in Python, but True/False are not valid CDE IDs
-    if isinstance(candidate, bool):
-        return None
-    if isinstance(candidate, (int, float)):
-        return _int_from_number(candidate)
-    if isinstance(candidate, str):
-        return _int_from_string(candidate)
-    return None
+def _wrong_type_message(entry: object, index: int) -> str:
+    return (
+        f"manifest entry must be a JSON object or null, found {type(entry).__name__}, "
+        + f"source={MANIFEST_COLUMN_MAPPINGS_KEY}[{index}]"
+    )
 
 
-def _int_from_number(value: int | float) -> int | None:
-    # 'why': OverflowError raised for float('inf') and float('nan')
-    try:
-        return int(value)
-    except (TypeError, ValueError, OverflowError):
-        return None
+def _wrong_value_message(key: str, expected: str, value: object, index: int) -> str:
+    return (
+        f"manifest entry field {key!r} must be {expected}, "
+        + f"found {type(value).__name__} ({value!r}), "
+        + f"source={MANIFEST_COLUMN_MAPPINGS_KEY}[{index}].{key}"
+    )
 
 
-def _int_from_string(value: str) -> int | None:
-    stripped = value.strip()
-    if not stripped:
-        return None
-    try:
-        return int(stripped)
-    except ValueError:
-        return None
+def _missing_keys_message(entry: Mapping[str, object], missing: list[str], index: int) -> str:
+    expected = ", ".join(REQUIRED_RECORD_KEYS)
+    found = ", ".join(entry.keys())
+    missing_str = ", ".join(missing)
+    return (
+        f"manifest entry missing required keys: expected {{{expected}}}, "
+        + f"found {{{found}}}, missing={{{missing_str}}}, "
+        + f"source={MANIFEST_COLUMN_MAPPINGS_KEY}[{index}]"
+    )

@@ -9,14 +9,15 @@ import base64
 import json
 import logging
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import Final
 
 import boto3  # pyright: ignore[reportMissingTypeStubs]
 import httpx
 
-from ._config import ASYNC_POLL_INTERVAL_SECONDS, BYPASS_REGION
+from ._config import API_KEY_HEADER, ASYNC_POLL_INTERVAL_SECONDS, BYPASS_REGION
 from ._errors import AsyncDiscoveryError
+from ._models import ColumnSamples
 
 TERMINAL_STATES: Final[frozenset[str]] = frozenset({"SUCCEEDED", "FAILED", "TIMED_OUT", "ABORTED"})
 
@@ -25,7 +26,7 @@ def discover_via_step_functions(
     api_url: str,
     target_schema: str,
     target_version: str,
-    columns: Mapping[str, Sequence[str]],
+    columns: list[ColumnSamples],
     timeout: float,
     logger: logging.Logger,
     top_k: int = 3,
@@ -46,7 +47,7 @@ def _start_execution(
     api_url: str,
     schema: str,
     version: str,
-    columns: Mapping[str, Sequence[str]],
+    columns: list[ColumnSamples],
     top_k: int,
     logger: logging.Logger,
     api_key: str | None = None,
@@ -55,7 +56,7 @@ def _start_execution(
     payload = {
         "target_schema": schema,
         "target_version": version,
-        "data": dict(columns),
+        "columns": columns,
         "top_k": top_k,
     }
     # 'why': base64 encode payload to avoid VTL escaping issues with special characters
@@ -68,7 +69,7 @@ def _start_execution(
     # 'why': cache-busting headers prevent API Gateway from returning stale responses
     headers: dict[str, str] = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
     if api_key:
-        headers["x-api-key"] = api_key
+        headers[API_KEY_HEADER] = api_key
     with httpx.Client(timeout=30.0) as client:
         response = client.post(url, json=wrapper, headers=headers)
         response.raise_for_status()

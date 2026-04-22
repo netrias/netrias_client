@@ -95,16 +95,29 @@ manifest = client.discover_mapping_from_csv(
 
 ```python
 {
-    "column_mappings": {
-        "patient_id": {"targetField": "participant_id"},
-        "gender": {"targetField": "sex_at_birth"},
-        "diagnosis": {
-            "targetField": "primary_diagnosis",
-            "route": "sagemaker:primary",
-            "cdeId": -200,
-            "cde_id": -200
-        }
-    }
+    "column_mappings": [
+        {
+            "column_name": "patient_id",
+            "cde_key": "participant_id",
+            "cde_id": 101,
+            "harmonization": "harmonizable",
+            "alternatives": [{"target": "participant_id", "confidence": 0.95, "harmonization": "harmonizable", "cde_id": 101}],
+        },
+        {
+            "column_name": "gender",
+            "cde_key": "sex_at_birth",
+            "cde_id": 102,
+            "harmonization": "harmonizable",
+            "alternatives": [{"target": "sex_at_birth", "confidence": 0.88, "harmonization": "harmonizable", "cde_id": 102}],
+        },
+        {
+            "column_name": "diagnosis",
+            "cde_key": "primary_diagnosis",
+            "cde_id": -200,
+            "harmonization": "harmonizable",
+            "alternatives": [{"target": "primary_diagnosis", "confidence": 0.97, "harmonization": "harmonizable", "cde_id": -200}],
+        },
+    ]
 }
 ```
 
@@ -414,8 +427,8 @@ The client raises typed exceptions that inherit from `NetriasClientError`:
 |-----------|-------------|
 | `ClientConfigurationError` | Invalid configuration or `configure()` not called. |
 | `FileValidationError` | Source file doesn't exist or is invalid. |
-| `MappingDiscoveryError` | Discovery API returned a client error (4xx). |
-| `MappingValidationError` | Manifest validation failed. |
+| `MappingDiscoveryError` | Discovery API returned a client error (4xx), or the response violated the position-indexed contract (length mismatch, reordered columns, missing/invalid `harmonization`). |
+| `MappingValidationError` | Manifest validation failed (missing keys, wrong value types, or a CSV with no header row). |
 | `OutputLocationError` | Cannot write to the output path. |
 | `NetriasAPIUnavailable` | Network error, timeout, or server error (5xx). |
 | `HarmonizationJobError` | Harmonization job failed or timed out. |

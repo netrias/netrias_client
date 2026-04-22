@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from ._errors import FileValidationError, MappingValidationError, OutputLocationError
@@ -78,19 +77,6 @@ def validate_top_k(top_k: int | None) -> int | None:
     return top_k
 
 
-def validate_column_samples(columns: Mapping[str, Sequence[object]]) -> dict[str, list[str]]:
-    """Normalize column sample data for mapping discovery."""
-
-    if not columns:
-        raise MappingValidationError("column data must include at least one column")
-    normalized: dict[str, list[str]] = {}
-    for raw_name, values in columns.items():
-        name = _normalized_column_name(raw_name)
-        samples = _normalized_samples(name, values)
-        normalized[name] = samples
-    return normalized
-
-
 def _require_exists(path: Path, message: str) -> None:
     if not path.exists():
         raise FileValidationError(f"{message}: {path}")
@@ -160,39 +146,3 @@ def _next_available_path(candidate: Path) -> Path:
     raise OutputLocationError(
         f"unable to determine unique output path after {index - 1} attempts for {candidate}"
     )
-
-
-def _normalized_column_name(raw_name: object) -> str:
-    if not isinstance(raw_name, str):
-        raise MappingValidationError("column names must be strings")
-    name = raw_name.strip()
-    if not name:
-        raise MappingValidationError("column names must be non-empty strings")
-    return name
-
-
-def _normalized_samples(column_name: str, values: Sequence[object] | None) -> list[str]:
-    """Normalize and deduplicate sample values for a column.
-
-    'why': duplicate values waste API bandwidth and don't improve recommendations
-    """
-
-    sequence = _require_sequence(column_name, values)
-    coerced = [sample for sample in (_coerced_sample(value) for value in sequence) if sample]
-    if not coerced:
-        raise MappingValidationError(f"column '{column_name}' must include at least one non-empty sample value")
-    # Deduplicate while preserving order
-    return list(dict.fromkeys(coerced))
-
-
-def _require_sequence(column_name: str, values: Sequence[object] | None) -> Sequence[object]:
-    if values is None or isinstance(values, (str, bytes)):
-        raise MappingValidationError(f"column '{column_name}' values must be a sequence of samples")
-    return values
-
-
-def _coerced_sample(value: object) -> str | None:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None

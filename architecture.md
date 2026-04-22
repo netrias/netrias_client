@@ -52,16 +52,34 @@
   - `validate_value`, `validate_value_async` – convenience methods returning `bool` for single-value validation.
 
 ## Discovery Workflow
-1. Validate schema (`validate_target_schema`) and column samples (`validate_column_samples`); CSV helpers (`discover_mapping_from_csv*`) read the header plus up to `sample_limit` rows (default 25) to build samples automatically.
+1. Validate schema (`validate_target_schema`) and column samples (`validate_column_samples`); CSV helpers (`discover_mapping_from_csv*`) read the header plus up to `sample_limit` rows (default 25) to build samples automatically. A CSV with no header row is rejected at the boundary as `MappingValidationError` before any request is issued, so a degenerate input cannot produce a trivially-"successful" empty manifest.
 2. Route based on configuration:
    - **Default (API Gateway)**: POST to the built-in discovery URL with payload `{ "body": "{...}" }`, sending the configured API key as `x-api-key`. Responses are parsed via `_interpret_discovery_response` and converted into manifest payloads.
    - **Gateway Bypass (temporary)**: Call the `cde-recommendation` Lambda alias directly using boto3. Request and response shapes mimic the API Gateway proxy event (`{"body": "...", "isBase64Encoded": false}`); errors surface as `GatewayBypassError`, wrapped into `NetriasAPIUnavailable` for the public surface.
-3. Suggestions are represented as `MappingSuggestion` / `MappingRecommendationOption` instances and stored alongside the raw payload for diagnostics.
-4. Duration metrics are logged for success, transport errors, and bypass failures.
+3. **Positional parity is enforced at the response boundary.** The tuple of outbound `column_name` values is threaded into the response parser, and every `results[i].column_name` must match `columns[i].column_name` exactly. A reorder (equal length, different order) raises `MappingDiscoveryError` — length parity alone is not trusted to guarantee identity parity. Transport signatures (`request_mapping_discovery`, `invoke_cde_recommendation_alias`, `discover_via_step_functions`) all take `list[ColumnSamples]` so the typed wire contract is preserved end-to-end instead of being erased to `list[dict[str, object]]`.
+4. Suggestions are represented as `MappingSuggestion` / `MappingRecommendationOption` instances and stored alongside the raw payload for diagnostics.
+5. Duration metrics are logged for success, transport errors, and bypass failures.
 
 ## Adapter Responsibilities
-- Discovery normalization extracts the highest-confidence target per source column, filters below the configured threshold, and merges static CDE metadata (route, target field, `cdeId`).
+- Discovery normalization extracts the highest-confidence target per source column, filters below the configured threshold, and emits the canonical column-mapping shape.
+- A slot is `None` whenever the top eligible option lacks a `target_cde_id`; non-`None` entries are guaranteed to carry both `cde_key` and `cde_id`.
 - Unresolved columns (missing CDE metadata) are logged for observability; downstream harmonization can still proceed with passthrough mappings when appropriate.
+
+## Column-mapping canonical shape
+The SDK is the canonical owner of the column-mapping wire shape. Consumers import these TypedDicts from `netrias_client` rather than redefining them.
+
+- **`ColumnMappingRecord`**: `{column_name: str, cde_key: str, cde_id: int, harmonization: Harmonization, alternatives: list[AlternativeEntry]}`. Every non-None entry carries all five fields. `cde_key` is the ontology string identifier of the chosen CDE; `cde_id` is its numeric database id. At creation time all three are derived from the top eligible alternative; consumers that let users override the choice rewrite `cde_key` / `cde_id` / `harmonization` in place.
+- **`AlternativeEntry`**: `{target: str, confidence: float, harmonization: Harmonization, cde_id: NotRequired[int]}`. The score field is named `confidence` — the same name the upstream API emits. There is no `similarity` alias at any layer.
+- **`Harmonization`**: `Literal["harmonizable", "no_permissible_values", "numeric"]`. Canonical ownership lives in the recommendation Lambda's `Harmonization` StrEnum; this Literal is the SDK's boundary-adapted view. Missing or unknown values from the upstream API raise `MappingDiscoveryError` — the field is required on every match.
+- **`ManifestPayload`**: `{column_mappings: list[ColumnMappingRecord | None]}`. `None` means "no mapping resolved for this CSV position" — either the top option fell below threshold or it lacked a `target_cde_id`. The list length equals the CSV column count; the array index is the canonical `column_id`.
+
+Invariants enforced by the adapter:
+1. `len(column_mappings) == column_count` (CSV position parity).
+2. Non-`None` entries always have a `cde_key: str`, `cde_id: int`, and `harmonization: Harmonization`.
+3. Alternatives are sorted by `confidence` descending; options lacking a `target` or `confidence` are filtered out. Every alternative carries `harmonization` — the field is never optional on a wire-level match.
+4. **Manifest ingress validates value types, not just key presence.** `normalize_manifest_mapping` raises `MappingValidationError` when a required field carries the wrong type (e.g., `cde_id: "forty-two"`, `harmonization: "bogus"`, `alternatives: "nope"`). A TypedDict that lies about its fields never enters the domain.
+
+The SDK owns one runtime mirror of the `Harmonization` literal (`HARMONIZATION_VALUES` in `_models.py`); both the discovery boundary and the manifest boundary consult the same frozenset, so the allowed set has a single owner. The wire-format key for per-column identity is `COLUMN_NAME_KEY` in `_models.py`; response and manifest boundary lookups reference it instead of repeating the raw literal.
 
 ## Harmonization Workflow
 1. Validate inputs (`validate_source_path`, `validate_manifest_path`, `validate_output_path`). Output validation automatically versions existing destinations (`.harmonized.v1.csv`, `.v2`, …) rather than overwriting.

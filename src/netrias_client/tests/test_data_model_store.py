@@ -4,12 +4,15 @@
 """
 from __future__ import annotations
 
+import asyncio
+
+import httpx
 import pytest
 
-from netrias_client import CDE, DataModel, DataModelStoreError, DataModelVersion, NetriasClient, PermissibleValue
+from netrias_client import CDE, DataModel, DataModelStoreError, DataModelVersion, NetriasClient
 from netrias_client._errors import NetriasAPIUnavailable
 
-from ._utils import install_mock_transport, json_failure, json_success, paginated_pv_responses
+from ._utils import MockTransportCapture, install_mock_transport, json_failure, json_success, paginated_pv_responses
 
 
 def test_list_data_models_success(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -105,6 +108,7 @@ def test_list_data_models_with_version_number(
 
     models = configured_client.list_data_models(include_versions=True)
 
+    assert models[0].versions is not None
     assert len(models[0].versions) == 2
     assert models[0].versions[0] == DataModelVersion(version_label="1")
     assert models[0].versions[1] == DataModelVersion(version_label="2")
@@ -116,7 +120,7 @@ def test_list_data_models_empty(configured_client: NetriasClient, monkeypatch: p
     'why': verify graceful handling of empty results
     """
 
-    payload = {"total": 0, "limit": None, "offset": 0, "items": []}
+    payload: dict[str, object] = {"total": 0, "limit": None, "offset": 0, "items": []}
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
@@ -152,36 +156,6 @@ def test_list_cdes_success(configured_client: NetriasClient, monkeypatch: pytest
     assert cdes[1] == CDE(cde_key="sex_at_birth", cde_id=124, cde_version_id=457, description="Biological sex")
 
 
-def test_list_pvs_success(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Return permissible values from the API response.
-
-    'why': verify basic happy path for listing PVs
-    """
-
-    payload = {
-        "data_commons_key": "ccdi",
-        "version_label": "v1",
-        "cde_key": "sex_at_birth",
-        "total": 3,
-        "limit": None,
-        "offset": 0,
-        "items": [
-            {"pv_id": 1, "value": "Male", "description": None, "is_active": True},
-            {"pv_id": 2, "value": "Female", "description": "Biological female", "is_active": True},
-            {"pv_id": 3, "value": "Unknown", "description": None, "is_active": False},
-        ],
-    }
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    pvs = configured_client.list_pvs("ccdi", "v1", "sex_at_birth")
-
-    assert len(pvs) == 3
-    assert pvs[0] == PermissibleValue(pv_id=1, value="Male", description=None, is_active=True)
-    assert pvs[1] == PermissibleValue(pv_id=2, value="Female", description="Biological female", is_active=True)
-    assert pvs[2] == PermissibleValue(pv_id=3, value="Unknown", description=None, is_active=False)
-
-
 def test_get_pv_set_returns_frozenset(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
     """Return a frozenset of PV values for efficient membership testing.
 
@@ -207,48 +181,6 @@ def test_get_pv_set_returns_frozenset(configured_client: NetriasClient, monkeypa
     assert "InvalidValue" not in pv_set
 
 
-def test_validate_value_returns_true_for_valid(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Return True when value is in permissible values.
-
-    'why': verify validation convenience method works for valid input
-    """
-
-    payload = {
-        "total": 2,
-        "items": [
-            {"pv_id": 1, "value": "Male", "description": None, "is_active": True},
-            {"pv_id": 2, "value": "Female", "description": None, "is_active": True},
-        ],
-    }
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    result = configured_client.validate_value("Male", "ccdi", "v1", "sex_at_birth")
-
-    assert result is True
-
-
-def test_validate_value_returns_false_for_invalid(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Return False when value is not in permissible values.
-
-    'why': verify validation convenience method rejects invalid input
-    """
-
-    payload = {
-        "total": 2,
-        "items": [
-            {"pv_id": 1, "value": "Male", "description": None, "is_active": True},
-            {"pv_id": 2, "value": "Female", "description": None, "is_active": True},
-        ],
-    }
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    result = configured_client.validate_value("InvalidValue", "ccdi", "v1", "sex_at_birth")
-
-    assert result is False
-
-
 def test_list_data_models_raises_on_client_error(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
     """Raise DataModelStoreError on 4xx responses.
 
@@ -259,9 +191,53 @@ def test_list_data_models_raises_on_client_error(configured_client: NetriasClien
     install_mock_transport(monkeypatch, capture)
 
     with pytest.raises(DataModelStoreError) as exc_info:
-        configured_client.list_data_models()
+        _ = configured_client.list_data_models()
 
     assert "Invalid model key" in str(exc_info.value)
+
+
+def _raw_json_failure(raw_json: bytes, status_code: int) -> MockTransportCapture:
+    """Return a mock transport serving an arbitrary JSON payload at the given status.
+
+    'why': json_failure accepts only dict payloads, but _try_extract_message_from_json
+    needs to be exercised against non-Mapping JSON bodies (null, scalars) to confirm
+    it never leaks a bare TypeError on the error-extraction path.
+    """
+
+    recorded: list[httpx.Request] = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        recorded.append(request)
+        return httpx.Response(
+            status_code,
+            headers={"content-type": "application/json"},
+            content=raw_json,
+            request=request,
+        )
+
+    return MockTransportCapture(httpx.MockTransport(handler), recorded)
+
+
+def test_non_mapping_json_body_surfaces_typed_error_not_type_error(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A 4xx response whose JSON body is `null` raises the typed domain error, not TypeError.
+
+    'why': _try_extract_message_from_json does `key in body` on the decoded JSON;
+    a null (or scalar/list) body used to escape as `TypeError: argument of type 'NoneType'
+    is not iterable` before the isinstance-Mapping guard was added. All error paths must
+    surface DataModelStoreError so callers can handle failures with one except clause.
+    """
+
+    # Given — a 400 response whose JSON body decodes to None
+    capture = _raw_json_failure(b"null", 400)
+    install_mock_transport(monkeypatch, capture)
+    assert capture.requests == []  # negative: request not yet issued
+
+    # When / Then — raises the typed domain error, not TypeError
+    with pytest.raises(DataModelStoreError):
+        _ = configured_client.list_data_models()
 
 
 def test_list_data_models_raises_on_server_error(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -274,7 +250,7 @@ def test_list_data_models_raises_on_server_error(configured_client: NetriasClien
     install_mock_transport(monkeypatch, capture)
 
     with pytest.raises(NetriasAPIUnavailable) as exc_info:
-        configured_client.list_data_models()
+        _ = configured_client.list_data_models()
 
     assert "server error" in str(exc_info.value)
 
@@ -289,24 +265,9 @@ def test_list_cdes_raises_on_not_found(configured_client: NetriasClient, monkeyp
     install_mock_transport(monkeypatch, capture)
 
     with pytest.raises(DataModelStoreError) as exc_info:
-        configured_client.list_cdes("ccdi", "v999")
+        _ = configured_client.list_cdes("ccdi", "v999")
 
     assert "Version not found" in str(exc_info.value)
-
-
-def test_list_pvs_raises_on_not_found(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Raise DataModelStoreError when CDE not found.
-
-    'why': verify 404 responses are handled correctly for PV endpoint
-    """
-
-    capture = json_failure({"message": "CDE not found"}, 404)
-    install_mock_transport(monkeypatch, capture)
-
-    with pytest.raises(DataModelStoreError) as exc_info:
-        configured_client.list_pvs("ccdi", "v1", "nonexistent_cde")
-
-    assert "CDE not found" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
@@ -350,26 +311,6 @@ async def test_list_cdes_async(configured_client: NetriasClient, monkeypatch: py
 
 
 @pytest.mark.asyncio
-async def test_list_pvs_async(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verify async variant returns same results for PVs.
-
-    'why': ensure async API works correctly
-    """
-
-    payload = {
-        "total": 1,
-        "items": [{"pv_id": 1, "value": "Test", "description": None, "is_active": True}],
-    }
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    pvs = await configured_client.list_pvs_async("ccdi", "v1", "test_cde")
-
-    assert len(pvs) == 1
-    assert pvs[0].value == "Test"
-
-
-@pytest.mark.asyncio
 async def test_get_pv_set_async(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify async variant returns frozenset.
 
@@ -404,31 +345,9 @@ def test_list_data_models_raises_on_timeout(configured_client: NetriasClient, mo
     install_mock_transport(monkeypatch, capture)
 
     with pytest.raises(NetriasAPIUnavailable) as exc_info:
-        configured_client.list_data_models()
+        _ = configured_client.list_data_models()
 
     assert "timed out" in str(exc_info.value)
-
-
-@pytest.mark.asyncio
-async def test_validate_value_async(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verify async validate_value works correctly.
-
-    'why': ensure async validation convenience method works
-    """
-
-    payload = {
-        "total": 2,
-        "items": [
-            {"pv_id": 1, "value": "Male", "description": None, "is_active": True},
-            {"pv_id": 2, "value": "Female", "description": None, "is_active": True},
-        ],
-    }
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    result = await configured_client.validate_value_async("Male", "ccdi", "v1", "sex_at_birth")
-
-    assert result is True
 
 
 def test_get_pv_set_paginates_multiple_pages(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -460,7 +379,7 @@ def test_list_data_models_sends_query_params(configured_client: NetriasClient, m
     'why': callers need to filter and control results via query params
     """
 
-    payload = {"total": 0, "items": []}
+    payload: dict[str, object] = {"total": 0, "items": []}
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
@@ -487,7 +406,7 @@ def test_list_cdes_sends_query_params(configured_client: NetriasClient, monkeypa
     'why': callers need to filter CDEs and include descriptions
     """
 
-    payload = {"total": 0, "items": []}
+    payload: dict[str, object] = {"total": 0, "items": []}
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
@@ -508,28 +427,28 @@ def test_list_cdes_sends_query_params(configured_client: NetriasClient, monkeypa
     assert "offset=10" in url
 
 
-def test_list_pvs_sends_query_params(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Query parameters are included in the PVs request.
+def test_get_pv_set_works_inside_running_event_loop(
+    configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Sync get_pv_set works when invoked from within a running event loop.
 
-    'why': callers need to filter PVs and include inactive values
+    'why': run_sync must dispatch to a worker thread so Jupyter/FastAPI callers don't deadlock
     """
 
-    payload = {"total": 0, "items": []}
+    payload = {
+        "total": 2,
+        "items": [
+            {"pv_id": 1, "value": "A", "description": None, "is_active": True},
+            {"pv_id": 2, "value": "B", "description": None, "is_active": True},
+        ],
+    }
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    _ = configured_client.list_pvs(
-        model_key="ccdi",
-        version="v1",
-        cde_key="sex_at_birth",
-        include_inactive=True,
-        query="Male",
-        limit=50,
-        offset=0,
-    )
+    async def call_from_async_context() -> frozenset[str]:
+        # invoke the sync delegate while an event loop is already running
+        return configured_client.get_pv_set("ccdi", "v1", "test_cde")
 
-    request = capture.requests[0]
-    url = str(request.url)
-    assert "include_inactive=true" in url
-    assert "q=Male" in url
-    assert "limit=50" in url
+    pv_set = asyncio.run(call_from_async_context())
+
+    assert pv_set == frozenset({"A", "B"})
