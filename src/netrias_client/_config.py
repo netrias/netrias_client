@@ -6,9 +6,17 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
+from typing import Final
 
 from ._errors import ClientConfigurationError
 from ._models import DataModelStoreEndpoints, LogLevel, Settings
+
+API_KEY_HEADER: Final[str] = "x-api-key"
+"""Single owner of the Netrias API Gateway key header name.
+
+'why': repeated literal across _http.py and _sfn_discovery.py; centralizing
+here keeps one authority so header renames cannot drift.
+"""
 
 
 class Environment(str, Enum):

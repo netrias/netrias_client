@@ -251,13 +251,34 @@ def _extract_error_message(response: httpx.Response) -> str:
 
 
 def _try_extract_message_from_json(response: httpx.Response) -> str | None:
+    """Return a human-readable message from a JSON error body, if one is present.
+
+    'why': error responses sometimes come back as null/scalars/lists instead of
+    objects; the isinstance-Mapping guard keeps this helper from leaking TypeError
+    so every failure path converges on the typed domain error in the caller.
+    """
+    body = _response_json_mapping(response)
+    if body is None:
+        return None
+    return _first_present_message(body)
+
+
+def _response_json_mapping(response: httpx.Response) -> Mapping[str, object] | None:
+    """Decode JSON body and return it only if it is a Mapping."""
     try:
         body = response.json()
-        for key in ("message", "detail", "error", "description"):
-            if key in body and body[key]:
-                return str(body[key])
     except (json.JSONDecodeError, ValueError):
-        pass
+        return None
+    if not isinstance(body, Mapping):
+        return None
+    return cast(Mapping[str, object], body)
+
+
+def _first_present_message(body: Mapping[str, object]) -> str | None:
+    for key in ("message", "detail", "error", "description"):
+        value = body.get(key)
+        if value:
+            return str(value)
     return None
 
 

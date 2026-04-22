@@ -6,12 +6,13 @@ from __future__ import annotations
 
 import asyncio
 
+import httpx
 import pytest
 
 from netrias_client import CDE, DataModel, DataModelStoreError, DataModelVersion, NetriasClient
 from netrias_client._errors import NetriasAPIUnavailable
 
-from ._utils import install_mock_transport, json_failure, json_success, paginated_pv_responses
+from ._utils import MockTransportCapture, install_mock_transport, json_failure, json_success, paginated_pv_responses
 
 
 def test_list_data_models_success(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -193,6 +194,50 @@ def test_list_data_models_raises_on_client_error(configured_client: NetriasClien
         _ = configured_client.list_data_models()
 
     assert "Invalid model key" in str(exc_info.value)
+
+
+def _raw_json_failure(raw_json: bytes, status_code: int) -> MockTransportCapture:
+    """Return a mock transport serving an arbitrary JSON payload at the given status.
+
+    'why': json_failure accepts only dict payloads, but _try_extract_message_from_json
+    needs to be exercised against non-Mapping JSON bodies (null, scalars) to confirm
+    it never leaks a bare TypeError on the error-extraction path.
+    """
+
+    recorded: list[httpx.Request] = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        recorded.append(request)
+        return httpx.Response(
+            status_code,
+            headers={"content-type": "application/json"},
+            content=raw_json,
+            request=request,
+        )
+
+    return MockTransportCapture(httpx.MockTransport(handler), recorded)
+
+
+def test_non_mapping_json_body_surfaces_typed_error_not_type_error(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A 4xx response whose JSON body is `null` raises the typed domain error, not TypeError.
+
+    'why': _try_extract_message_from_json does `key in body` on the decoded JSON;
+    a null (or scalar/list) body used to escape as `TypeError: argument of type 'NoneType'
+    is not iterable` before the isinstance-Mapping guard was added. All error paths must
+    surface DataModelStoreError so callers can handle failures with one except clause.
+    """
+
+    # Given — a 400 response whose JSON body decodes to None
+    capture = _raw_json_failure(b"null", 400)
+    install_mock_transport(monkeypatch, capture)
+    assert capture.requests == []  # negative: request not yet issued
+
+    # When / Then — raises the typed domain error, not TypeError
+    with pytest.raises(DataModelStoreError):
+        _ = configured_client.list_data_models()
 
 
 def test_list_data_models_raises_on_server_error(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:

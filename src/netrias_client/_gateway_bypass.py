@@ -13,6 +13,7 @@ from collections.abc import Mapping
 from typing import Callable, IO, Protocol, cast
 
 from ._errors import GatewayBypassError
+from ._logging import LOGGER_NAMESPACE
 
 
 class _LambdaClient(Protocol):
@@ -67,7 +68,7 @@ def invoke_cde_recommendation_alias(
     body = json.dumps(body_dict)
     event = {"body": body, "isBase64Encoded": False}
 
-    active_logger = logger or logging.getLogger("netrias_client")
+    active_logger = logger or logging.getLogger(LOGGER_NAMESPACE)
 
     active_logger.info(
         "gateway bypass invoke start: function=%s alias=%s schema=%s columns=%s",

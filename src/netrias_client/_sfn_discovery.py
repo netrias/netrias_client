@@ -15,7 +15,7 @@ from typing import Final
 import boto3  # pyright: ignore[reportMissingTypeStubs]
 import httpx
 
-from ._config import ASYNC_POLL_INTERVAL_SECONDS, BYPASS_REGION
+from ._config import API_KEY_HEADER, ASYNC_POLL_INTERVAL_SECONDS, BYPASS_REGION
 from ._errors import AsyncDiscoveryError
 
 TERMINAL_STATES: Final[frozenset[str]] = frozenset({"SUCCEEDED", "FAILED", "TIMED_OUT", "ABORTED"})
@@ -68,7 +68,7 @@ def _start_execution(
     # 'why': cache-busting headers prevent API Gateway from returning stale responses
     headers: dict[str, str] = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
     if api_key:
-        headers["x-api-key"] = api_key
+        headers[API_KEY_HEADER] = api_key
     with httpx.Client(timeout=30.0) as client:
         response = client.post(url, json=wrapper, headers=headers)
         response.raise_for_status()

@@ -17,6 +17,7 @@ import httpx
 from ._errors import HarmonizationJobError, NetriasAPIUnavailable
 from ._http import build_harmonize_payload, fetch_job_status, submit_harmonize_job
 from ._io import stream_download_to_file
+from ._logging import LOGGER_NAMESPACE
 from ._models import HarmonizationResult, Settings
 from ._validators import validate_manifest_path, validate_output_path, validate_source_path
 
@@ -43,7 +44,7 @@ async def harmonize_async(
 ) -> HarmonizationResult:
     """Execute harmonization using the asynchronous job API."""
 
-    logger = logger or logging.getLogger("netrias_client")
+    logger = logger or logging.getLogger(LOGGER_NAMESPACE)
     csv_path = validate_source_path(source_path)
     manifest_input = _resolve_manifest(manifest, manifest_output_path)
     dest = validate_output_path(output_path, source_name=csv_path.stem, allow_versioning=True)

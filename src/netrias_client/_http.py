@@ -14,7 +14,8 @@ from urllib.parse import quote
 
 import httpx
 
-from ._adapter import normalize_manifest_mapping
+from ._adapter import MANIFEST_COLUMN_MAPPINGS_KEY, normalize_manifest_mapping
+from ._config import API_KEY_HEADER
 
 SCHEMA_VERSION: Final[str] = "1.0"
 DEFAULT_MODEL_VERSION: Final[str] = "v1"
@@ -46,7 +47,7 @@ def build_harmonize_payload(
 
     column_mappings = normalize_manifest_mapping(manifest)
     if column_mappings:
-        envelope["column_mappings"] = column_mappings
+        envelope[MANIFEST_COLUMN_MAPPINGS_KEY] = column_mappings
 
     raw = json.dumps(envelope, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     compressed = gzip.compress(raw)
@@ -65,7 +66,7 @@ async def submit_harmonize_job(
 
     url = _build_job_submit_url(base_url)
     headers = {
-        "x-api-key": api_key,
+        API_KEY_HEADER: api_key,
         "Content-Type": "application/octet-stream",
     }
     if idempotency_key:
@@ -83,7 +84,7 @@ async def fetch_job_status(
     """Return the status response for a previously submitted harmonization job."""
 
     url = _build_job_status_url(base_url, job_id)
-    headers = {"x-api-key": api_key}
+    headers = {API_KEY_HEADER: api_key}
     async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
         return await client.get(url, headers=headers)
 
@@ -101,7 +102,7 @@ async def request_mapping_discovery(
     url = _build_discovery_url(base_url)
     headers = {
         "Content-Type": "application/json",
-        "x-api-key": api_key,
+        API_KEY_HEADER: api_key,
     }
     body: dict[str, object] = {
         "target_schema": schema,
@@ -127,7 +128,7 @@ async def fetch_data_models(
     """Fetch data models from the Data Model Store."""
 
     url = f"{base_url.rstrip('/')}/data-models"
-    headers = {"x-api-key": api_key}
+    headers = {API_KEY_HEADER: api_key}
     params = _build_data_models_params(query, include_versions, include_counts, limit, offset)
 
     async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
@@ -167,7 +168,7 @@ async def fetch_cdes(
     """Fetch CDEs for a data model version from the Data Model Store."""
 
     url = f"{base_url.rstrip('/')}/data-models/{quote(model_key, safe='')}/versions/{quote(version, safe='')}/cdes"
-    headers = {"x-api-key": api_key}
+    headers = {API_KEY_HEADER: api_key}
     params: dict[str, str | int] = {"offset": offset}
     if include_description:
         params["include_description"] = "true"
@@ -200,7 +201,7 @@ async def fetch_pvs(
         f"/cdes/{quote(cde_key, safe='')}/pvs"
     )
     url = f"{base_url.rstrip('/')}{path}"
-    headers = {"x-api-key": api_key}
+    headers = {API_KEY_HEADER: api_key}
     params: dict[str, str | int] = {"offset": offset}
     if include_inactive:
         params["include_inactive"] = "true"
