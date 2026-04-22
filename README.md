@@ -96,9 +96,9 @@ manifest = client.discover_mapping_from_csv(
 ```python
 {
     "column_mappings": [
-        {"column_name": "patient_id", "cde_id": 101, "alternatives": [{"target": "participant_id", "similarity": 0.95}]},
-        {"column_name": "gender", "cde_id": 102, "alternatives": [{"target": "sex_at_birth", "similarity": 0.88}]},
-        {"column_name": "diagnosis", "cde_id": -200, "alternatives": [{"target": "primary_diagnosis", "similarity": 0.97}]},
+        {"column_name": "patient_id", "cde_key": "participant_id", "cde_id": 101, "alternatives": [{"target": "participant_id", "confidence": 0.95}]},
+        {"column_name": "gender", "cde_key": "sex_at_birth", "cde_id": 102, "alternatives": [{"target": "sex_at_birth", "confidence": 0.88}]},
+        {"column_name": "diagnosis", "cde_key": "primary_diagnosis", "cde_id": -200, "alternatives": [{"target": "primary_diagnosis", "confidence": 0.97}]},
     ]
 }
 ```

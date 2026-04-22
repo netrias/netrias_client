@@ -36,14 +36,14 @@ def test_discover_mapping_from_csv_success(
     payload = _array_payload(
         [
             {
-                "name": "a",
+                "column_name": "a",
                 "matches": [
                     {"target": "Sample.name", "target_cde_id": 11, "confidence": 0.92, "harmonization": "harmonizable"},
                     {"target": "Sample.display_name", "target_cde_id": 12, "confidence": 0.5, "harmonization": "harmonizable"},
                 ],
             },
-            {"name": "b", "matches": []},
-            {"name": "c", "matches": []},
+            {"column_name": "b", "matches": []},
+            {"column_name": "c", "matches": []},
         ]
     )
     capture = json_success(payload)
@@ -89,9 +89,9 @@ def test_discover_mapping_from_csv_samples_csv_data(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": []},
-            {"name": "b", "matches": []},
-            {"name": "c", "matches": []},
+            {"column_name": "a", "matches": []},
+            {"column_name": "b", "matches": []},
+            {"column_name": "c", "matches": []},
         ]
     )
     capture = json_success(payload)
@@ -107,7 +107,7 @@ def test_discover_mapping_from_csv_samples_csv_data(
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     columns_section = cast(list[dict[str, object]], content.get("columns", []))
-    column_names = [entry.get("name") for entry in columns_section]
+    column_names = [entry.get("column_name") for entry in columns_section]
     assert column_names == ["a", "b", "c"]
     assert isinstance(manifest["column_mappings"], list)
 
@@ -160,9 +160,9 @@ async def test_discover_mapping_from_csv_async(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": []},
-            {"name": "b", "matches": []},
-            {"name": "c", "matches": []},
+            {"column_name": "a", "matches": []},
+            {"column_name": "b", "matches": []},
+            {"column_name": "c", "matches": []},
         ]
     )
     capture = json_success(payload)
@@ -185,9 +185,9 @@ def test_discover_mapping_from_csv_sends_top_k_parameter(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": []},
-            {"name": "b", "matches": []},
-            {"name": "c", "matches": []},
+            {"column_name": "a", "matches": []},
+            {"column_name": "b", "matches": []},
+            {"column_name": "c", "matches": []},
         ]
     )
     capture = json_success(payload)
@@ -215,9 +215,9 @@ async def test_discover_mapping_from_csv_async_includes_version(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": []},
-            {"name": "b", "matches": []},
-            {"name": "c", "matches": []},
+            {"column_name": "a", "matches": []},
+            {"column_name": "b", "matches": []},
+            {"column_name": "c", "matches": []},
         ]
     )
     capture = json_success(payload)
@@ -246,19 +246,19 @@ def test_discover_mapping_handles_array_results_format(
     payload = _array_payload(
         [
             {
-                "name": "a",
+                "column_name": "a",
                 "matches": [
                     {"target": "age", "target_cde_id": 900, "confidence": 1.0, "harmonization": "numeric"},
                     {"target": "ageUnit", "target_cde_id": 904, "confidence": 0.1, "harmonization": "harmonizable"},
                 ],
             },
             {
-                "name": "b",
+                "column_name": "b",
                 "matches": [
                     {"target": "sex", "target_cde_id": 901, "confidence": 0.95, "harmonization": "harmonizable"},
                 ],
             },
-            {"name": "c", "matches": []},
+            {"column_name": "c", "matches": []},
         ]
     )
     capture = json_success(payload)
@@ -297,9 +297,19 @@ def test_discovery_entry_uses_column_name(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "confidence": 0.95, "harmonization": "harmonizable"}]},
-            {"name": "b", "matches": []},
-            {"name": "c", "matches": []},
+            {
+                "column_name": "a",
+                "matches": [
+                    {
+                        "target": "A_target",
+                        "target_cde_id": 1,
+                        "confidence": 0.95,
+                        "harmonization": "harmonizable",
+                    }
+                ],
+            },
+            {"column_name": "b", "matches": []},
+            {"column_name": "c", "matches": []},
         ]
     )
     capture = json_success(payload)
@@ -327,9 +337,19 @@ def test_discovery_entry_has_no_target_field(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 1, "confidence": 0.95, "harmonization": "harmonizable"}]},
-            {"name": "b", "matches": []},
-            {"name": "c", "matches": []},
+            {
+                "column_name": "a",
+                "matches": [
+                    {
+                        "target": "A_target",
+                        "target_cde_id": 1,
+                        "confidence": 0.95,
+                        "harmonization": "harmonizable",
+                    }
+                ],
+            },
+            {"column_name": "b", "matches": []},
+            {"column_name": "c", "matches": []},
         ]
     )
     capture = json_success(payload)
@@ -362,9 +382,39 @@ def test_positional_parity_all_columns_matched(
 
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A_target", "target_cde_id": 101, "confidence": 0.99, "harmonization": "harmonizable"}]},
-            {"name": "b", "matches": [{"target": "B_target", "target_cde_id": 102, "confidence": 0.95, "harmonization": "harmonizable"}]},
-            {"name": "c", "matches": [{"target": "C_target", "target_cde_id": 103, "confidence": 0.9, "harmonization": "harmonizable"}]},
+            {
+                "column_name": "a",
+                "matches": [
+                    {
+                        "target": "A_target",
+                        "target_cde_id": 101,
+                        "confidence": 0.99,
+                        "harmonization": "harmonizable",
+                    }
+                ],
+            },
+            {
+                "column_name": "b",
+                "matches": [
+                    {
+                        "target": "B_target",
+                        "target_cde_id": 102,
+                        "confidence": 0.95,
+                        "harmonization": "harmonizable",
+                    }
+                ],
+            },
+            {
+                "column_name": "c",
+                "matches": [
+                    {
+                        "target": "C_target",
+                        "target_cde_id": 103,
+                        "confidence": 0.9,
+                        "harmonization": "harmonizable",
+                    }
+                ],
+            },
         ]
     )
     capture = json_success(payload)
@@ -377,12 +427,12 @@ def test_positional_parity_all_columns_matched(
         target_version="v1",
     )
 
-    # Then request length == 3, manifest length == 3, every entry is non-None with matching name
+    # Then request length == 3, manifest length == 3, every entry is non-None with matching column_name
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     columns_section = cast(list[dict[str, object]], content.get("columns", []))
     assert len(columns_section) == 3
-    assert [entry["name"] for entry in columns_section] == ["a", "b", "c"]
+    assert [entry["column_name"] for entry in columns_section] == ["a", "b", "c"]
 
     column_mappings = manifest["column_mappings"]
     assert len(column_mappings) == 3
@@ -411,8 +461,8 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
     # Backend returns only 2 results (drops column 'b') — must raise
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.9, "harmonization": "harmonizable"}]},
-            {"name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9, "harmonization": "harmonizable"}]},
+            {"column_name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.9, "harmonization": "harmonizable"}]},
+            {"column_name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9, "harmonization": "harmonizable"}]},
         ]
     )
     capture = json_success(payload)
@@ -435,7 +485,7 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     columns_section = cast(list[dict[str, object]], content.get("columns", []))
     assert len(columns_section) == 3
-    assert columns_section[1] == {"name": "b", "values": []}
+    assert columns_section[1] == {"column_name": "b", "values": []}
 
 
 def test_positional_parity_below_threshold_becomes_none(
@@ -450,9 +500,9 @@ def test_positional_parity_below_threshold_becomes_none(
     # no option meets the threshold.
     payload = _array_payload(
         [
-            {"name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.95, "harmonization": "harmonizable"}]},
-            {"name": "b", "matches": [{"target": "weak", "target_cde_id": 2, "confidence": 0.2, "harmonization": "harmonizable"}]},
-            {"name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9, "harmonization": "harmonizable"}]},
+            {"column_name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.95, "harmonization": "harmonizable"}]},
+            {"column_name": "b", "matches": [{"target": "weak", "target_cde_id": 2, "confidence": 0.2, "harmonization": "harmonizable"}]},
+            {"column_name": "c", "matches": [{"target": "C", "target_cde_id": 3, "confidence": 0.9, "harmonization": "harmonizable"}]},
         ]
     )
     capture = json_success(payload)
@@ -636,13 +686,13 @@ def test_discovery_strict_rejects_response_missing_harmonization(
     payload = _array_payload(
         [
             {
-                "name": "a",
+                "column_name": "a",
                 "matches": [
                     {"target": "Sample.name", "target_cde_id": 11, "confidence": 0.92},
                 ],
             },
-            {"name": "b", "matches": []},
-            {"name": "c", "matches": []},
+            {"column_name": "b", "matches": []},
+            {"column_name": "c", "matches": []},
         ]
     )
     capture = json_success(payload)

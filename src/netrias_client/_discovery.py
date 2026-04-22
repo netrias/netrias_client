@@ -305,8 +305,8 @@ def _samples_from_csv(csv_path: Path, sample_limit: int) -> list[ColumnSamples]:
     """'why': emit one entry per CSV header position so array index == column_id downstream;
     csv.DictReader would silently merge duplicate headers, so csv.reader is used.
     Blank/whitespace-only headers get synthetic `_col_<i>` names so the backend's
-    non-empty-name validator accepts the payload; the synthetic column will not match
-    anything and lands as None in the manifest, preserving positional parity."""
+    non-empty-column-name validator accepts the payload; the synthetic column will
+    not match anything and lands as None in the manifest, preserving positional parity."""
     dataset = validate_source_path(csv_path)
     headers, rows = _read_limited_rows(dataset, sample_limit)
     column_count = len(headers)
@@ -318,7 +318,7 @@ def _samples_from_csv(csv_path: Path, sample_limit: int) -> list[ColumnSamples]:
             if value:
                 samples[i].append(value)
     return [
-        ColumnSamples(name=_column_name_or_placeholder(headers[i], i), values=samples[i])
+        ColumnSamples(column_name=_column_name_or_placeholder(headers[i], i), values=samples[i])
         for i in range(column_count)
     ]
 
@@ -407,10 +407,10 @@ def _require_expected_length(results: list[object], expected_length: int) -> Non
 
 def _suggestion_from_entry(entry: object, index: int) -> MappingSuggestion:
     entry_map = _require_entry_mapping(entry, index)
-    name = _require_entry_name(entry_map, index)
+    column_name = _require_entry_column_name(entry_map, index)
     matches = _require_entry_matches(entry_map, index)
     options = _options_from_list(matches)
-    return MappingSuggestion(source_column=name, options=options, raw=dict(entry_map), column_id=index)
+    return MappingSuggestion(source_column=column_name, options=options, raw=dict(entry_map), column_id=index)
 
 
 def _require_entry_mapping(entry: object, index: int) -> Mapping[str, object]:
@@ -421,12 +421,12 @@ def _require_entry_mapping(entry: object, index: int) -> Mapping[str, object]:
     )
 
 
-def _require_entry_name(entry_map: Mapping[str, object], index: int) -> str:
-    name = entry_map.get("name")
-    if isinstance(name, str):
-        return name
+def _require_entry_column_name(entry_map: Mapping[str, object], index: int) -> str:
+    column_name = entry_map.get("column_name")
+    if isinstance(column_name, str):
+        return column_name
     raise MappingDiscoveryError(
-        f"mapping discovery result at index {index} missing 'name' string, source=discovery response"
+        f"mapping discovery result at index {index} missing 'column_name' string, source=discovery response"
     )
 
 

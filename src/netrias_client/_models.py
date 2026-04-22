@@ -15,7 +15,7 @@ from typing import Literal, NotRequired, TypedDict, override
 class ColumnSamples(TypedDict):
     """Outbound per-column request payload — one entry per CSV header position."""
 
-    name: str
+    column_name: str
     values: list[str]
 
 

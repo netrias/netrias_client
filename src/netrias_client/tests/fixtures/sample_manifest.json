@@ -1,8 +1,7 @@
 {
-  "mapping": "demo",
-  "columns": [
-    {"name": "a", "target": "alpha"},
-    {"name": "b", "target": "beta"},
-    {"name": "c", "target": "gamma"}
+  "column_mappings": [
+    {"column_name": "a", "cde_key": "alpha", "cde_id": 1},
+    {"column_name": "b", "cde_key": "beta", "cde_id": 2},
+    {"column_name": "c", "cde_key": "gamma", "cde_id": 3}
   ]
 }
