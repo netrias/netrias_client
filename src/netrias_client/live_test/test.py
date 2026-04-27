@@ -20,7 +20,7 @@ def main() -> None:
 
     client = NetriasClient(api_key=api_key)
 
-    manifest = client.discover_mapping_from_csv(source_csv=CSV_PATH, target_schema="ccdi", target_version="v1")
+    manifest = client.discover_mapping_from_tabular(source_path=CSV_PATH, target_schema="ccdi", target_version="v1")
 
     result = client.harmonize(source_path=CSV_PATH, manifest=manifest, data_commons_key="ccdi")
 

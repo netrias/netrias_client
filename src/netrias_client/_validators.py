@@ -8,18 +8,20 @@ import os
 from pathlib import Path
 
 from ._errors import FileValidationError, MappingValidationError, OutputLocationError
+from ._tabular import SUPPORTED_TABULAR_SUFFIXES, TabularFormat
 
 
-# OBVIOUS HARD-CODED SIZE LIMIT: 250 MB maximum CSV size prior to upload
+# OBVIOUS HARD-CODED SIZE LIMIT: 250 MB maximum tabular source size prior to upload
 HARD_MAX_CSV_BYTES = 250 * 1024 * 1024
+HARD_MAX_TABULAR_BYTES = HARD_MAX_CSV_BYTES
 
 
 def validate_source_path(path: Path) -> Path:
-    """Ensure the CSV exists, is a file, has a .csv extension, and respects size limits."""
+    """Ensure the tabular source exists, has a supported extension, and respects size limits."""
 
-    _require_exists(path, "source CSV not found")
+    _require_exists(path, "source tabular file not found")
     _require_is_file(path, "source path is not a file")
-    _require_suffix(path, ".csv", "unsupported file extension for source CSV")
+    _require_tabular_suffix(path)
     _require_not_too_large(path)
     return path
 
@@ -33,13 +35,18 @@ def validate_manifest_path(path: Path) -> Path:
     return path
 
 
-def validate_output_path(path: Path | None, source_name: str, allow_versioning: bool = False) -> Path:
+def validate_output_path(
+    path: Path | None,
+    source_name: str,
+    allow_versioning: bool = False,
+    source_format: TabularFormat = TabularFormat.CSV,
+) -> Path:
     """Return a valid output file path, creating parent directories when needed.
 
-    Defaults to `<CWD>/<source_name>.harmonized.csv` when `path` is None or a directory.
+    Defaults to `<CWD>/<source_name>.harmonized.<format>` when `path` is None or a directory.
     """
 
-    candidate = _resolve_output_candidate(path, source_name)
+    candidate = _resolve_output_candidate(path, source_name, source_format)
     _ensure_parent(candidate)
     _require_parent_writable(candidate)
     if allow_versioning:
@@ -92,22 +99,29 @@ def _require_suffix(path: Path, suffix: str, message: str) -> None:
         raise FileValidationError(f"{message}: {path.suffix}")
 
 
+def _require_tabular_suffix(path: Path) -> None:
+    if path.suffix.lower() in SUPPORTED_TABULAR_SUFFIXES:
+        return
+    supported = ", ".join(sorted(SUPPORTED_TABULAR_SUFFIXES))
+    raise FileValidationError(f"unsupported file extension for source tabular file: {path.suffix}; expected {supported}")
+
+
 def _require_not_too_large(path: Path) -> None:
     try:
         size = os.path.getsize(path)
     except OSError as exc:
-        raise FileValidationError(f"unable to stat source CSV: {exc}") from exc
-    if size > HARD_MAX_CSV_BYTES:
+        raise FileValidationError(f"unable to stat source tabular file: {exc}") from exc
+    if size > HARD_MAX_TABULAR_BYTES:
         raise FileValidationError(
-            f"source CSV exceeds hard-coded limit of {HARD_MAX_CSV_BYTES // (1024 * 1024)} MB (got {size} bytes)"
+            f"source tabular file exceeds hard-coded limit of {HARD_MAX_TABULAR_BYTES // (1024 * 1024)} MB (got {size} bytes)"
         )
 
 
-def _resolve_output_candidate(path: Path | None, source_name: str) -> Path:
+def _resolve_output_candidate(path: Path | None, source_name: str, source_format: TabularFormat) -> Path:
     if path is None:
-        return Path.cwd() / f"{source_name}.harmonized.csv"
+        return Path.cwd() / f"{source_name}.harmonized{source_format.suffix}"
     if path.exists() and path.is_dir():
-        return path / f"{source_name}.harmonized.csv"
+        return path / f"{source_name}.harmonized{source_format.suffix}"
     return path
 
 

@@ -4,7 +4,6 @@
 """
 from __future__ import annotations
 
-import csv
 import gzip
 import json
 from collections.abc import Mapping
@@ -17,36 +16,35 @@ import httpx
 from ._adapter import MANIFEST_COLUMN_MAPPINGS_KEY, normalize_manifest_mapping
 from ._config import API_KEY_HEADER
 from ._models import ColumnSamples
+from ._tabular import read_tabular
 
 SCHEMA_VERSION: Final[str] = "1.0"
 DEFAULT_MODEL_VERSION: Final[str] = "v1"
 MAX_COMPRESSED_BYTES: Final[int] = 10 * 1024 * 1024
 
 def build_harmonize_payload(
-    csv_path: Path,
+    source_path: Path,
     manifest: Path | Mapping[str, object] | None,
     data_commons_key: str,
     model_version: str = DEFAULT_MODEL_VERSION,
 ) -> bytes:
-    """Return gzip-compressed harmonization payload for the given CSV and manifest."""
+    """Return gzip-compressed harmonization payload for the given tabular source and manifest."""
 
-    rows = _read_tabular(csv_path)
-    header = rows[0] if rows else []
-    data_rows = rows[1:] if len(rows) > 1 else []
+    dataset = read_tabular(source_path)
 
     envelope: dict[str, object] = {
         "schemaVersion": SCHEMA_VERSION,
         "modelVersion": model_version,
         "data_commons_key": data_commons_key,
         "document": {
-            "name": csv_path.name,
+            "name": source_path.name,
             "sheetName": None,
-            "header": header,
-            "rows": data_rows,
+            "header": dataset.headers,
+            "rows": dataset.rows,
         },
     }
 
-    column_mappings = normalize_manifest_mapping(manifest)
+    column_mappings = normalize_manifest_mapping(manifest, column_count=len(dataset.columns))
     if column_mappings:
         envelope[MANIFEST_COLUMN_MAPPINGS_KEY] = column_mappings
 
@@ -225,14 +223,3 @@ def _build_job_status_url(base_url: str, job_id: str) -> str:
 def _build_discovery_url(base_url: str) -> str:
     base = base_url.rstrip("/")
     return f"{base}/recommend"
-
-def _read_tabular(path: Path) -> list[list[str]]:
-    if not path.exists():
-        raise FileNotFoundError(path)
-    if path.suffix.lower() != ".csv":
-        raise ValueError("harmonization only supports CSV inputs")
-    # 'why': utf-8-sig strips BOM if present, consistent with discovery's _read_limited_rows
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.reader(handle)
-        return [list(row) for row in reader]
-

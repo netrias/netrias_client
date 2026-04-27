@@ -85,6 +85,12 @@ class ManifestPayload(TypedDict):
     column_mappings: list[ColumnMappingRecord | None]
 
 
+class ColumnKeyedManifestPayload(TypedDict):
+    """Manifest keyed by stable `col_0000`-style source column identity."""
+
+    column_mappings: dict[str, ColumnMappingRecord]
+
+
 class LogLevel(str, Enum):
     """Enumerate supported logging levels for the client."""
 

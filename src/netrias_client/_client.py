@@ -21,8 +21,17 @@ from ._data_model_store import (
     list_data_models_async as _list_data_models_async,
 )
 from ._discovery import discover_mapping_from_csv_async as _discover_mapping_from_csv_async
+from ._discovery import discover_mapping_from_tabular_async as _discover_mapping_from_tabular_async
 from ._logging import LOGGER_NAMESPACE, configure_logger
-from ._models import CDE, DataModel, HarmonizationResult, ManifestPayload, OperationContext, Settings
+from ._models import (
+    CDE,
+    ColumnKeyedManifestPayload,
+    DataModel,
+    HarmonizationResult,
+    ManifestPayload,
+    OperationContext,
+    Settings,
+)
 
 
 class NetriasClient:
@@ -143,6 +152,51 @@ class NetriasClient:
         return run_sync(
             self.discover_mapping_from_csv_async(
                 source_csv=source_csv,
+                target_schema=target_schema,
+                target_version=target_version,
+                sample_limit=sample_limit,
+                top_k=top_k,
+                confidence_threshold=confidence_threshold,
+            )
+        )
+
+    async def discover_mapping_from_tabular_async(
+        self,
+        source_path: Path,
+        target_schema: str,
+        target_version: str = "latest",
+        sample_limit: int = 25,
+        top_k: int = 3,
+        confidence_threshold: float | None = None,
+    ) -> ColumnKeyedManifestPayload:
+        """Derive column samples from a CSV/TSV file and return mappings by column key."""
+
+        ctx = self._snapshot_context()
+        return await _discover_mapping_from_tabular_async(
+            settings=ctx.settings,
+            source_path=source_path,
+            target_schema=target_schema,
+            target_version=target_version,
+            sample_limit=sample_limit,
+            logger=ctx.logger,
+            top_k=top_k,
+            confidence_threshold=confidence_threshold,
+        )
+
+    def discover_mapping_from_tabular(
+        self,
+        source_path: Path,
+        target_schema: str,
+        target_version: str = "latest",
+        sample_limit: int = 25,
+        top_k: int = 3,
+        confidence_threshold: float | None = None,
+    ) -> ColumnKeyedManifestPayload:
+        """Sync delegate for :meth:`discover_mapping_from_tabular_async`."""
+
+        return run_sync(
+            self.discover_mapping_from_tabular_async(
+                source_path=source_path,
                 target_schema=target_schema,
                 target_version=target_version,
                 sample_limit=sample_limit,

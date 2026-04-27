@@ -19,6 +19,7 @@ from ._http import build_harmonize_payload, fetch_job_status, submit_harmonize_j
 from ._io import stream_download_to_file
 from ._logging import LOGGER_NAMESPACE
 from ._models import HarmonizationResult, Settings
+from ._tabular import TabularFormat, csv_bytes_to_dataset, tabular_format_for_path, write_tabular
 from ._validators import validate_manifest_path, validate_output_path, validate_source_path
 
 JSONPrimitive: TypeAlias = str | int | float | bool | None
@@ -46,8 +47,14 @@ async def harmonize_async(
 
     logger = logger or logging.getLogger(LOGGER_NAMESPACE)
     csv_path = validate_source_path(source_path)
+    source_format = tabular_format_for_path(csv_path)
     manifest_input = _resolve_manifest(manifest, manifest_output_path)
-    dest = validate_output_path(output_path, source_name=csv_path.stem, allow_versioning=True)
+    dest = validate_output_path(
+        output_path,
+        source_name=csv_path.stem,
+        allow_versioning=True,
+        source_format=source_format,
+    )
 
     started = time.perf_counter()
     status_label = "error"
@@ -82,7 +89,7 @@ async def harmonize_async(
         manifest_path: Path | None = None
         if manifest_url:
             manifest_path = await _download_manifest(manifest_url, dest, settings.timeout, logger)
-        result = await _download_final(final_url, dest, settings.timeout, csv_path, logger, manifest_path)
+        result = await _download_final(final_url, dest, settings.timeout, csv_path, source_format, logger, manifest_path)
         status_label = result.status
         return result
     finally:
@@ -374,6 +381,7 @@ async def _download_final(
     dest: Path,
     timeout: float,
     csv_path: Path,
+    source_format: TabularFormat,
     logger: logging.Logger,
     manifest_path: Path | None = None,
 ) -> HarmonizationResult:
@@ -381,7 +389,7 @@ async def _download_final(
         async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
             async with client.stream("GET", final_url) as response:
                 if 200 <= response.status_code < 300:
-                    _ = await stream_download_to_file(response, dest)
+                    await _write_successful_download(response, dest, source_format)
                     logger.info("harmonize complete: file=%s -> %s", csv_path, dest)
                     return HarmonizationResult(
                         file_path=dest, status="succeeded", description="harmonization succeeded", manifest_path=manifest_path,
@@ -402,6 +410,19 @@ async def _download_final(
     except httpx.HTTPError as exc:
         logger.error("harmonize download transport error: file=%s err=%s", csv_path, exc)
         raise NetriasAPIUnavailable(f"transport error: {exc}") from exc
+
+
+async def _write_successful_download(
+    response: httpx.Response,
+    dest: Path,
+    source_format: TabularFormat,
+) -> None:
+    if source_format == TabularFormat.CSV:
+        _ = await stream_download_to_file(response, dest)
+        return
+    body_bytes = await response.aread()
+    dataset = csv_bytes_to_dataset(body_bytes, source_format)
+    write_tabular(dest, dataset)
 
 
 def _error_description(status: int, body_text: str, default: str) -> tuple[str, JSONValue | str]:

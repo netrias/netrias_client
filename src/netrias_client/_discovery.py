@@ -30,6 +30,8 @@ from ._http import request_mapping_discovery
 from ._models import (
     COLUMN_NAME_KEY,
     HARMONIZATION_VALUES,
+    ColumnKeyedManifestPayload,
+    ColumnMappingRecord,
     ColumnSamples,
     Harmonization,
     ManifestPayload,
@@ -39,6 +41,7 @@ from ._models import (
     Settings,
 )
 from ._sfn_discovery import discover_via_step_functions
+from ._tabular import TabularDataset, read_tabular
 from ._validators import validate_source_path, validate_target_schema, validate_target_version, validate_top_k
 
 
@@ -108,6 +111,33 @@ async def discover_mapping_from_csv_async(
         top_k=top_k,
         confidence_threshold=confidence_threshold,
     )
+
+
+async def discover_mapping_from_tabular_async(
+    settings: Settings,
+    source_path: Path,
+    target_schema: str,
+    target_version: str,
+    sample_limit: int,
+    logger: logging.Logger,
+    top_k: int | None = None,
+    confidence_threshold: float | None = None,
+) -> ColumnKeyedManifestPayload:
+    """Derive positional samples from a CSV/TSV file and return a column-keyed manifest."""
+
+    dataset = read_tabular(validate_source_path(source_path))
+    _require_nonempty_header(dataset.headers, source_path)
+    columns = _samples_from_dataset(dataset, sample_limit)
+    legacy_manifest = await _discover_mapping_async(
+        settings=settings,
+        target_schema=target_schema,
+        target_version=target_version,
+        columns=columns,
+        logger=logger,
+        top_k=top_k,
+        confidence_threshold=confidence_threshold,
+    )
+    return _column_keyed_manifest(legacy_manifest, dataset)
 
 
 async def _discover_with_backend(
@@ -321,15 +351,46 @@ def _samples_from_csv(csv_path: Path, sample_limit: int) -> list[ColumnSamples]:
     An empty header row yields zero columns, which the backend would 400 on or return
     an empty results array — either way the manifest would be trivially "successful"
     for a degenerate input, so reject it here at the boundary instead."""
-    dataset = validate_source_path(csv_path)
-    headers, rows = _read_limited_rows(dataset, sample_limit)
-    _require_nonempty_header(headers, dataset)
+    dataset_path = validate_source_path(csv_path)
+    if dataset_path.suffix.lower() != ".csv":
+        raise MappingValidationError(
+            "discover_mapping_from_csv only supports .csv inputs; "
+            "use discover_mapping_from_tabular for other tabular formats"
+        )
+    headers, rows = _read_limited_rows(dataset_path, sample_limit)
+    _require_nonempty_header(headers, dataset_path)
     column_count = len(headers)
     samples = _collect_column_samples(rows, column_count)
     return [
         ColumnSamples(column_name=_column_name_or_placeholder(headers[i], i), values=samples[i])
         for i in range(column_count)
     ]
+
+
+def _samples_from_dataset(dataset: TabularDataset, sample_limit: int) -> list[ColumnSamples]:
+    sample_rows = dataset.rows[:sample_limit]
+    samples = _collect_column_samples(sample_rows, len(dataset.columns))
+    backend_names = dataset.backend_column_names()
+    return [
+        ColumnSamples(column_name=backend_names[i], values=samples[i])
+        for i in range(len(dataset.columns))
+    ]
+
+
+def _column_keyed_manifest(
+    manifest: ManifestPayload,
+    dataset: TabularDataset,
+) -> ColumnKeyedManifestPayload:
+    entries: dict[str, ColumnMappingRecord] = {}
+    slots = manifest["column_mappings"]
+    for column in dataset.columns:
+        if column.index >= len(slots):
+            continue
+        entry = slots[column.index]
+        if entry is None:
+            continue
+        entries[column.key] = {**entry, "column_name": column.header}
+    return ColumnKeyedManifestPayload(column_mappings=entries)
 
 
 def _require_nonempty_header(headers: list[str], dataset: Path) -> None:
