@@ -29,6 +29,8 @@ from ._models import (
     ManifestPayload,
 )
 from ._tabular import (
+    SUPPORTED_TABULAR_FORMATS,
+    SUPPORTED_TABULAR_SUFFIXES,
     TabularColumn,
     TabularDataset,
     TabularFormat,
@@ -57,6 +59,8 @@ __all__ = [
     "ColumnSamples",
     "Harmonization",
     "ManifestPayload",
+    "SUPPORTED_TABULAR_FORMATS",
+    "SUPPORTED_TABULAR_SUFFIXES",
     "TabularColumn",
     "TabularDataset",
     "TabularFormat",

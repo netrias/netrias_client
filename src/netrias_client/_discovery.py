@@ -1,12 +1,11 @@
 """Mapping discovery workflow functions.
 
 'why': call the recommendation service and normalize responses while preserving
-position-wise parity between CSV columns, request, response, and manifest
+position-wise parity between tabular columns, request, response, and manifest
 """
 from __future__ import annotations
 
 import asyncio
-import csv
 import json
 import logging
 import time
@@ -89,30 +88,6 @@ async def _discover_mapping_async(
     return manifest
 
 
-async def discover_mapping_from_csv_async(
-    settings: Settings,
-    source_csv: Path,
-    target_schema: str,
-    target_version: str,
-    sample_limit: int,
-    logger: logging.Logger,
-    top_k: int | None = None,
-    confidence_threshold: float | None = None,
-) -> ManifestPayload:
-    """Derive positional column samples from a CSV then perform async discovery."""
-
-    columns = _samples_from_csv(source_csv, sample_limit)
-    return await _discover_mapping_async(
-        settings=settings,
-        target_schema=target_schema,
-        target_version=target_version,
-        columns=columns,
-        logger=logger,
-        top_k=top_k,
-        confidence_threshold=confidence_threshold,
-    )
-
-
 async def discover_mapping_from_tabular_async(
     settings: Settings,
     source_path: Path,
@@ -128,7 +103,7 @@ async def discover_mapping_from_tabular_async(
     dataset = read_tabular(validate_source_path(source_path))
     _require_nonempty_header(dataset.headers, source_path)
     columns = _samples_from_dataset(dataset, sample_limit)
-    legacy_manifest = await _discover_mapping_async(
+    positional_manifest = await _discover_mapping_async(
         settings=settings,
         target_schema=target_schema,
         target_version=target_version,
@@ -137,7 +112,7 @@ async def discover_mapping_from_tabular_async(
         top_k=top_k,
         confidence_threshold=confidence_threshold,
     )
-    return _column_keyed_manifest(legacy_manifest, dataset)
+    return _column_keyed_manifest(positional_manifest, dataset)
 
 
 async def _discover_with_backend(
@@ -342,31 +317,6 @@ def _coerce_mapping(obj: Mapping[object, object], strict: bool) -> dict[str, obj
     return result
 
 
-def _samples_from_csv(csv_path: Path, sample_limit: int) -> list[ColumnSamples]:
-    """'why': emit one entry per CSV header position so array index == column_id downstream;
-    csv.DictReader would silently merge duplicate headers, so csv.reader is used.
-    Blank/whitespace-only headers get synthetic `_col_<i>` names so the backend's
-    non-empty-column-name validator accepts the payload; the synthetic column will
-    not match anything and lands as None in the manifest, preserving positional parity.
-    An empty header row yields zero columns, which the backend would 400 on or return
-    an empty results array — either way the manifest would be trivially "successful"
-    for a degenerate input, so reject it here at the boundary instead."""
-    dataset_path = validate_source_path(csv_path)
-    if dataset_path.suffix.lower() != ".csv":
-        raise MappingValidationError(
-            "discover_mapping_from_csv only supports .csv inputs; "
-            "use discover_mapping_from_tabular for other tabular formats"
-        )
-    headers, rows = _read_limited_rows(dataset_path, sample_limit)
-    _require_nonempty_header(headers, dataset_path)
-    column_count = len(headers)
-    samples = _collect_column_samples(rows, column_count)
-    return [
-        ColumnSamples(column_name=_column_name_or_placeholder(headers[i], i), values=samples[i])
-        for i in range(column_count)
-    ]
-
-
 def _samples_from_dataset(dataset: TabularDataset, sample_limit: int) -> list[ColumnSamples]:
     sample_rows = dataset.rows[:sample_limit]
     samples = _collect_column_samples(sample_rows, len(dataset.columns))
@@ -400,7 +350,7 @@ def _require_nonempty_header(headers: list[str], dataset: Path) -> None:
     if headers:
         return
     raise MappingValidationError(
-        "source CSV has no header row: expected at least one column, "
+        "source tabular file has no header row: expected at least one column, "
         + f"found 0 columns, source={dataset}"
     )
 
@@ -414,24 +364,6 @@ def _collect_column_samples(rows: list[list[str]], column_count: int) -> list[li
             if value:
                 samples[i].append(value)
     return samples
-
-
-def _column_name_or_placeholder(header: str, index: int) -> str:
-    return header if header.strip() else f"_col_{index}"
-
-
-def _read_limited_rows(dataset: Path, sample_limit: int) -> tuple[list[str], list[list[str]]]:
-    """'why': utf-8-sig strips BOM if present; BOM in column names causes Step Functions SerializationException"""
-    with dataset.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.reader(handle)
-        default_row: list[str] = []
-        headers = next(reader, default_row)
-        rows: list[list[str]] = []
-        for index, row in enumerate(reader):
-            if index >= sample_limit:
-                break
-            rows.append(row)
-    return headers, rows
 
 
 def _decode_body(body: object, strict: bool) -> object:

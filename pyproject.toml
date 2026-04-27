@@ -108,6 +108,7 @@ dev = [
     "python-dotenv>=1.2.2",
     "twine>=5.0",
     "pip-audit>=2.7.0",
+    "pip>=26.0.2",
 ]
 
 

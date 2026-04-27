@@ -20,7 +20,6 @@ from ._data_model_store import (
     list_cdes_async as _list_cdes_async,
     list_data_models_async as _list_data_models_async,
 )
-from ._discovery import discover_mapping_from_csv_async as _discover_mapping_from_csv_async
 from ._discovery import discover_mapping_from_tabular_async as _discover_mapping_from_tabular_async
 from ._logging import LOGGER_NAMESPACE, configure_logger
 from ._models import (
@@ -28,7 +27,6 @@ from ._models import (
     ColumnKeyedManifestPayload,
     DataModel,
     HarmonizationResult,
-    ManifestPayload,
     OperationContext,
     Settings,
 )
@@ -114,51 +112,6 @@ class NetriasClient:
         """
 
         return self._snapshot_settings()
-
-    async def discover_mapping_from_csv_async(
-        self,
-        source_csv: Path,
-        target_schema: str,
-        target_version: str = "latest",
-        sample_limit: int = 25,
-        top_k: int = 3,
-        confidence_threshold: float | None = None,
-    ) -> ManifestPayload:
-        """Derive column samples from a CSV file then perform mapping discovery."""
-
-        ctx = self._snapshot_context()
-        return await _discover_mapping_from_csv_async(
-            settings=ctx.settings,
-            source_csv=source_csv,
-            target_schema=target_schema,
-            target_version=target_version,
-            sample_limit=sample_limit,
-            logger=ctx.logger,
-            top_k=top_k,
-            confidence_threshold=confidence_threshold,
-        )
-
-    def discover_mapping_from_csv(
-        self,
-        source_csv: Path,
-        target_schema: str,
-        target_version: str = "latest",
-        sample_limit: int = 25,
-        top_k: int = 3,
-        confidence_threshold: float | None = None,
-    ) -> ManifestPayload:
-        """Sync delegate for :meth:`discover_mapping_from_csv_async`."""
-
-        return run_sync(
-            self.discover_mapping_from_csv_async(
-                source_csv=source_csv,
-                target_schema=target_schema,
-                target_version=target_version,
-                sample_limit=sample_limit,
-                top_k=top_k,
-                confidence_threshold=confidence_threshold,
-            )
-        )
 
     async def discover_mapping_from_tabular_async(
         self,

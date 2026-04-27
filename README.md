@@ -84,6 +84,15 @@ print(dataset.rows[0])                # first data row as positional cells
 
 Duplicate headers are allowed. The stable column key (`col_0000`, `col_0001`, ...) is the identity; the header text is only the display label. This prevents data loss from duplicate column names and keeps future file formats, such as XLSX, from forcing CSV-shaped assumptions into the rest of the client.
 
+Supported tabular formats are exposed in code:
+
+```python
+from netrias_client import SUPPORTED_TABULAR_FORMATS, SUPPORTED_TABULAR_SUFFIXES, TabularFormat
+
+assert tuple(SUPPORTED_TABULAR_FORMATS) == (TabularFormat.CSV, TabularFormat.TSV)
+assert set(SUPPORTED_TABULAR_SUFFIXES) == {".csv", ".tsv"}
+```
+
 ### `discover_mapping_from_tabular(...)`
 
 Reads a supported tabular file, samples values, and returns a manifest keyed by stable source column keys.
@@ -134,64 +143,6 @@ manifest = client.discover_mapping_from_tabular(
     }
 }
 ```
-
-### `discover_mapping_from_csv(...)`
-
-Reads a CSV file, samples values, and returns the legacy position-indexed manifest. Prefer `discover_mapping_from_tabular()` for new code because it works across file types and exposes stable column keys directly.
-
-```python
-manifest = client.discover_mapping_from_csv(
-    source_csv=Path("data/patients.csv"),
-    target_schema="ccdi",
-    target_version="latest",
-    sample_limit=25,
-    top_k=3,
-    confidence_threshold=0.8,          # Optional: minimum confidence for recommendations
-)
-```
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `source_csv` | `Path` | - | **Required.** Path to the CSV file to analyze. |
-| `target_schema` | `str` | - | **Required.** Target schema key. Available schemas (as of Jan 19, 2026): `ccdi`, `gc`, `synapse`, `sage_chipseq_template`, `sage_clinical_assay_template`, `sage_imaging_assay_template`, `sage_rnaseq_template`. |
-| `target_version` | `str` | `"latest"` | Schema version to target. |
-| `sample_limit` | `int` | `25` | Maximum rows to sample from the CSV for discovery. |
-| `top_k` | `int` | `3` | Number of top recommendations to return per column. |
-| `confidence_threshold` | `float \| None` | `0.8` | Minimum confidence score (0–1) for keeping recommendations. Lower values capture more tentative matches. |
-
-**Returns:** `ManifestPayload` — A dictionary suitable for passing to `harmonize()`.
-
-**Example Response:**
-
-```python
-{
-    "column_mappings": [
-        {
-            "column_name": "patient_id",
-            "cde_key": "participant_id",
-            "cde_id": 101,
-            "harmonization": "harmonizable",
-            "alternatives": [{"target": "participant_id", "confidence": 0.95, "harmonization": "harmonizable", "cde_id": 101}],
-        },
-        {
-            "column_name": "gender",
-            "cde_key": "sex_at_birth",
-            "cde_id": 102,
-            "harmonization": "harmonizable",
-            "alternatives": [{"target": "sex_at_birth", "confidence": 0.88, "harmonization": "harmonizable", "cde_id": 102}],
-        },
-        {
-            "column_name": "diagnosis",
-            "cde_key": "primary_diagnosis",
-            "cde_id": -200,
-            "harmonization": "harmonizable",
-            "alternatives": [{"target": "primary_diagnosis", "confidence": 0.97, "harmonization": "harmonizable", "cde_id": -200}],
-        },
-    ]
-}
-```
-
----
 
 ## Harmonization Methods
 
@@ -478,7 +429,6 @@ async def process_file():
 | Sync Method | Async Method |
 |-------------|--------------|
 | `discover_mapping_from_tabular()` | `discover_mapping_from_tabular_async()` |
-| `discover_mapping_from_csv()` | `discover_mapping_from_csv_async()` |
 | `harmonize()` | `harmonize_async()` |
 | `list_data_models()` | `list_data_models_async()` |
 | `list_cdes()` | `list_cdes_async()` |

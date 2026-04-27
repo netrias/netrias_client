@@ -58,6 +58,7 @@ SUPPORTED_TABULAR_SUFFIXES: dict[str, TabularFormat] = {
     ".csv": TabularFormat.CSV,
     ".tsv": TabularFormat.TSV,
 }
+SUPPORTED_TABULAR_FORMATS: tuple[TabularFormat, ...] = tuple(SUPPORTED_TABULAR_SUFFIXES.values())
 _CSV_CONTENT_TYPES = {"text/csv", "application/csv", "application/vnd.ms-excel"}
 _TSV_CONTENT_TYPES = {"text/tab-separated-values", "text/tsv", "text/plain"}
 
@@ -190,6 +191,7 @@ def _normalize_row(row: list[str], width: int) -> list[str]:
 
 
 __all__ = [
+    "SUPPORTED_TABULAR_FORMATS",
     "SUPPORTED_TABULAR_SUFFIXES",
     "TabularColumn",
     "TabularDataset",
