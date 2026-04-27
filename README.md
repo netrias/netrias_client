@@ -1,6 +1,6 @@
 # Netrias Client
 
-A Python client for the Netrias discovery and harmonization services. Transform CSV datasets to conform to standard data models (e.g., CCDI) with AI-powered column mapping.
+A Python client for the Netrias discovery and harmonization services. Transform tabular datasets such as CSV and TSV files to conform to standard data models (e.g., CCDI) with AI-powered column mapping.
 
 ## Installation
 
@@ -65,67 +65,88 @@ client.configure(
 
 Discover how source columns map to target schema CDEs using AI recommendations.
 
-### `discover_mapping_from_csv(...)`
+### Tabular files and column identity
 
-Reads a CSV file, samples values, and returns a manifest mapping columns to the target schema.
+CSV and TSV are file formats at the SDK boundary. Inside the client, data is represented as a positional tabular dataset:
 
 ```python
-manifest = client.discover_mapping_from_csv(
-    source_csv=Path("data/patients.csv"),
+from pathlib import Path
+
+from netrias_client import read_tabular
+
+dataset = read_tabular(Path("data/patients.tsv"))
+
+print(dataset.source_format)          # TabularFormat.TSV
+print(dataset.headers)                # display headers, duplicates preserved
+print(dataset.columns[0].key)         # "col_0000"
+print(dataset.rows[0])                # first data row as positional cells
+```
+
+Duplicate headers are allowed. The stable column key (`col_0000`, `col_0001`, ...) is the identity; the header text is only the display label. This prevents data loss from duplicate column names and keeps future file formats, such as XLSX, from forcing CSV-shaped assumptions into the rest of the client.
+
+Supported tabular formats are exposed in code:
+
+```python
+from netrias_client import SUPPORTED_TABULAR_FORMATS, SUPPORTED_TABULAR_SUFFIXES, TabularFormat
+
+assert tuple(SUPPORTED_TABULAR_FORMATS) == (TabularFormat.CSV, TabularFormat.TSV)
+assert set(SUPPORTED_TABULAR_SUFFIXES) == {".csv", ".tsv"}
+```
+
+### `discover_mapping_from_tabular(...)`
+
+Reads a supported tabular file, samples values, and returns a manifest keyed by stable source column keys.
+
+```python
+manifest = client.discover_mapping_from_tabular(
+    source_path=Path("data/patients.tsv"),      # .csv and .tsv are supported
     target_schema="ccdi",
     target_version="latest",
     sample_limit=25,
     top_k=3,
-    confidence_threshold=0.8,          # Optional: minimum confidence for recommendations
+    confidence_threshold=0.8,
 )
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `source_csv` | `Path` | — | **Required.** Path to the CSV file to analyze. |
-| `target_schema` | `str` | — | **Required.** Target schema key. Available schemas (as of Jan 19, 2026): `ccdi`, `gc`, `synapse`, `sage_chipseq_template`, `sage_clinical_assay_template`, `sage_imaging_assay_template`, `sage_rnaseq_template`. |
+| `source_path` | `Path` | - | **Required.** Path to a supported tabular file (`.csv` or `.tsv`). |
+| `target_schema` | `str` | - | **Required.** Target schema key. |
 | `target_version` | `str` | `"latest"` | Schema version to target. |
-| `sample_limit` | `int` | `25` | Maximum rows to sample from the CSV for discovery. |
+| `sample_limit` | `int` | `25` | Maximum rows to sample for discovery. |
 | `top_k` | `int` | `3` | Number of top recommendations to return per column. |
-| `confidence_threshold` | `float \| None` | `0.8` | Minimum confidence score (0–1) for keeping recommendations. Lower values capture more tentative matches. |
+| `confidence_threshold` | `float \| None` | `0.8` | Minimum confidence score (0-1) for keeping recommendations. |
 
-**Returns:** `ManifestPayload` — A dictionary suitable for passing to `harmonize()`.
-
-**Example Response:**
+**Returns:** `ColumnKeyedManifestPayload` — A dictionary suitable for passing to `harmonize()`.
 
 ```python
 {
-    "column_mappings": [
-        {
-            "column_name": "patient_id",
-            "cde_key": "participant_id",
+    "column_mappings": {
+        "col_0000": {
+            "column_name": "name",
+            "cde_key": "participant_name",
             "cde_id": 101,
             "harmonization": "harmonizable",
-            "alternatives": [{"target": "participant_id", "confidence": 0.95, "harmonization": "harmonizable", "cde_id": 101}],
+            "alternatives": [
+                {"target": "participant_name", "confidence": 0.95, "harmonization": "harmonizable", "cde_id": 101}
+            ],
         },
-        {
-            "column_name": "gender",
-            "cde_key": "sex_at_birth",
+        "col_0001": {
+            "column_name": "name",
+            "cde_key": "family_name",
             "cde_id": 102,
             "harmonization": "harmonizable",
-            "alternatives": [{"target": "sex_at_birth", "confidence": 0.88, "harmonization": "harmonizable", "cde_id": 102}],
+            "alternatives": [
+                {"target": "family_name", "confidence": 0.89, "harmonization": "harmonizable", "cde_id": 102}
+            ],
         },
-        {
-            "column_name": "diagnosis",
-            "cde_key": "primary_diagnosis",
-            "cde_id": -200,
-            "harmonization": "harmonizable",
-            "alternatives": [{"target": "primary_diagnosis", "confidence": 0.97, "harmonization": "harmonizable", "cde_id": -200}],
-        },
-    ]
+    }
 }
 ```
 
----
-
 ## Harmonization Methods
 
-Transform source CSV data using the discovered column mappings.
+Transform source tabular data using the discovered column mappings.
 
 ### `harmonize(...)`
 
@@ -133,31 +154,31 @@ Execute the harmonization workflow: submit job, poll for completion, download re
 
 ```python
 result = client.harmonize(
-    source_path=Path("data/patients.csv"),
+    source_path=Path("data/patients.tsv"),
     manifest=manifest,                           # from discover_*
     data_commons_key="GC",                       # target data commons
-    output_path=Path("output/harmonized.csv"),   # optional
+    output_path=Path("output/harmonized.tsv"),   # optional
     manifest_output_path=Path("output/manifest.json"),  # optional
 )
 
 print(result.status)       # "succeeded", "failed", or "timeout"
-print(result.file_path)    # Path to the harmonized CSV
+print(result.file_path)    # Path to the harmonized file
 print(result.description)  # Human-readable status message
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `source_path` | `Path` | — | **Required.** Path to the source CSV file. |
-| `manifest` | `Path \| Mapping[str, object]` | — | **Required.** Mapping manifest (from discovery) or path to a JSON manifest file. |
-| `data_commons_key` | `str` | — | **Required.** Target data commons identifier (e.g., `"GC"`). |
-| `output_path` | `Path \| None` | `None` | Where to write the harmonized CSV. Auto-generated if omitted (e.g., `source.harmonized.csv`). |
+| `source_path` | `Path` | - | **Required.** Path to the source tabular file (`.csv` or `.tsv`). |
+| `manifest` | `Path \| Mapping[str, object]` | - | **Required.** Mapping manifest (from discovery) or path to a JSON manifest file. |
+| `data_commons_key` | `str` | - | **Required.** Target data commons identifier (e.g., `"GC"`). |
+| `output_path` | `Path \| None` | `None` | Where to write the harmonized file. Auto-generated with the same suffix as the source, such as `source.harmonized.tsv` for TSV input. |
 | `manifest_output_path` | `Path \| None` | `None` | Where to write the manifest JSON for debugging. |
 
 **Returns:** `HarmonizationResult` with these fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `file_path` | `Path` | Path to the output CSV file. |
+| `file_path` | `Path` | Path to the output file. |
 | `status` | `"succeeded" \| "failed" \| "timeout"` | Job outcome. |
 | `description` | `str` | Human-readable status message. |
 | `mapping_id` | `str \| None` | Internal mapping identifier (if available). |
@@ -385,20 +406,20 @@ from netrias_client import NetriasClient
 client = NetriasClient(api_key="your-api-key")
 
 # Sync usage (scripts, Jupyter notebooks)
-manifest = client.discover_mapping_from_csv(
-    source_csv=Path("data/patients.csv"),
+manifest = client.discover_mapping_from_tabular(
+    source_path=Path("data/patients.tsv"),
     target_schema="ccdi",
 )
-result = client.harmonize(source_path=Path("data/patients.csv"), manifest=manifest, data_commons_key="GC")
+result = client.harmonize(source_path=Path("data/patients.tsv"), manifest=manifest, data_commons_key="GC")
 
 # Async usage (FastAPI, async frameworks)
 async def process_file():
-    manifest = await client.discover_mapping_from_csv_async(
-        source_csv=Path("data/patients.csv"),
+    manifest = await client.discover_mapping_from_tabular_async(
+        source_path=Path("data/patients.tsv"),
         target_schema="ccdi",
     )
     result = await client.harmonize_async(
-        source_path=Path("data/patients.csv"),
+        source_path=Path("data/patients.tsv"),
         manifest=manifest,
         data_commons_key="GC",
     )
@@ -407,7 +428,7 @@ async def process_file():
 
 | Sync Method | Async Method |
 |-------------|--------------|
-| `discover_mapping_from_csv()` | `discover_mapping_from_csv_async()` |
+| `discover_mapping_from_tabular()` | `discover_mapping_from_tabular_async()` |
 | `harmonize()` | `harmonize_async()` |
 | `list_data_models()` | `list_data_models_async()` |
 | `list_cdes()` | `list_cdes_async()` |
@@ -428,7 +449,7 @@ The client raises typed exceptions that inherit from `NetriasClientError`:
 | `ClientConfigurationError` | Invalid configuration or `configure()` not called. |
 | `FileValidationError` | Source file doesn't exist or is invalid. |
 | `MappingDiscoveryError` | Discovery API returned a client error (4xx), or the response violated the position-indexed contract (length mismatch, reordered columns, missing/invalid `harmonization`). |
-| `MappingValidationError` | Manifest validation failed (missing keys, wrong value types, or a CSV with no header row). |
+| `MappingValidationError` | Manifest validation failed (missing keys, wrong value types, or a tabular file with no header row). |
 | `OutputLocationError` | Cannot write to the output path. |
 | `NetriasAPIUnavailable` | Network error, timeout, or server error (5xx). |
 | `HarmonizationJobError` | Harmonization job failed or timed out. |

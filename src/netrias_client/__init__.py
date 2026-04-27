@@ -19,6 +19,7 @@ from ._errors import (
 from ._models import (
     CDE,
     AlternativeEntry,
+    ColumnKeyedManifestPayload,
     ColumnMappingRecord,
     ColumnSamples,
     DataModel,
@@ -26,6 +27,19 @@ from ._models import (
     Harmonization,
     HarmonizationResult,
     ManifestPayload,
+)
+from ._tabular import (
+    SUPPORTED_TABULAR_FORMATS,
+    SUPPORTED_TABULAR_SUFFIXES,
+    TabularColumn,
+    TabularDataset,
+    TabularFormat,
+    column_key_for_index,
+    dataset_from_rows,
+    get_tabular_format,
+    is_supported_tabular_content_type,
+    read_tabular,
+    write_tabular,
 )
 
 __all__ = [
@@ -40,10 +54,22 @@ __all__ = [
     "HarmonizationResult",
     # Manifest wire shapes
     "AlternativeEntry",
+    "ColumnKeyedManifestPayload",
     "ColumnMappingRecord",
     "ColumnSamples",
     "Harmonization",
     "ManifestPayload",
+    "SUPPORTED_TABULAR_FORMATS",
+    "SUPPORTED_TABULAR_SUFFIXES",
+    "TabularColumn",
+    "TabularDataset",
+    "TabularFormat",
+    "column_key_for_index",
+    "dataset_from_rows",
+    "get_tabular_format",
+    "is_supported_tabular_content_type",
+    "read_tabular",
+    "write_tabular",
     # Exceptions
     "NetriasClientError",
     "ClientConfigurationError",
@@ -58,4 +84,4 @@ __all__ = [
     "__version__",
 ]
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"

@@ -185,36 +185,36 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
     print("DISCOVERY API")
     print("-" * 70)
 
-    from netrias_client import ManifestPayload
+    from netrias_client import ColumnKeyedManifestPayload
 
-    discovered_manifest: ManifestPayload | None = None
+    discovered_manifest: ColumnKeyedManifestPayload | None = None
 
-    def test_discover_mapping_from_csv() -> None:
+    def test_discover_mapping_from_tabular() -> None:
         nonlocal discovered_manifest
         if not CSV_PATH.exists():
             raise FileNotFoundError(f"Test CSV not found: {CSV_PATH}")
 
-        discovered_manifest = client.discover_mapping_from_csv(
-            source_csv=CSV_PATH,
+        discovered_manifest = client.discover_mapping_from_tabular(
+            source_path=CSV_PATH,
             target_schema=MODEL_KEY,
             target_version=VERSION,
             sample_limit=10,
             top_k=3,
         )
-        print(f"  discover_mapping_from_csv({CSV_PATH.name})")
+        print(f"  discover_mapping_from_tabular({CSV_PATH.name})")
         mappings = discovered_manifest["column_mappings"]
-        print(f"    - Column mappings: {len(mappings)} (including placeholders)")
-        matched = [m for m in mappings if m is not None]
+        print(f"    - Column mappings: {len(mappings)}")
+        matched = list(mappings.values())
         for mapping_data in matched[:3]:
             column_name = mapping_data.get("column_name", "N/A")
             cde_id = mapping_data.get("cde_id", "N/A")
             print(f"      {column_name} (cde_id={cde_id})")
 
-    results.append(run_test("discover_mapping_from_csv", test_discover_mapping_from_csv))
+    results.append(run_test("discover_mapping_from_tabular", test_discover_mapping_from_tabular))
 
     def test_discover_mapping_with_confidence_threshold() -> None:
-        manifest = client.discover_mapping_from_csv(
-            source_csv=CSV_PATH,
+        manifest = client.discover_mapping_from_tabular(
+            source_path=CSV_PATH,
             target_schema=MODEL_KEY,
             target_version=VERSION,
             sample_limit=10,
@@ -222,10 +222,10 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
             confidence_threshold=0.5,
         )
         mappings = manifest["column_mappings"]
-        print("  discover_mapping_from_csv(confidence_threshold=0.5)")
-        print(f"    - Column mappings: {len(mappings)} (including placeholders)")
+        print("  discover_mapping_from_tabular(confidence_threshold=0.5)")
+        print(f"    - Column mappings: {len(mappings)}")
 
-    results.append(run_test("discover_mapping_from_csv(confidence_threshold)", test_discover_mapping_with_confidence_threshold))
+    results.append(run_test("discover_mapping_from_tabular(confidence_threshold)", test_discover_mapping_with_confidence_threshold))
 
     # =========================================================================
     # HARMONIZATION API TESTS

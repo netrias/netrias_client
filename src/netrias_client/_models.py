@@ -22,7 +22,7 @@ reference this constant instead of repeating the raw literal.
 
 
 class ColumnSamples(TypedDict):
-    """Outbound per-column request payload — one entry per CSV header position."""
+    """Outbound per-column request payload — one entry per tabular column position."""
 
     column_name: str
     values: list[str]
@@ -80,9 +80,15 @@ class ColumnMappingRecord(TypedDict):
 
 
 class ManifestPayload(TypedDict):
-    """JSON-on-disk manifest shape; list position encodes CSV column_id."""
+    """Backend-adapted manifest shape; list position encodes source column position."""
 
     column_mappings: list[ColumnMappingRecord | None]
+
+
+class ColumnKeyedManifestPayload(TypedDict):
+    """Manifest keyed by stable `col_0000`-style source column identity."""
+
+    column_mappings: dict[str, ColumnMappingRecord]
 
 
 class LogLevel(str, Enum):

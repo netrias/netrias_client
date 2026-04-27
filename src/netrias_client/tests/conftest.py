@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-
 from typing import cast
 
 import pytest
@@ -37,6 +36,27 @@ def sample_csv_path() -> Path:
     """
 
     return Path(__file__).parent / "fixtures" / "sample.csv"
+
+
+@pytest.fixture
+def empty_middle_csv_path() -> Path:
+    """Return a CSV fixture with an all-empty middle column."""
+
+    return Path(__file__).parent / "fixtures" / "empty_middle.csv"
+
+
+@pytest.fixture
+def sample_tsv_path() -> Path:
+    """Return the canonical TSV fixture path."""
+
+    return Path(__file__).parent / "fixtures" / "sample.tsv"
+
+
+@pytest.fixture
+def duplicate_headers_tsv_path() -> Path:
+    """Return a TSV fixture with duplicate display headers."""
+
+    return Path(__file__).parent / "fixtures" / "duplicate_headers.tsv"
 
 
 @pytest.fixture

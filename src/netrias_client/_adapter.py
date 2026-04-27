@@ -23,6 +23,7 @@ from ._models import (
     MappingRecommendationOption,
     MappingSuggestion,
 )
+from ._tabular import column_index_from_key
 
 MANIFEST_COLUMN_MAPPINGS_KEY: Final[str] = "column_mappings"
 """Wire-format key for the position-indexed manifest list.
@@ -179,6 +180,7 @@ def load_manifest(path: Path) -> Mapping[str, object]:
 
 def normalize_manifest_mapping(
     manifest: Path | Mapping[str, object] | None,
+    column_count: int | None = None,
 ) -> list[ColumnMappingRecord | None]:
     """Return the position-indexed column_mappings list from a manifest input."""
 
@@ -186,9 +188,40 @@ def normalize_manifest_mapping(
         return []
     raw = load_manifest(manifest) if isinstance(manifest, Path) else manifest
     column_mappings = raw.get(MANIFEST_COLUMN_MAPPINGS_KEY)
-    if not isinstance(column_mappings, list):
-        return []
-    return [_coerce_entry(entry, index) for index, entry in enumerate(cast(list[object], column_mappings))]
+    if isinstance(column_mappings, list):
+        return [_coerce_entry(entry, index) for index, entry in enumerate(cast(list[object], column_mappings))]
+    if isinstance(column_mappings, Mapping):
+        return _coerce_column_keyed_entries(cast(Mapping[object, object], column_mappings), column_count)
+    return []
+
+
+def _coerce_column_keyed_entries(
+    entries: Mapping[object, object],
+    column_count: int | None,
+) -> list[ColumnMappingRecord | None]:
+    indexed_entries = _indexed_column_keyed_entries(entries)
+    slot_count = column_count if column_count is not None else _inferred_column_count(indexed_entries)
+    slots: list[ColumnMappingRecord | None] = [None] * slot_count
+    for index, entry in indexed_entries:
+        if 0 <= index < slot_count:
+            slots[index] = _coerce_entry(entry, index)
+    return slots
+
+
+def _indexed_column_keyed_entries(entries: Mapping[object, object]) -> list[tuple[int, object]]:
+    indexed_entries: list[tuple[int, object]] = []
+    for key, entry in entries.items():
+        if not isinstance(key, str):
+            continue
+        index = column_index_from_key(key)
+        if index is None:
+            continue
+        indexed_entries.append((index, entry))
+    return indexed_entries
+
+
+def _inferred_column_count(indexed_entries: list[tuple[int, object]]) -> int:
+    return max((index for index, _ in indexed_entries), default=-1) + 1
 
 
 def _coerce_entry(entry: object, index: int) -> ColumnMappingRecord | None:
