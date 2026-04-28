@@ -2,7 +2,7 @@
 
 ## Responsibility & Scope
 - Provide a focused Python interface for the Netrias discovery and harmonization services while hiding transport details and enforcing validation guard rails.
-- Support CSV and TSV inputs today with async and sync entry points; XLSX and broader formats remain future enhancements.
+- Support CSV, TSV, and XLSX inputs today with async and sync entry points; broader formats remain future enhancements.
 - Maintain transparency on failures by surfacing structured errors, typed results, and detailed logs rather than silent retries.
 
 ## Module Overview
@@ -20,7 +20,7 @@
 - `_io.py`: stream API responses to disk to avoid loading large files into memory.
 - `_logging.py`: create a namespaced logger (`netrias_client`) that honors configured log level.
 - `_models.py`: define typed dataclasses (`Settings`, `MappingDiscoveryResult`, `HarmonizationResult`, `DataModel`, `CDE`, `PermissibleValue`, …).
-- `_tabular.py`: own the high-fidelity tabular representation, CSV/TSV readers and writers, stable positional column keys, and backend-safe column names.
+- `_tabular.py`: own the high-fidelity tabular representation, CSV/TSV/XLSX readers and writers, workbook sheet selection, and stable positional column keys.
 - `_validators.py`: guard filesystem access, manifest JSON, and discovery samples; raise typed errors early.
 - `tests/`: Given/When/Then-style fixtures and utilities for validation, discovery, and harmonization.
 
@@ -41,7 +41,7 @@
 - `NetriasClient`
   - `__init__(api_key)` – validates the API key and initializes the client with default settings; raises `ClientConfigurationError` on invalid input.
   - `configure(...)` – optionally adjusts settings; stores an immutable `Settings` snapshot; raises `ClientConfigurationError` on invalid input.
-  - `discover_mapping_from_tabular`, `discover_mapping_from_tabular_async` – derive samples from CSV/TSV and return a manifest keyed by stable source column keys; accept `confidence_threshold` to filter recommendations; raise `MappingDiscoveryError`, `MappingValidationError`, or `NetriasAPIUnavailable`.
+  - `discover_mapping_from_tabular`, `discover_mapping_from_tabular_async` – derive samples from CSV/TSV/XLSX and return a manifest keyed by stable source column keys; accept `sheet_name` for XLSX and `confidence_threshold` to filter recommendations; raise `MappingDiscoveryError`, `MappingValidationError`, or `NetriasAPIUnavailable`.
   - `discover_mapping_from_csv`, `discover_mapping_from_csv_async` – compatibility helpers that return the legacy position-indexed CSV manifest.
   - `harmonize`, `harmonize_async` – require a supported tabular source + manifest (path or mapping) and optional output destinations; return `HarmonizationResult` even on failure; raise `NetriasAPIUnavailable` on transport errors.
 - Consumers instantiate `NetriasClient`; configuration snapshots and loggers live on the instance rather than module-wide globals.
@@ -56,9 +56,9 @@
 ## Discovery Workflow
 1. Validate schema (`validate_target_schema`) and column samples. Tabular helpers (`discover_mapping_from_tabular*`) read the header plus up to `sample_limit` rows (default 25) to build samples automatically. A source with no header row is rejected at the boundary as `MappingValidationError` before any request is issued, so a degenerate input cannot produce a trivially-"successful" empty manifest.
 2. Route based on configuration:
-   - **Default (API Gateway)**: POST to the built-in discovery URL with payload `{ "body": "{...}" }`, sending the configured API key as `x-api-key`. Responses are parsed via `_interpret_discovery_response` and converted into manifest payloads.
+   - **Default (API Gateway)**: POST to the built-in discovery URL with payload `{ "target_schema": "...", "target_version": "...", "columns": [...] }`, sending the configured API key as `x-api-key`. Responses are parsed via `_interpret_discovery_response` and converted into manifest payloads.
    - **Gateway Bypass (temporary)**: Call the `cde-recommendation` Lambda alias directly using boto3. Request and response shapes mimic the API Gateway proxy event (`{"body": "...", "isBase64Encoded": false}`); errors surface as `GatewayBypassError`, wrapped into `NetriasAPIUnavailable` for the public surface.
-3. **Positional parity is enforced at the response boundary.** The tuple of outbound `column_name` values is threaded into the response parser, and every `results[i].column_name` must match `columns[i].column_name` exactly. For tabular discovery, outbound names are backend-safe names derived from the stable column key, such as `col_0001__name`, so duplicate headers do not collide. A reorder (equal length, different order) raises `MappingDiscoveryError` — length parity alone is not trusted to guarantee identity parity. Transport signatures (`request_mapping_discovery`, `invoke_cde_recommendation_alias`, `discover_via_step_functions`) all take `list[ColumnSamples]` so the typed wire contract is preserved end-to-end instead of being erased to `list[dict[str, object]]`.
+3. **Positional parity is enforced at the response boundary.** The tuple of outbound `column_name` values is threaded into the response parser, and every `results[i].column_name` must match `columns[i].column_name` exactly. For tabular discovery, outbound names are source display headers so the recommendation service sees semantic column labels; duplicate headers remain distinct because the request and response are ordered arrays. A reorder (equal length, different order) raises `MappingDiscoveryError` — length parity alone is not trusted to guarantee identity parity. Transport signatures (`request_mapping_discovery`, `invoke_cde_recommendation_alias`, `discover_via_step_functions`) all take `list[ColumnSamples]` so the typed wire contract is preserved end-to-end instead of being erased to `list[dict[str, object]]`.
 4. Suggestions are represented as `MappingSuggestion` / `MappingRecommendationOption` instances and stored alongside the raw payload for diagnostics.
 5. Duration metrics are logged for success, transport errors, and bypass failures.
 
@@ -89,7 +89,7 @@ The SDK owns one runtime mirror of the `Harmonization` literal (`HARMONIZATION_V
 2. Build a gzip-compressed payload containing schema/document data plus the mapping manifest (`_http.build_harmonize_payload`). Hard fail if compression exceeds 10 MiB.
 3. Submit the job via `POST <harmonization_url>/v1/jobs/harmonize` with `Bearer` authentication; capture `job_id`.
 4. Poll `GET <harmonization_url>/v1/jobs/{job_id}` until the status is `SUCCEEDED` or `FAILED`. INFO logs include elapsed seconds per heartbeat; timeouts emit the accumulated duration before raising `HarmonizationJobError`.
-5. Stream the final result via the signed `finalUrl`; CSV sources stream directly to disk, while TSV sources convert the service's CSV response back to TSV before returning. Successful downloads emit `HarmonizationResult(status="succeeded")`, while non-2xx responses return `status="failed"` with parsed error messaging. Transport errors raise `NetriasAPIUnavailable`.
+5. Stream the final result via the signed `finalUrl`; CSV sources stream directly to disk, TSV sources convert the service's CSV response back to TSV, and XLSX sources update the selected worksheet in a workbook copy before returning. Successful downloads emit `HarmonizationResult(status="succeeded")`, while non-2xx responses return `status="failed"` with parsed error messaging. Transport errors raise `NetriasAPIUnavailable`.
 
 ## Data Model Store Workflow
 The Data Model Store API provides read-only access to reference data for validation use cases.
@@ -120,7 +120,7 @@ All methods follow the async-first pattern with sync wrappers. Sync wrappers det
 - ERROR logs precede raised exceptions; unresolved adapter entries are logged at INFO for visibility.
 
 ## Output & Filesystem Behavior
-- Harmonized CSVs stream to disk via `_io.stream_download_to_file`; partial downloads are avoided through temp writes. TSV outputs are converted through the SDK tabular writer so delimiters match the input format.
+- Harmonized CSVs stream to disk via `_io.stream_download_to_file`; partial downloads are avoided through temp writes. TSV and XLSX outputs are converted through the SDK tabular writer so the output format matches the input format.
 - Output naming: defaults to `<source>.harmonized.<source suffix>`; collisions are versioned (`.harmonized.v{n}.csv`, `.harmonized.v{n}.tsv`, etc.).
 - Manifest payloads written by the live harness (`live_test/test.py`) aid manual validation but are optional for API consumers.
 

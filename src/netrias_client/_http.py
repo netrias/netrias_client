@@ -27,10 +27,11 @@ def build_harmonize_payload(
     manifest: Path | Mapping[str, object] | None,
     data_commons_key: str,
     model_version: str = DEFAULT_MODEL_VERSION,
+    sheet_name: str | None = None,
 ) -> bytes:
     """Return gzip-compressed harmonization payload for the given tabular source and manifest."""
 
-    dataset = read_tabular(source_path)
+    dataset = read_tabular(source_path, sheet_name=sheet_name)
 
     envelope: dict[str, object] = {
         "schemaVersion": SCHEMA_VERSION,
@@ -38,7 +39,7 @@ def build_harmonize_payload(
         "data_commons_key": data_commons_key,
         "document": {
             "name": source_path.name,
-            "sheetName": None,
+            "sheetName": dataset.sheet_name,
             "header": dataset.headers,
             "rows": dataset.rows,
         },
