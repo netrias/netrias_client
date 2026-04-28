@@ -93,6 +93,11 @@ dataset = read_tabular(Path("data/patients.xlsx"), sheet_name=sheets[0].name)
 
 Duplicate headers are allowed. The stable column key (`col_0000`, `col_0001`, ...) is the identity; the header text is only the display label. This prevents data loss from duplicate column names and keeps file formats from forcing CSV-shaped assumptions into the rest of the client.
 
+At the CDE recommendation boundary, the client sends display headers as
+`column_name` and relies on the ordered response to map results back to stable
+column keys. This keeps matching semantic while preserving duplicate and blank
+headers locally.
+
 Supported tabular formats are exposed in code:
 
 ```python

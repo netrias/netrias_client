@@ -321,9 +321,8 @@ def _coerce_mapping(obj: Mapping[object, object], strict: bool) -> dict[str, obj
 def _samples_from_dataset(dataset: TabularDataset, sample_limit: int) -> list[ColumnSamples]:
     sample_rows = dataset.rows[:sample_limit]
     samples = _collect_column_samples(sample_rows, len(dataset.columns))
-    backend_names = dataset.backend_column_names()
     return [
-        ColumnSamples(column_name=backend_names[i], values=samples[i])
+        ColumnSamples(column_name=dataset.headers[i], values=samples[i])
         for i in range(len(dataset.columns))
     ]
 

@@ -20,7 +20,7 @@
 - `_io.py`: stream API responses to disk to avoid loading large files into memory.
 - `_logging.py`: create a namespaced logger (`netrias_client`) that honors configured log level.
 - `_models.py`: define typed dataclasses (`Settings`, `MappingDiscoveryResult`, `HarmonizationResult`, `DataModel`, `CDE`, `PermissibleValue`, …).
-- `_tabular.py`: own the high-fidelity tabular representation, CSV/TSV/XLSX readers and writers, workbook sheet selection, stable positional column keys, and backend-safe column names.
+- `_tabular.py`: own the high-fidelity tabular representation, CSV/TSV/XLSX readers and writers, workbook sheet selection, and stable positional column keys.
 - `_validators.py`: guard filesystem access, manifest JSON, and discovery samples; raise typed errors early.
 - `tests/`: Given/When/Then-style fixtures and utilities for validation, discovery, and harmonization.
 
@@ -56,9 +56,9 @@
 ## Discovery Workflow
 1. Validate schema (`validate_target_schema`) and column samples. Tabular helpers (`discover_mapping_from_tabular*`) read the header plus up to `sample_limit` rows (default 25) to build samples automatically. A source with no header row is rejected at the boundary as `MappingValidationError` before any request is issued, so a degenerate input cannot produce a trivially-"successful" empty manifest.
 2. Route based on configuration:
-   - **Default (API Gateway)**: POST to the built-in discovery URL with payload `{ "body": "{...}" }`, sending the configured API key as `x-api-key`. Responses are parsed via `_interpret_discovery_response` and converted into manifest payloads.
+   - **Default (API Gateway)**: POST to the built-in discovery URL with payload `{ "target_schema": "...", "target_version": "...", "columns": [...] }`, sending the configured API key as `x-api-key`. Responses are parsed via `_interpret_discovery_response` and converted into manifest payloads.
    - **Gateway Bypass (temporary)**: Call the `cde-recommendation` Lambda alias directly using boto3. Request and response shapes mimic the API Gateway proxy event (`{"body": "...", "isBase64Encoded": false}`); errors surface as `GatewayBypassError`, wrapped into `NetriasAPIUnavailable` for the public surface.
-3. **Positional parity is enforced at the response boundary.** The tuple of outbound `column_name` values is threaded into the response parser, and every `results[i].column_name` must match `columns[i].column_name` exactly. For tabular discovery, outbound names are backend-safe names derived from the stable column key, such as `col_0001__name`, so duplicate headers do not collide. A reorder (equal length, different order) raises `MappingDiscoveryError` — length parity alone is not trusted to guarantee identity parity. Transport signatures (`request_mapping_discovery`, `invoke_cde_recommendation_alias`, `discover_via_step_functions`) all take `list[ColumnSamples]` so the typed wire contract is preserved end-to-end instead of being erased to `list[dict[str, object]]`.
+3. **Positional parity is enforced at the response boundary.** The tuple of outbound `column_name` values is threaded into the response parser, and every `results[i].column_name` must match `columns[i].column_name` exactly. For tabular discovery, outbound names are source display headers so the recommendation service sees semantic column labels; duplicate headers remain distinct because the request and response are ordered arrays. A reorder (equal length, different order) raises `MappingDiscoveryError` — length parity alone is not trusted to guarantee identity parity. Transport signatures (`request_mapping_discovery`, `invoke_cde_recommendation_alias`, `discover_via_step_functions`) all take `list[ColumnSamples]` so the typed wire contract is preserved end-to-end instead of being erased to `list[dict[str, object]]`.
 4. Suggestions are represented as `MappingSuggestion` / `MappingRecommendationOption` instances and stored alongside the raw payload for diagnostics.
 5. Duration metrics are logged for success, transport errors, and bypass failures.
 

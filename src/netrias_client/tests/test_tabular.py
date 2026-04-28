@@ -130,13 +130,13 @@ def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
     monkeypatch: pytest.MonkeyPatch,
     duplicate_headers_tsv_path: Path,
 ) -> None:
-    """Discovery exposes stable column keys while sending unique backend names."""
+    """Discovery exposes stable column keys while sending display headers."""
 
-    # Given: a duplicate-header TSV and a backend response using SDK-generated names
+    # Given: a duplicate-header TSV and a response preserving input order
     payload = _array_payload(
         [
             {
-                "column_name": "col_0000__name",
+                "column_name": "name",
                 "matches": [
                     {
                         "target": "first_name",
@@ -147,7 +147,7 @@ def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
                 ],
             },
             {
-                "column_name": "col_0001__name",
+                "column_name": "name",
                 "matches": [
                     {
                         "target": "last_name",
@@ -157,7 +157,7 @@ def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
                     }
                 ],
             },
-            {"column_name": "col_0002__note", "matches": []},
+            {"column_name": "note", "matches": []},
         ]
     )
     capture = json_success(payload)
@@ -181,9 +181,9 @@ def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     columns = cast(list[dict[str, object]], content["columns"])
     assert [column["column_name"] for column in columns] == [
-        "col_0000__name",
-        "col_0001__name",
-        "col_0002__note",
+        "name",
+        "name",
+        "note",
     ]
 
 

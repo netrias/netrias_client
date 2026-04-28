@@ -69,9 +69,6 @@ class TabularDataset:
     def headers(self) -> list[str]:
         return [column.header for column in self.columns]
 
-    def backend_column_names(self) -> list[str]:
-        return [_backend_column_name(column) for column in self.columns]
-
 
 SUPPORTED_TABULAR_SUFFIXES: dict[str, TabularFormat] = {
     ".csv": TabularFormat.CSV,
@@ -268,10 +265,6 @@ def _cell_to_string(value: object) -> str:
     return str(value)
 
 
-def _backend_column_name(column: TabularColumn) -> str:
-    return f"{column.key}__{_safe_header_token(column.header)}"
-
-
 def _columns_for_headers(headers: list[str], columns: list[TabularColumn] | None) -> list[TabularColumn]:
     if columns is None:
         return [
@@ -285,12 +278,6 @@ def _columns_for_headers(headers: list[str], columns: list[TabularColumn] | None
         for index in range(len(columns), len(headers))
     ]
     return [*columns, *extra_columns]
-
-
-def _safe_header_token(header: str) -> str:
-    cleaned = "".join(char if char.isalnum() else "_" for char in header.strip().lower())
-    collapsed = "_".join(part for part in cleaned.split("_") if part)
-    return collapsed or "blank"
 
 
 def _normalize_row(row: list[str], width: int) -> list[str]:

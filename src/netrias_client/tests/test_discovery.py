@@ -22,33 +22,15 @@ def _array_payload(results: list[dict[str, object]]) -> dict[str, object]:
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"results": _with_backend_column_names(results)}),
+        "body": json.dumps({"results": results}),
     }
 
 
 def _recorded_payload(recorded: dict[str, object]) -> dict[str, object]:
-    results = cast(list[dict[str, object]], recorded["results"])
     return {
         "statusCode": 200,
-        "body": json.dumps({**recorded, "results": _with_backend_column_names(results)}),
+        "body": json.dumps(recorded),
     }
-
-
-def _with_backend_column_names(results: list[dict[str, object]]) -> list[dict[str, object]]:
-    output: list[dict[str, object]] = []
-    for index, result in enumerate(results):
-        column_name = result.get("column_name")
-        if not isinstance(column_name, str):
-            output.append(result)
-            continue
-        output.append({**result, "column_name": _backend_column_name(index, column_name)})
-    return output
-
-
-def _backend_column_name(index: int, header: str) -> str:
-    cleaned = "".join(char if char.isalnum() else "_" for char in header.strip().lower())
-    collapsed = "_".join(part for part in cleaned.split("_") if part)
-    return f"{column_key_for_index(index)}__{collapsed or 'blank'}"
 
 
 def _column_slots(manifest: ColumnKeyedManifestPayload, column_count: int) -> list[ColumnMappingRecord | None]:
@@ -137,7 +119,7 @@ def test_discover_mapping_from_tabular_samples_data(
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     columns_section = cast(list[dict[str, object]], content.get("columns", []))
     column_names = [entry.get("column_name") for entry in columns_section]
-    assert column_names == ["col_0000__a", "col_0001__b", "col_0002__c"]
+    assert column_names == ["a", "b", "c"]
     assert isinstance(manifest["column_mappings"], dict)
 
 
@@ -460,7 +442,7 @@ def test_positional_parity_all_columns_matched(
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     columns_section = cast(list[dict[str, object]], content.get("columns", []))
     assert len(columns_section) == 3
-    assert [entry["column_name"] for entry in columns_section] == ["col_0000__a", "col_0001__b", "col_0002__c"]
+    assert [entry["column_name"] for entry in columns_section] == ["a", "b", "c"]
 
     column_mappings = _column_slots(manifest, 3)
     assert len(column_mappings) == 3
@@ -512,7 +494,7 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     columns_section = cast(list[dict[str, object]], content.get("columns", []))
     assert len(columns_section) == 3
-    assert columns_section[1] == {"column_name": "col_0001__b", "values": []}
+    assert columns_section[1] == {"column_name": "b", "values": []}
 
 
 def test_positional_parity_below_threshold_becomes_none(
@@ -752,8 +734,8 @@ def test_positional_parity_rejects_reordered_response_of_equal_length(
 
     message = str(exc.value)
     assert "column_name mismatch" in message
-    assert "'col_0000__a'" in message
-    assert "'col_0000__c'" in message
+    assert "'a'" in message
+    assert "'c'" in message
 
 
 def test_zero_column_tabular_file_rejected_at_boundary(
