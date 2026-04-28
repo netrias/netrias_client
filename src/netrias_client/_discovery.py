@@ -97,10 +97,11 @@ async def discover_mapping_from_tabular_async(
     logger: logging.Logger,
     top_k: int | None = None,
     confidence_threshold: float | None = None,
+    sheet_name: str | None = None,
 ) -> ColumnKeyedManifestPayload:
-    """Derive positional samples from a CSV/TSV file and return a column-keyed manifest."""
+    """Derive positional samples from a tabular file and return a column-keyed manifest."""
 
-    dataset = read_tabular(validate_source_path(source_path))
+    dataset = read_tabular(validate_source_path(source_path), sheet_name=sheet_name)
     _require_nonempty_header(dataset.headers, source_path)
     columns = _samples_from_dataset(dataset, sample_limit)
     positional_manifest = await _discover_mapping_async(

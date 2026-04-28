@@ -42,6 +42,7 @@ async def harmonize_async(
     output_path: Path | None = None,
     manifest_output_path: Path | None = None,
     logger: logging.Logger | None = None,
+    sheet_name: str | None = None,
 ) -> HarmonizationResult:
     """Execute harmonization using the asynchronous job API."""
 
@@ -61,7 +62,7 @@ async def harmonize_async(
     logger.info("harmonize start: file=%s", csv_path)
 
     try:
-        payload = build_harmonize_payload(csv_path, manifest_input, data_commons_key)
+        payload = build_harmonize_payload(csv_path, manifest_input, data_commons_key, sheet_name=sheet_name)
         job_payload = await _submit_job_response(
             base_url=settings.harmonization_url,
             api_key=settings.api_key,
@@ -89,7 +90,16 @@ async def harmonize_async(
         manifest_path: Path | None = None
         if manifest_url:
             manifest_path = await _download_manifest(manifest_url, dest, settings.timeout, logger)
-        result = await _download_final(final_url, dest, settings.timeout, csv_path, source_format, logger, manifest_path)
+        result = await _download_final(
+            final_url,
+            dest,
+            settings.timeout,
+            csv_path,
+            source_format,
+            sheet_name,
+            logger,
+            manifest_path,
+        )
         status_label = result.status
         return result
     finally:
@@ -382,6 +392,7 @@ async def _download_final(
     timeout: float,
     csv_path: Path,
     source_format: TabularFormat,
+    sheet_name: str | None,
     logger: logging.Logger,
     manifest_path: Path | None = None,
 ) -> HarmonizationResult:
@@ -389,7 +400,7 @@ async def _download_final(
         async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
             async with client.stream("GET", final_url) as response:
                 if 200 <= response.status_code < 300:
-                    await _write_successful_download(response, dest, source_format)
+                    await _write_successful_download(response, dest, source_format, csv_path, sheet_name)
                     logger.info("harmonize complete: file=%s -> %s", csv_path, dest)
                     return HarmonizationResult(
                         file_path=dest, status="succeeded", description="harmonization succeeded", manifest_path=manifest_path,
@@ -416,13 +427,16 @@ async def _write_successful_download(
     response: httpx.Response,
     dest: Path,
     source_format: TabularFormat,
+    source_path: Path,
+    sheet_name: str | None,
 ) -> None:
     if source_format == TabularFormat.CSV:
         _ = await stream_download_to_file(response, dest)
         return
     body_bytes = await response.aread()
-    dataset = csv_bytes_to_dataset(body_bytes, source_format)
-    write_tabular(dest, dataset)
+    dataset = csv_bytes_to_dataset(body_bytes, source_format, sheet_name=sheet_name)
+    template_path = source_path if source_format == TabularFormat.XLSX else None
+    write_tabular(dest, dataset, template_path=template_path)
 
 
 def _error_description(status: int, body_text: str, default: str) -> tuple[str, JSONValue | str]:
