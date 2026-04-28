@@ -401,11 +401,13 @@ def _suggestions_from_payload(
     """Boundary: validate response shape, length, and per-index column identity."""
 
     results = payload.get("results")
-    if not isinstance(results, list):
-        raise MappingDiscoveryError(
-            "mapping discovery response missing 'results' array, source=discovery response"
-        )
-    return _suggestions_from_results_array(cast(list[object], results), outbound_names)
+    if isinstance(results, list):
+        return _suggestions_from_results_array(cast(list[object], results), outbound_names)
+    if isinstance(results, Mapping):
+        return _suggestions_from_results_mapping(cast(Mapping[object, object], results), outbound_names)
+    raise MappingDiscoveryError(
+        "mapping discovery response missing 'results' array or object, source=discovery response"
+    )
 
 
 def _suggestions_from_results_array(
@@ -422,6 +424,52 @@ def _suggestions_from_results_array(
     _require_expected_length(results, len(outbound_names))
     return tuple(
         _suggestion_from_entry(entry, i, outbound_names[i]) for i, entry in enumerate(results)
+    )
+
+
+def _suggestions_from_results_mapping(
+    results: Mapping[object, object], outbound_names: tuple[str, ...]
+) -> tuple[MappingSuggestion, ...]:
+    """Convert the production map-format response into positional suggestions.
+
+    The live endpoint returns {"results": {column_name: [matches...]}}. We still
+    anchor identity to outbound_names so response ordering cannot affect the
+    manifest.
+    """
+
+    normalized = _string_keyed_mapping(results)
+    missing = [name for name in outbound_names if name not in normalized]
+    if missing:
+        raise MappingDiscoveryError(
+            "mapping discovery response missing result keys: "
+            + ", ".join(repr(name) for name in missing)
+            + ", source=discovery response"
+        )
+    return tuple(
+        MappingSuggestion(
+            source_column=name,
+            options=_legacy_options_from_list(_require_legacy_options(normalized[name], name)),
+            raw={"column_name": name, "matches": normalized[name]},
+            column_id=index,
+        )
+        for index, name in enumerate(outbound_names)
+    )
+
+
+def _string_keyed_mapping(results: Mapping[object, object]) -> dict[str, object]:
+    mapping: dict[str, object] = {}
+    for key, value in results.items():
+        if not isinstance(key, str):
+            raise MappingDiscoveryError("mapping discovery results object has a non-string key")
+        mapping[key] = value
+    return mapping
+
+
+def _require_legacy_options(value: object, column_name: str) -> list[object]:
+    if isinstance(value, list):
+        return cast(list[object], value)
+    raise MappingDiscoveryError(
+        f"mapping discovery result for {column_name!r} is not an array, source=discovery response"
     )
 
 
@@ -509,6 +557,27 @@ def _options_from_list(options_list: list[object]) -> tuple[MappingRecommendatio
     return tuple(options)
 
 
+def _legacy_options_from_list(options_list: list[object]) -> tuple[MappingRecommendationOption, ...]:
+    options: list[MappingRecommendationOption] = []
+    for item in options_list:
+        if not isinstance(item, Mapping):
+            continue
+        mapping = cast(Mapping[str, object], item)
+        target = _option_target(mapping)
+        confidence = _option_confidence(mapping)
+        target_cde_id = _option_target_cde_id(mapping)
+        options.append(
+            MappingRecommendationOption(
+                target=target,
+                confidence=confidence,
+                harmonization=_optional_option_harmonization(mapping),
+                target_cde_id=target_cde_id,
+                raw=mapping,
+            )
+        )
+    return tuple(options)
+
+
 def _require_option_harmonization(option: Mapping[str, object]) -> Harmonization:
     """'why': harmonization is required on every match from the Lambda; missing or
     unknown values mean the SDK is talking to an incompatible upstream — fail fast.
@@ -524,6 +593,13 @@ def _require_option_harmonization(option: Mapping[str, object]) -> Harmonization
     raise MappingDiscoveryError(message)
 
 
+def _optional_option_harmonization(option: Mapping[str, object]) -> Harmonization:
+    value = option.get("harmonization")
+    if isinstance(value, str) and value in HARMONIZATION_VALUES:
+        return cast(Harmonization, value)
+    return "harmonizable"
+
+
 def _option_target(option: Mapping[str, object]) -> str | None:
     value = option.get("target")
     if isinstance(value, str):
@@ -534,8 +610,10 @@ def _option_target(option: Mapping[str, object]) -> str | None:
 
 
 def _option_confidence(option: Mapping[str, object]) -> float | None:
-    """'why': upstream API returns the score under 'confidence'; no other key is emitted."""
+    """Return the recommendation score from either supported backend shape."""
     value = option.get("confidence")
+    if value is None:
+        value = option.get("similarity")
     # 'why': bool is subclass of int in Python; must guard before int/float check
     if isinstance(value, bool):
         return None

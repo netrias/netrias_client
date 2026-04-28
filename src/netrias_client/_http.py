@@ -104,10 +104,11 @@ async def request_mapping_discovery(
         "Content-Type": "application/json",
         API_KEY_HEADER: api_key,
     }
+    data = {column["column_name"]: column["values"] for column in columns}
     body: dict[str, object] = {
         "target_schema": schema,
         "target_version": version,
-        "columns": columns,
+        "data": data,
     }
     if top_k is not None:
         body["top_k"] = top_k

@@ -34,6 +34,15 @@ def _recorded_payload(recorded: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _mapping_payload(results: dict[str, object]) -> dict[str, object]:
+    """Build the production map-format discovery response body."""
+
+    return {
+        "statusCode": 200,
+        "body": json.dumps({"results": results}),
+    }
+
+
 def _with_backend_column_names(results: list[dict[str, object]]) -> list[dict[str, object]]:
     output: list[dict[str, object]] = []
     for index, result in enumerate(results):
@@ -135,9 +144,8 @@ def test_discover_mapping_from_tabular_samples_data(
 
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    columns_section = cast(list[dict[str, object]], content.get("columns", []))
-    column_names = [entry.get("column_name") for entry in columns_section]
-    assert column_names == ["col_0000__a", "col_0001__b", "col_0002__c"]
+    data = cast(dict[str, list[str]], content.get("data", {}))
+    assert list(data) == ["col_0000__a", "col_0001__b", "col_0002__c"]
     assert isinstance(manifest["column_mappings"], dict)
 
 
@@ -313,6 +321,45 @@ def test_discover_mapping_handles_array_results_format(
     assert column_mappings[2] is None
 
 
+def test_discover_mapping_handles_production_results_mapping(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_csv_path: Path,
+) -> None:
+    """Handle the live production response keyed by outbound column name."""
+
+    payload = _mapping_payload(
+        {
+            "col_0000__a": [{"target": "age", "target_cde_id": 900, "similarity": 0.93}],
+            "col_0001__b": [{"target": "sex", "target_cde_id": 901, "similarity": 0.91}],
+            "col_0002__c": [{"target": "No_Matches_Found", "target_cde_id": None, "similarity": 0.0}],
+        }
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    manifest = configured_client.discover_mapping_from_tabular(
+        source_path=sample_csv_path,
+        target_schema="gc",
+        target_version="v1",
+    )
+
+    column_mappings = _column_slots(manifest, 3)
+    first = column_mappings[0]
+    assert first is not None
+    assert first["column_name"] == "a"
+    assert first["cde_key"] == "age"
+    assert first["harmonization"] == "harmonizable"
+    assert first["alternatives"][0]["confidence"] == 0.93
+
+    second = column_mappings[1]
+    assert second is not None
+    assert second["column_name"] == "b"
+    assert second["cde_key"] == "sex"
+
+    assert column_mappings[2] is None
+
+
 # ---- Wire-shape contract tests ----
 
 
@@ -458,9 +505,9 @@ def test_positional_parity_all_columns_matched(
     # Then request length == 3, manifest length == 3, every entry is non-None with matching column_name
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    columns_section = cast(list[dict[str, object]], content.get("columns", []))
-    assert len(columns_section) == 3
-    assert [entry["column_name"] for entry in columns_section] == ["col_0000__a", "col_0001__b", "col_0002__c"]
+    data = cast(dict[str, list[str]], content.get("data", {}))
+    assert len(data) == 3
+    assert list(data) == ["col_0000__a", "col_0001__b", "col_0002__c"]
 
     column_mappings = _column_slots(manifest, 3)
     assert len(column_mappings) == 3
@@ -510,9 +557,9 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
     # And the outbound request preserved the empty-value column at position 1
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    columns_section = cast(list[dict[str, object]], content.get("columns", []))
-    assert len(columns_section) == 3
-    assert columns_section[1] == {"column_name": "col_0001__b", "values": []}
+    data = cast(dict[str, list[str]], content.get("data", {}))
+    assert len(data) == 3
+    assert data["col_0001__b"] == []
 
 
 def test_positional_parity_below_threshold_becomes_none(

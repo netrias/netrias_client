@@ -179,8 +179,8 @@ def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
 
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    columns = cast(list[dict[str, object]], content["columns"])
-    assert [column["column_name"] for column in columns] == [
+    data = cast(dict[str, list[str]], content["data"])
+    assert list(data) == [
         "col_0000__name",
         "col_0001__name",
         "col_0002__note",
