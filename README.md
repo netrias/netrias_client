@@ -1,6 +1,6 @@
 # Netrias Client
 
-A Python client for the Netrias discovery and harmonization services. Transform tabular datasets such as CSV and TSV files to conform to standard data models (e.g., CCDI) with AI-powered column mapping.
+A Python client for the Netrias discovery and harmonization services. Transform tabular datasets such as CSV, TSV, and XLSX files to conform to standard data models (e.g., CCDI) with AI-powered column mapping.
 
 ## Installation
 
@@ -67,7 +67,7 @@ Discover how source columns map to target schema CDEs using AI recommendations.
 
 ### Tabular files and column identity
 
-CSV and TSV are file formats at the SDK boundary. Inside the client, data is represented as a positional tabular dataset:
+CSV, TSV, and XLSX are file formats at the SDK boundary. Inside the client, data is represented as a positional tabular dataset:
 
 ```python
 from pathlib import Path
@@ -82,15 +82,29 @@ print(dataset.columns[0].key)         # "col_0000"
 print(dataset.rows[0])                # first data row as positional cells
 ```
 
-Duplicate headers are allowed. The stable column key (`col_0000`, `col_0001`, ...) is the identity; the header text is only the display label. This prevents data loss from duplicate column names and keeps future file formats, such as XLSX, from forcing CSV-shaped assumptions into the rest of the client.
+For XLSX workbooks, select one worksheet at the boundary:
+
+```python
+from netrias_client import list_workbook_sheets, read_tabular
+
+sheets = list_workbook_sheets(Path("data/patients.xlsx"))
+dataset = read_tabular(Path("data/patients.xlsx"), sheet_name=sheets[0].name)
+```
+
+Duplicate headers are allowed. The stable column key (`col_0000`, `col_0001`, ...) is the identity; the header text is only the display label. This prevents data loss from duplicate column names and keeps file formats from forcing CSV-shaped assumptions into the rest of the client.
+
+At the CDE recommendation boundary, the client sends display headers as
+`column_name` and relies on the ordered response to map results back to stable
+column keys. This keeps matching semantic while preserving duplicate and blank
+headers locally.
 
 Supported tabular formats are exposed in code:
 
 ```python
 from netrias_client import SUPPORTED_TABULAR_FORMATS, SUPPORTED_TABULAR_SUFFIXES, TabularFormat
 
-assert tuple(SUPPORTED_TABULAR_FORMATS) == (TabularFormat.CSV, TabularFormat.TSV)
-assert set(SUPPORTED_TABULAR_SUFFIXES) == {".csv", ".tsv"}
+assert tuple(SUPPORTED_TABULAR_FORMATS) == (TabularFormat.CSV, TabularFormat.TSV, TabularFormat.XLSX)
+assert set(SUPPORTED_TABULAR_SUFFIXES) == {".csv", ".tsv", ".xlsx"}
 ```
 
 ### `discover_mapping_from_tabular(...)`
@@ -99,9 +113,10 @@ Reads a supported tabular file, samples values, and returns a manifest keyed by 
 
 ```python
 manifest = client.discover_mapping_from_tabular(
-    source_path=Path("data/patients.tsv"),      # .csv and .tsv are supported
+    source_path=Path("data/patients.xlsx"),
     target_schema="ccdi",
     target_version="latest",
+    sheet_name="Patients",                      # optional; XLSX defaults to the first sheet
     sample_limit=25,
     top_k=3,
     confidence_threshold=0.8,
@@ -110,9 +125,10 @@ manifest = client.discover_mapping_from_tabular(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `source_path` | `Path` | - | **Required.** Path to a supported tabular file (`.csv` or `.tsv`). |
+| `source_path` | `Path` | - | **Required.** Path to a supported tabular file (`.csv`, `.tsv`, or `.xlsx`). |
 | `target_schema` | `str` | - | **Required.** Target schema key. |
 | `target_version` | `str` | `"latest"` | Schema version to target. |
+| `sheet_name` | `str \| None` | `None` | Worksheet to read for XLSX input. Defaults to the first sheet. |
 | `sample_limit` | `int` | `25` | Maximum rows to sample for discovery. |
 | `top_k` | `int` | `3` | Number of top recommendations to return per column. |
 | `confidence_threshold` | `float \| None` | `0.8` | Minimum confidence score (0-1) for keeping recommendations. |
@@ -154,10 +170,11 @@ Execute the harmonization workflow: submit job, poll for completion, download re
 
 ```python
 result = client.harmonize(
-    source_path=Path("data/patients.tsv"),
+    source_path=Path("data/patients.xlsx"),
     manifest=manifest,                           # from discover_*
     data_commons_key="GC",                       # target data commons
-    output_path=Path("output/harmonized.tsv"),   # optional
+    sheet_name="Patients",                       # optional; XLSX defaults to the first sheet
+    output_path=Path("output/harmonized.xlsx"),  # optional
     manifest_output_path=Path("output/manifest.json"),  # optional
 )
 
@@ -168,11 +185,12 @@ print(result.description)  # Human-readable status message
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `source_path` | `Path` | - | **Required.** Path to the source tabular file (`.csv` or `.tsv`). |
+| `source_path` | `Path` | - | **Required.** Path to the source tabular file (`.csv`, `.tsv`, or `.xlsx`). |
 | `manifest` | `Path \| Mapping[str, object]` | - | **Required.** Mapping manifest (from discovery) or path to a JSON manifest file. |
 | `data_commons_key` | `str` | - | **Required.** Target data commons identifier (e.g., `"GC"`). |
 | `output_path` | `Path \| None` | `None` | Where to write the harmonized file. Auto-generated with the same suffix as the source, such as `source.harmonized.tsv` for TSV input. |
 | `manifest_output_path` | `Path \| None` | `None` | Where to write the manifest JSON for debugging. |
+| `sheet_name` | `str \| None` | `None` | Worksheet to read and update for XLSX input. Defaults to the first sheet. |
 
 **Returns:** `HarmonizationResult` with these fields:
 

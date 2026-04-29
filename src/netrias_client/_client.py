@@ -121,8 +121,9 @@ class NetriasClient:
         sample_limit: int = 25,
         top_k: int = 3,
         confidence_threshold: float | None = None,
+        sheet_name: str | None = None,
     ) -> ColumnKeyedManifestPayload:
-        """Derive column samples from a CSV/TSV file and return mappings by column key."""
+        """Derive column samples from a tabular file and return mappings by column key."""
 
         ctx = self._snapshot_context()
         return await _discover_mapping_from_tabular_async(
@@ -134,6 +135,7 @@ class NetriasClient:
             logger=ctx.logger,
             top_k=top_k,
             confidence_threshold=confidence_threshold,
+            sheet_name=sheet_name,
         )
 
     def discover_mapping_from_tabular(
@@ -144,6 +146,7 @@ class NetriasClient:
         sample_limit: int = 25,
         top_k: int = 3,
         confidence_threshold: float | None = None,
+        sheet_name: str | None = None,
     ) -> ColumnKeyedManifestPayload:
         """Sync delegate for :meth:`discover_mapping_from_tabular_async`."""
 
@@ -155,6 +158,7 @@ class NetriasClient:
                 sample_limit=sample_limit,
                 top_k=top_k,
                 confidence_threshold=confidence_threshold,
+                sheet_name=sheet_name,
             )
         )
 
@@ -165,6 +169,7 @@ class NetriasClient:
         data_commons_key: str,
         output_path: Path | None = None,
         manifest_output_path: Path | None = None,
+        sheet_name: str | None = None,
     ) -> HarmonizationResult:
         """Execute the harmonization workflow asynchronously."""
 
@@ -177,6 +182,7 @@ class NetriasClient:
             output_path=output_path,
             manifest_output_path=manifest_output_path,
             logger=ctx.logger,
+            sheet_name=sheet_name,
         )
 
     def harmonize(
@@ -186,6 +192,7 @@ class NetriasClient:
         data_commons_key: str,
         output_path: Path | None = None,
         manifest_output_path: Path | None = None,
+        sheet_name: str | None = None,
     ) -> HarmonizationResult:
         """Sync delegate for :meth:`harmonize_async`."""
 
@@ -196,6 +203,7 @@ class NetriasClient:
                 data_commons_key=data_commons_key,
                 output_path=output_path,
                 manifest_output_path=manifest_output_path,
+                sheet_name=sheet_name,
             )
         )
 
