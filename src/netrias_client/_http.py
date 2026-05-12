@@ -28,6 +28,7 @@ def build_harmonize_payload(
     data_commons_key: str,
     model_version: str = DEFAULT_MODEL_VERSION,
     sheet_name: str | None = None,
+    use_cache: bool = True,
 ) -> bytes:
     """Return gzip-compressed harmonization payload for the given tabular source and manifest."""
 
@@ -37,6 +38,7 @@ def build_harmonize_payload(
         "schemaVersion": SCHEMA_VERSION,
         "modelVersion": model_version,
         "data_commons_key": data_commons_key,
+        "use_cache": use_cache,
         "document": {
             "name": source_path.name,
             "sheetName": dataset.sheet_name,

@@ -176,11 +176,13 @@ result = client.harmonize(
     sheet_name="Patients",                       # optional; XLSX defaults to the first sheet
     output_path=Path("output/harmonized.xlsx"),  # optional
     manifest_output_path=Path("output/manifest.json"),  # optional
+    use_cache=True,                              # optional; set False to bypass cached runs
 )
 
 print(result.status)       # "succeeded", "failed", or "timeout"
 print(result.file_path)    # Path to the harmonized file
 print(result.description)  # Human-readable status message
+print(result.job_id)       # API job id for tracking
 ```
 
 | Parameter | Type | Default | Description |
@@ -191,6 +193,7 @@ print(result.description)  # Human-readable status message
 | `output_path` | `Path \| None` | `None` | Where to write the harmonized file. Auto-generated with the same suffix as the source, such as `source.harmonized.tsv` for TSV input. |
 | `manifest_output_path` | `Path \| None` | `None` | Where to write the manifest JSON for debugging. |
 | `sheet_name` | `str \| None` | `None` | Worksheet to read and update for XLSX input. Defaults to the first sheet. |
+| `use_cache` | `bool` | `True` | When `False`, asks the service to bypass cached harmonization results. |
 
 **Returns:** `HarmonizationResult` with these fields:
 
@@ -199,8 +202,9 @@ print(result.description)  # Human-readable status message
 | `file_path` | `Path` | Path to the output file. |
 | `status` | `"succeeded" \| "failed" \| "timeout"` | Job outcome. |
 | `description` | `str` | Human-readable status message. |
+| `job_id` | `str \| None` | API job identifier, when submission succeeded. |
 | `mapping_id` | `str \| None` | Internal mapping identifier (if available). |
-| `manifest_path` | `Path \| None` | Path to the downloaded manifest parquet file (if available). |
+| `manifest_path` | `Path \| None` | Path to the downloaded manifest parquet file (if available). The SDK derives this path from the harmonized output path and versions it rather than overwriting existing files. |
 
 ---
 

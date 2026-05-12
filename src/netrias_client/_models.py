@@ -149,6 +149,7 @@ class HarmonizationResult:
     description: str
     mapping_id: str | None = None
     manifest_path: Path | None = None
+    job_id: str | None = None
 
 
 @dataclass(frozen=True)
