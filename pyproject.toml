@@ -21,6 +21,7 @@ dependencies = [
     "requests>=2.33.0",  # CVE-2026-25645
     "cryptography>=46.0.7",  # CVE-2026-26007, CVE-2026-34073, CVE-2026-39892
     "urllib3>=2.7.0",  # CVE-2025-66418, CVE-2025-66471, CVE-2026-21441, CVE-2026-44431, CVE-2026-44432
+    "idna>=3.15",  # CVE-2026-45409
 ]
 license = { file = "LICENSE" }
 classifiers = [
