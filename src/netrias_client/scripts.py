@@ -68,7 +68,7 @@ def live_check() -> None:
 
 
 def release(argv: Sequence[str] | None = None) -> None:
-    """Run the release pipeline: bump version, validate, build, publish.
+    """Run the release pipeline: validate, bump version, build, publish.
 
     'why': streamline TestPyPI/PyPI releases from a single script
     """
@@ -76,9 +76,9 @@ def release(argv: Sequence[str] | None = None) -> None:
     options = _parse_release_args(argv)
     _ensure_logging()
     target_version = _determine_target_version(options)
+    check()
     _update_versions(target_version)
     _LOGGER.info("version synchronized → %s", target_version)
-    check()
     artifacts = _build_distributions()
     _verify_artifacts(artifacts)
     if options.repository:
@@ -299,15 +299,33 @@ def _publish_artifacts(repository: str) -> None:
     'why': keep credential handling opinionated yet minimal
     """
 
+    from dotenv import load_dotenv
+
+    _ = load_dotenv()
+
     if repository not in _REPOSITORY_CONFIG:
         raise RuntimeError(f"Unsupported repository '{repository}'")
     env_var, publish_url = _REPOSITORY_CONFIG[repository]
+    token = _require_publish_token(env_var, repository)
+    command, display = _build_publish_commands(token, publish_url)
+    _run_command_or_raise(tuple(command), display_command=tuple(display))
+
+
+def _require_publish_token(env_var: str, repository: str) -> str:
+    """Retrieve and validate the publish token from environment."""
+
     token = os.environ.get(env_var)
     if not token:
         raise RuntimeError(f"Set {env_var} before publishing to {repository}")
+    return token
+
+
+def _build_publish_commands(token: str, publish_url: str | None) -> tuple[list[str], list[str]]:
+    """Build publish command and display-safe version."""
+
     command: list[str] = ["uv", "publish", "--username", "__token__", "--password", token]
     display: list[str] = ["uv", "publish", "--username", "__token__", "--password", "******"]
     if publish_url:
         command.extend(["--publish-url", publish_url])
         display.extend(["--publish-url", publish_url])
-    _run_command_or_raise(tuple(command), display_command=tuple(display))
+    return command, display

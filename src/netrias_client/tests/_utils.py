@@ -28,6 +28,8 @@ def job_success(
     chunks: Sequence[bytes],
     job_id: str = "job-123",
     final_url: str = "https://mock.netrias/result.csv",
+    manifest_url: str | None = None,
+    manifest_chunks: Sequence[bytes] = (b"manifest",),
 ) -> MockTransportCapture:
     """Return a mock transport that simulates the multi-step harmonization workflow.
 
@@ -39,7 +41,7 @@ def job_success(
 
     async def handler(request: httpx.Request) -> httpx.Response:
         recorded.append(request)
-        response = _resolve_job_response(request, job_id, final_url, chunks, state)
+        response = _resolve_job_response(request, job_id, final_url, manifest_url, chunks, manifest_chunks, state)
         if response is None:
             raise AssertionError(f"unexpected request during job_success: {request.method} {request.url}")
         return response
@@ -154,6 +156,7 @@ def _job_status_response(
     request: httpx.Request,
     job_id: str,
     final_url: str,
+    manifest_url: str | None,
     state: _JobState,
 ) -> httpx.Response | None:
     if request.method != "GET":
@@ -162,17 +165,29 @@ def _job_status_response(
         return None
     state.status_served = True
     payload = {"status": "SUCCEEDED", "final_url": final_url}
+    if manifest_url:
+        payload["manifest_url"] = manifest_url
     return httpx.Response(200, json=payload, request=request)
 
 
 def _job_download_response(
     request: httpx.Request,
     final_url: str,
+    manifest_url: str | None,
     chunks: Sequence[bytes],
+    manifest_chunks: Sequence[bytes],
 ) -> httpx.Response | None:
     if request.method != "GET":
         return None
-    if str(request.url) != final_url:
+    target = str(request.url)
+    if target == manifest_url:
+        return httpx.Response(
+            200,
+            headers={"Content-Type": "application/octet-stream"},
+            stream=_ChunkStream(manifest_chunks),
+            request=request,
+        )
+    if target != final_url:
         return None
     return httpx.Response(
         200,
@@ -186,16 +201,18 @@ def _resolve_job_response(
     request: httpx.Request,
     job_id: str,
     final_url: str,
+    manifest_url: str | None,
     chunks: Sequence[bytes],
+    manifest_chunks: Sequence[bytes],
     state: _JobState,
 ) -> httpx.Response | None:
     response = _job_submit_response(request, job_id)
     if response is not None:
         return response
-    response = _job_status_response(request, job_id, final_url, state)
+    response = _job_status_response(request, job_id, final_url, manifest_url, state)
     if response is not None:
         return response
-    return _job_download_response(request, final_url, chunks)
+    return _job_download_response(request, final_url, manifest_url, chunks, manifest_chunks)
 
 
 def paginated_pv_responses(

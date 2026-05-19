@@ -20,7 +20,7 @@ from ._io import stream_download_to_file
 from ._logging import LOGGER_NAMESPACE
 from ._models import HarmonizationResult, Settings
 from ._tabular import TabularFormat, csv_bytes_to_dataset, tabular_format_for_path, write_tabular
-from ._validators import validate_manifest_path, validate_output_path, validate_source_path
+from ._validators import next_available_path, validate_manifest_path, validate_output_path, validate_source_path
 
 JSONPrimitive: TypeAlias = str | int | float | bool | None
 JSONValue: TypeAlias = JSONPrimitive | Mapping[str, "JSONValue"] | Sequence["JSONValue"]
@@ -43,6 +43,7 @@ async def harmonize_async(
     manifest_output_path: Path | None = None,
     logger: logging.Logger | None = None,
     sheet_name: str | None = None,
+    use_cache: bool = True,
 ) -> HarmonizationResult:
     """Execute harmonization using the asynchronous job API."""
 
@@ -59,10 +60,17 @@ async def harmonize_async(
 
     started = time.perf_counter()
     status_label = "error"
+    job_id: str | None = None
     logger.info("harmonize start: file=%s", csv_path)
 
     try:
-        payload = build_harmonize_payload(csv_path, manifest_input, data_commons_key, sheet_name=sheet_name)
+        payload = build_harmonize_payload(
+            csv_path,
+            manifest_input,
+            data_commons_key,
+            sheet_name=sheet_name,
+            use_cache=use_cache,
+        )
         job_payload = await _submit_job_response(
             base_url=settings.harmonization_url,
             api_key=settings.api_key,
@@ -85,7 +93,7 @@ async def harmonize_async(
         manifest_url = _extract_manifest_url(final_payload)
     except HarmonizationJobError as exc:
         status_label = "failed"
-        return HarmonizationResult(file_path=dest, status="failed", description=str(exc))
+        return HarmonizationResult(file_path=dest, status="failed", description=str(exc), job_id=job_id)
     else:
         manifest_path: Path | None = None
         if manifest_url:
@@ -99,6 +107,7 @@ async def harmonize_async(
             sheet_name,
             logger,
             manifest_path,
+            job_id,
         )
         status_label = result.status
         return result
@@ -359,19 +368,25 @@ def _require_final_url(
     logger.error("harmonize job missing final_url: file=%s payload=%s", csv_path, payload)
     raise HarmonizationJobError("harmonization job completed without a download URL")
 
+
 def _extract_manifest_url(payload: Mapping[str, JSONValue]) -> str | None:
     """Returns manifest_url if present, None otherwise (optional download)."""
     return _string_field(payload, "manifest_url")
 
 
+def _manifest_destination(harmonized_dest: Path) -> Path:
+    candidate = harmonized_dest.with_suffix(".manifest.parquet")
+    return next_available_path(candidate)
+
+
 async def _download_manifest(
     manifest_url: str,
-    csv_dest: Path,
+    harmonized_dest: Path,
     timeout: float,
     logger: logging.Logger,
 ) -> Path | None:
     """Download manifest parquet to same directory as CSV output."""
-    manifest_dest = csv_dest.with_suffix(".manifest.parquet")
+    manifest_dest = _manifest_destination(harmonized_dest)
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
             async with client.stream("GET", manifest_url) as response:
@@ -395,6 +410,7 @@ async def _download_final(
     sheet_name: str | None,
     logger: logging.Logger,
     manifest_path: Path | None = None,
+    job_id: str | None = None,
 ) -> HarmonizationResult:
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
@@ -403,7 +419,11 @@ async def _download_final(
                     await _write_successful_download(response, dest, source_format, csv_path, sheet_name)
                     logger.info("harmonize complete: file=%s -> %s", csv_path, dest)
                     return HarmonizationResult(
-                        file_path=dest, status="succeeded", description="harmonization succeeded", manifest_path=manifest_path,
+                        file_path=dest,
+                        status="succeeded",
+                        description="harmonization succeeded",
+                        job_id=job_id,
+                        manifest_path=manifest_path,
                     )
 
                 body_bytes = await response.aread()
@@ -414,10 +434,22 @@ async def _download_final(
                     response.status_code,
                     _formatted_body(_payload_for_logging(body_bytes)),
                 )
-                return HarmonizationResult(file_path=dest, status="failed", description=description)
+                return HarmonizationResult(
+                    file_path=dest,
+                    status="failed",
+                    description=description,
+                    job_id=job_id,
+                    manifest_path=manifest_path,
+                )
     except httpx.TimeoutException as exc:
         logger.error("harmonize download timeout: file=%s err=%s", csv_path, exc)
-        return HarmonizationResult(file_path=dest, status="timeout", description="download timed out")
+        return HarmonizationResult(
+            file_path=dest,
+            status="timeout",
+            description="download timed out",
+            job_id=job_id,
+            manifest_path=manifest_path,
+        )
     except httpx.HTTPError as exc:
         logger.error("harmonize download transport error: file=%s err=%s", csv_path, exc)
         raise NetriasAPIUnavailable(f"transport error: {exc}") from exc

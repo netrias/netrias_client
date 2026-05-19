@@ -50,7 +50,7 @@ def validate_output_path(
     _ensure_parent(candidate)
     _require_parent_writable(candidate)
     if allow_versioning:
-        candidate = _next_available_path(candidate)
+        candidate = next_available_path(candidate)
     else:
         _require_not_exists(candidate)
     return candidate
@@ -145,7 +145,9 @@ def _require_not_exists(candidate: Path) -> None:
         raise OutputLocationError(f"refusing to overwrite existing file: {candidate}")
 
 
-def _next_available_path(candidate: Path) -> Path:
+def next_available_path(candidate: Path) -> Path:
+    """Return `candidate` or the first `.vN` sibling that does not already exist."""
+
     if not candidate.exists():
         return candidate
     stem = candidate.stem

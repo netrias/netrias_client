@@ -87,9 +87,10 @@ The SDK owns one runtime mirror of the `Harmonization` literal (`HARMONIZATION_V
 ## Harmonization Workflow
 1. Validate inputs (`validate_source_path`, `validate_manifest_path`, `validate_output_path`). Output validation automatically versions existing destinations (`.harmonized.v1.csv`, `.v2`, …) rather than overwriting and uses the source suffix for default output naming.
 2. Build a gzip-compressed payload containing schema/document data plus the mapping manifest (`_http.build_harmonize_payload`). Hard fail if compression exceeds 10 MiB.
-3. Submit the job via `POST <harmonization_url>/v1/jobs/harmonize` with `Bearer` authentication; capture `job_id`.
+3. Submit the job via `POST <harmonization_url>/v1/jobs/harmonize` with `Bearer` authentication; capture `job_id`. Requests include `use_cache=true` by default, or `use_cache=false` when callers disable cache use.
 4. Poll `GET <harmonization_url>/v1/jobs/{job_id}` until the status is `SUCCEEDED` or `FAILED`. INFO logs include elapsed seconds per heartbeat; timeouts emit the accumulated duration before raising `HarmonizationJobError`.
-5. Stream the final result via the signed `finalUrl`; CSV sources stream directly to disk, TSV sources convert the service's CSV response back to TSV, and XLSX sources update the selected worksheet in a workbook copy before returning. Successful downloads emit `HarmonizationResult(status="succeeded")`, while non-2xx responses return `status="failed"` with parsed error messaging. Transport errors raise `NetriasAPIUnavailable`.
+5. Download an optional manifest artifact from `manifest_url` to an SDK-owned path derived from the validated harmonized output path (`.manifest.parquet`, versioned as needed).
+6. Stream the final result via the signed `finalUrl`; CSV sources stream directly to disk, TSV sources convert the service's CSV response back to TSV, and XLSX sources update the selected worksheet in a workbook copy before returning. Successful downloads emit `HarmonizationResult(status="succeeded")`, while non-2xx responses return `status="failed"` with parsed error messaging. Transport errors raise `NetriasAPIUnavailable`.
 
 ## Data Model Store Workflow
 The Data Model Store API provides read-only access to reference data for validation use cases.
@@ -104,7 +105,7 @@ All methods follow the async-first pattern with sync wrappers. Sync wrappers det
 ## Data Models & Exceptions
 - `Settings`: configuration snapshot, including gateway-bypass decisions and optional per-client log directory.
 - `MappingDiscoveryResult` / `MappingSuggestion` / `MappingRecommendationOption`: structured discovery outputs plus raw payload.
-- `HarmonizationResult`: communicates file path, status (`succeeded`, `failed`, `timeout`), description, and optional mapping identifier.
+- `HarmonizationResult`: communicates file path, status (`succeeded`, `failed`, `timeout`), description, optional job identifier, optional mapping identifier, and optional manifest path.
 - `DataModel` / `CDE` / `PermissibleValue`: reference data from the Data Model Store for validation use cases.
 - Exceptions inherit from `NetriasClientError`:
   - `ClientConfigurationError`, `FileValidationError`, `MappingDiscoveryError`, `MappingValidationError`, `OutputLocationError`, `NetriasAPIUnavailable`, `HarmonizationJobError`, `DataModelStoreError`, `GatewayBypassError` (internal).
