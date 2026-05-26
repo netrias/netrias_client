@@ -497,6 +497,63 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
     assert columns_section[1] == {"column_name": "b", "values": []}
 
 
+def test_blank_header_column_is_preserved_by_position(
+    configured_client: NetriasClient,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Blank display headers are valid because request/response order carries identity."""
+
+    # Given: a tabular file with a blank middle header, and no manifest yet
+    csv_path = tmp_path / "blank_middle_header.csv"
+    _ = csv_path.write_text("a,,c\n1,2,3\n4,5,6\n", encoding="utf-8")
+    assert csv_path.read_text(encoding="utf-8").splitlines()[0] == "a,,c"
+
+    payload = _array_payload(
+        [
+            {
+                "column_name": "a",
+                "matches": [
+                    {"target": "A", "target_cde_id": 1, "confidence": 0.9, "harmonization": "harmonizable"},
+                ],
+            },
+            {
+                "column_name": "",
+                "matches": [
+                    {"target": "B", "target_cde_id": 2, "confidence": 0.9, "harmonization": "harmonizable"},
+                ],
+            },
+            {
+                "column_name": "c",
+                "matches": [
+                    {"target": "C", "target_cde_id": 3, "confidence": 0.9, "harmonization": "harmonizable"},
+                ],
+            },
+        ]
+    )
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    # When: discovery runs
+    manifest = configured_client.discover_mapping_from_tabular(
+        source_path=csv_path,
+        target_schema="ccdi",
+        target_version="v1",
+    )
+
+    # Then: the blank header is sent and mapped back through its list position
+    request = capture.requests[0]
+    content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
+    columns_section = cast(list[dict[str, object]], content.get("columns", []))
+    assert [entry["column_name"] for entry in columns_section] == ["a", "", "c"]
+    assert columns_section[1]["values"] == ["2", "5"]
+
+    column_mappings = _column_slots(manifest, 3)
+    assert column_mappings[1] is not None
+    assert column_mappings[1]["column_name"] == ""
+    assert column_mappings[1]["cde_key"] == "B"
+
+
 def test_positional_parity_below_threshold_becomes_none(
     configured_client: NetriasClient,
     monkeypatch: pytest.MonkeyPatch,
