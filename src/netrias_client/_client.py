@@ -122,8 +122,8 @@ class NetriasClient:
         top_k: int = 3,
         confidence_threshold: float | None = None,
         sheet_name: str | None = None,
+        generate_raw_overlap_report: bool = False,
     ) -> ColumnKeyedManifestPayload:
-        """Derive column samples from a tabular file and return mappings by column key."""
 
         ctx = self._snapshot_context()
         return await _discover_mapping_from_tabular_async(
@@ -136,7 +136,8 @@ class NetriasClient:
             top_k=top_k,
             confidence_threshold=confidence_threshold,
             sheet_name=sheet_name,
-        )
+            generate_raw_overlap_report=generate_raw_overlap_report,
+    )
 
     def discover_mapping_from_tabular(
         self,
@@ -147,6 +148,8 @@ class NetriasClient:
         top_k: int = 3,
         confidence_threshold: float | None = None,
         sheet_name: str | None = None,
+        generate_raw_overlap_report: bool = False,
+
     ) -> ColumnKeyedManifestPayload:
         """Sync delegate for :meth:`discover_mapping_from_tabular_async`."""
 
@@ -159,6 +162,8 @@ class NetriasClient:
                 top_k=top_k,
                 confidence_threshold=confidence_threshold,
                 sheet_name=sheet_name,
+                generate_raw_overlap_report=generate_raw_overlap_report,
+
             )
         )
 
