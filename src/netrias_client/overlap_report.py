@@ -52,11 +52,11 @@ async def run_overlap_analysis(
             "column_name": col_name,
             "cde_key": cde_key,
             "status": None,
-            "distinct_values": None,
-            "matched_distinct": None,
-            "matched_total": None,
-            "total_value_match_rate": None,
-            "top_matches": [],
+            "distinct_raw_values": None,
+            "matched_distinct_raw_values": None,
+            "matched_total_raw_values": None,
+            "total_raw_value_match_rate": None,
+            "top_raw_matches": [],
         }
 
         if not cde_key:
@@ -71,7 +71,7 @@ async def run_overlap_analysis(
 
         raw_counts = df[col_name].value_counts(dropna=False)
         distinct_count = len(raw_counts)
-        entry["distinct_values"] = distinct_count
+        entry["distinct_raw_values"] = distinct_count
 
         if distinct_count > SKIP_THRESHOLD:
             entry["status"] = "skipped_too_many_distinct"
@@ -113,10 +113,10 @@ async def run_overlap_analysis(
         ] if matched_total else []
 
         entry["status"] = "ok"
-        entry["matched_distinct"] = len(matched)
-        entry["matched_total"] = matched_total
-        entry["total_value_match_rate"] = round(total_value_match_rate, 2)
-        entry["top_matches"] = top_matches
+        entry["matched_distinct_raw_values"] = len(matched)
+        entry["matched_total_raw_values"] = matched_total
+        entry["total_raw_value_match_rate"] = round(total_value_match_rate, 2)
+        entry["top_raw_matches"] = top_matches
 
         for v, c in matched:
             flat_rows.append({
@@ -128,18 +128,14 @@ async def run_overlap_analysis(
             })
 
         report.append(entry)
-        logger.info(
-            "%s -> %s: total_value_match_rate %.1f%% (%d/%d)",
-            col_name, cde_key, total_value_match_rate * 100, matched_total, total_rows,
-        )
 
     # Write outputs
     out_json = output_dir / "overlap_report.json"
     with open(out_json, "w") as f:
         json.dump(report, f, indent=2)
-    logger.info("Wrote JSON report: %s", out_json)
+    logger.info("Wrote JSON report: %s successfully ✅", out_json)
 
     if flat_rows:
         out_csv = output_dir / "overlap_report.csv"
         pd.DataFrame(flat_rows).to_csv(out_csv, index=False)
-        logger.info("Wrote CSV report: %s", out_csv)
+        logger.info("Wrote CSV report: %s successfully ✅", out_csv)

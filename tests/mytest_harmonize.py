@@ -24,7 +24,7 @@ manifest = client.discover_mapping_from_tabular(
       sample_limit=5000,
       top_k=3,
       confidence_threshold=0.5,
-      generate_raw_overlap_report=True
+      generate_raw_overlap_report=True          # optional
 )
 print("Discovered manifest:")
 for col_key, mapping in manifest["column_mappings"].items():
