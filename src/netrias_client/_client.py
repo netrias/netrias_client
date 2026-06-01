@@ -152,7 +152,6 @@ class NetriasClient:
         sheet_name: str | None = None,
         generate_raw_overlap_report: bool = False,
         overlap_report_output_dir: Path | None = None,
-
     ) -> ColumnKeyedManifestPayload:
         """Sync delegate for :meth:`discover_mapping_from_tabular_async`."""
 
