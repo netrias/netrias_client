@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from ._tabular import TabularDataset
 from ._data_model_store import get_pv_set_async
 from ._models import ColumnKeyedManifestPayload, Settings
 
@@ -26,7 +27,7 @@ def _normalize(v: object) -> str | None:
 
 
 async def run_overlap_analysis(
-    source_path: Path,
+    dataset: TabularDataset,
     manifest: ColumnKeyedManifestPayload,
     settings: Settings,
     target_schema: str,
@@ -36,7 +37,7 @@ async def run_overlap_analysis(
 ) -> None:
     """Compare raw column values against each mapped CDE's full PV set."""
 
-    df = pd.read_csv(source_path, low_memory=False)
+    df = pd.DataFrame(dataset.rows, columns=dataset.headers)    
     report: list[dict] = []
     flat_rows: list[dict] = []
 
@@ -55,8 +56,11 @@ async def run_overlap_analysis(
             "distinct_raw_values": None,
             "matched_distinct_raw_values": None,
             "matched_total_raw_values": None,
-            "total_raw_value_match_rate": None,
+            "missing_count": None,
+            "match_rate_including_nulls": None,
+            "match_rate_excluding_nulls": None,
             "top_raw_matches": [],
+            "top_unmatched": [],
         }
 
         if not cde_key:
@@ -69,8 +73,11 @@ async def run_overlap_analysis(
             report.append(entry)
             continue
 
-        raw_counts = df[col_name].value_counts(dropna=False)
-        distinct_count = len(raw_counts)
+        distinct_raw_counts = df[col_name].value_counts(dropna=False)
+        distinct_count = len(distinct_raw_counts)
+        missing_count = int(df[col_name].isna().sum())
+        total_rows = len(df[col_name])
+        non_null_rows = total_rows - missing_count
         entry["distinct_raw_values"] = distinct_count
 
         if distinct_count > SKIP_THRESHOLD:
@@ -95,37 +102,56 @@ async def run_overlap_analysis(
         pv_normalized = {_normalize(pv) for pv in pv_set if pv is not None}
 
         matched = []
-        matched_total, total_rows = 0, 0
-        for value, count in raw_counts.items():
+        matched_total = 0
+        for value, count in distinct_raw_counts.items():
             c = int(count)
-            total_rows += c
             norm = _normalize(value)
             if norm and norm in pv_normalized:
                 matched.append((value, c))
                 matched_total += c
 
         matched.sort(key=lambda x: x[1], reverse=True)
-        total_value_match_rate = (matched_total / total_rows) if total_rows else 0
+        match_rate_including_nulls = (matched_total / total_rows) if total_rows else 0
+        match_rate_excluding_nulls = (matched_total / non_null_rows) if non_null_rows else 0
 
         top_matches = [
             {"value": str(v), "rate": round(c / matched_total, 2)}
             for v, c in matched[:3]
         ] if matched_total else []
 
+        unmatched = []
+        for value, count in distinct_raw_counts.items():
+            c = int(count)
+            norm = _normalize(value)
+            if norm and norm not in pv_normalized:
+                unmatched.append((value, c))
+
+        unmatched.sort(key=lambda x: x[1], reverse=True)
+
+        top_unmatched = [
+            {"value": str(v), "count": c}
+            for v, c in unmatched[:3]
+        ]
+
         entry["status"] = "ok"
         entry["matched_distinct_raw_values"] = len(matched)
         entry["matched_total_raw_values"] = matched_total
-        entry["total_raw_value_match_rate"] = round(total_value_match_rate, 2)
+        entry["missing_count"] = missing_count
+        entry["match_rate_including_nulls"] = round(match_rate_including_nulls, 2)
+        entry["match_rate_excluding_nulls"] = round(match_rate_excluding_nulls, 2)
         entry["top_raw_matches"] = top_matches
+        entry["top_unmatched"] = top_unmatched
 
-        for v, c in matched:
+        for value, count in distinct_raw_counts.items():
+            norm = _normalize(value)
             flat_rows.append({
                 "column_name": col_name,
                 "cde_key": cde_key,
-                "value": str(v),
-                "count": c,
-                "in_pv_set": True,
-            })
+                "value": str(value),
+                "normalized_value": norm,
+                "count": int(count),
+                "in_pv_set": norm is not None and norm in pv_normalized,
+        })
 
         report.append(entry)
 

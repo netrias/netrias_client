@@ -1,8 +1,7 @@
 import os
-import pandas as pd
 from pathlib import Path
 from dotenv import load_dotenv
-from netrias_client import NetriasClient, NetriasClientError
+from netrias_client import NetriasClient
 from netrias_client._config import Environment
 
 
@@ -24,7 +23,8 @@ manifest = client.discover_mapping_from_tabular(
       sample_limit=5000,
       top_k=3,
       confidence_threshold=0.5,
-      generate_raw_overlap_report=True          # optional
+      generate_raw_overlap_report=True,               # optional, defaults to False
+      overlap_report_output_dir=Path("output"),       # optional, defaults to "output"
 )
 print("Discovered manifest:")
 for col_key, mapping in manifest["column_mappings"].items():

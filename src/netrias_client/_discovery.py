@@ -110,6 +110,7 @@ async def discover_mapping_from_tabular_async(
     confidence_threshold: float | None = None,
     sheet_name: str | None = None,
     generate_raw_overlap_report: bool = False,
+    overlap_report_output_dir: Path | None = None,
 ) -> ColumnKeyedManifestPayload:
     """Derive positional samples from a tabular file and return a column-keyed manifest."""
 
@@ -129,10 +130,10 @@ async def discover_mapping_from_tabular_async(
 
     if generate_raw_overlap_report:
         from .overlap_report import run_overlap_analysis
-        output_dir = Path("output")
+        output_dir = overlap_report_output_dir or Path("output")
         output_dir.mkdir(parents=True, exist_ok=True)
         await run_overlap_analysis(
-            source_path=source_path,
+            dataset=dataset,
             manifest=keyed,
             settings=settings,
             target_schema=target_schema,

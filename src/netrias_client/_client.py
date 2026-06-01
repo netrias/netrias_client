@@ -123,6 +123,7 @@ class NetriasClient:
         confidence_threshold: float | None = None,
         sheet_name: str | None = None,
         generate_raw_overlap_report: bool = False,
+        overlap_report_output_dir: Path | None = None,
     ) -> ColumnKeyedManifestPayload:
 
         ctx = self._snapshot_context()
@@ -137,7 +138,8 @@ class NetriasClient:
             confidence_threshold=confidence_threshold,
             sheet_name=sheet_name,
             generate_raw_overlap_report=generate_raw_overlap_report,
-    )
+            overlap_report_output_dir=overlap_report_output_dir,
+        )
 
     def discover_mapping_from_tabular(
         self,
@@ -149,6 +151,7 @@ class NetriasClient:
         confidence_threshold: float | None = None,
         sheet_name: str | None = None,
         generate_raw_overlap_report: bool = False,
+        overlap_report_output_dir: Path | None = None,
 
     ) -> ColumnKeyedManifestPayload:
         """Sync delegate for :meth:`discover_mapping_from_tabular_async`."""
@@ -163,7 +166,7 @@ class NetriasClient:
                 confidence_threshold=confidence_threshold,
                 sheet_name=sheet_name,
                 generate_raw_overlap_report=generate_raw_overlap_report,
-
+                overlap_report_output_dir=overlap_report_output_dir,
             )
         )
 
