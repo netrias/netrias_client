@@ -60,7 +60,7 @@ async def run_overlap_analysis(
             "match_rate_including_nulls": None,
             "match_rate_excluding_nulls": None,
             "top_raw_matches": [],
-            "top_unmatched": [],
+            "top_raw_unmatched": [],
         }
 
         if not cde_key:
@@ -128,7 +128,7 @@ async def run_overlap_analysis(
 
         unmatched.sort(key=lambda x: x[1], reverse=True)
 
-        top_unmatched = [
+        top_raw_unmatched = [
             {"value": str(v), "count": c}
             for v, c in unmatched[:3]
         ]
@@ -140,7 +140,7 @@ async def run_overlap_analysis(
         entry["match_rate_including_nulls"] = round(match_rate_including_nulls, 2)
         entry["match_rate_excluding_nulls"] = round(match_rate_excluding_nulls, 2)
         entry["top_raw_matches"] = top_matches
-        entry["top_unmatched"] = top_unmatched
+        entry["top_raw_unmatched"] = top_raw_unmatched
 
         for value, count in distinct_raw_counts.items():
             norm = _normalize(value)

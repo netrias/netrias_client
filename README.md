@@ -492,7 +492,7 @@ assert set(SUPPORTED_TABULAR_SUFFIXES) == {".csv", ".tsv", ".xlsx"}
 
 ### `discover_mapping_from_tabular(...)`
 
-Reads a supported tabular file, samples values, and returns a manifest keyed by stable source column keys.
+Reads a supported tabular file, samples values, and returns a manifest keyed by stable source column keys. Optionally generates an overlap report comparing raw input values against full CDE permissible value sets.
 
 ```python
 from pathlib import Path
@@ -504,6 +504,8 @@ manifest = client.discover_mapping_from_tabular(
     sample_limit=25,
     top_k=3,
     confidence_threshold=0.8,
+    generate_raw_overlap_report=True,           # optional, defaults to False
+    overlap_report_output_dir=Path("output"),   # optional, defaults to "output"
 )
 ```
 
@@ -516,6 +518,8 @@ manifest = client.discover_mapping_from_tabular(
 | `sample_limit` | `int` | `25` | Maximum rows to sample for discovery. |
 | `top_k` | `int` | `3` | Number of top recommendations to return per column. |
 | `confidence_threshold` | `float \| None` | `0.8` | Minimum confidence score for keeping recommendations. Use `None` to keep all returned recommendations. |
+| `generate_raw_overlap_report` | `bool` | `False` | When `True`, compares raw column values against full CDE PV sets and writes `overlap_report.json` and `overlap_report.csv` to the specified output directory. Supports all tabular formats handled by `read_tabular`. |
+| `overlap_report_output_dir` | `Path \| None` | `Path("output")` | Directory for overlap report files. Defaults to `Path("output")` when not provided. Only used when `generate_raw_overlap_report` is `True`. |
 
 Returns a `ColumnKeyedManifestPayload`, a dictionary suitable for passing to `harmonize()`:
 
@@ -540,7 +544,40 @@ Returns a `ColumnKeyedManifestPayload`, a dictionary suitable for passing to `ha
 }
 ```
 
+**Overlap Report Output** (when `generate_raw_overlap_report=True`):
+
+Two files are written to `overlap_report_output_dir`:
+
+- `overlap_report.json` — per-column null and non-null match rates, top matched/unmatched values, null counts.
+```python
+{
+  "column_name": "race",
+  "cde_key": "race",
+  "status": "ok",
+  "distinct_raw_values": 5,
+  "matched_distinct_raw_values": 4,
+  "matched_total_raw_values": 850,
+  "missing_count": 12,
+  "match_rate_including_nulls": 0.89,
+  "match_rate_excluding_nulls": 0.92,
+  "top_raw_matches": [
+    {"value": "White", "rate": 0.55},
+    {"value": "Black or African American", "rate": 0.28},
+    {"value": "Asian", "rate": 0.09}
+  ],
+  "top_raw_unmatched": [
+    {"value": "Unkown", "count": 8},
+    {"value": "N/A", "count": 5},
+    {"value": "other", "count": 3}
+  ]
+}
+```
+
+- `overlap_report.csv` — flat row-per-value format with all distinct values, respective counts and `in_pv_set: True/False`
+
 ---
+
+## Harmonization Methods
 
 ## Harmonization Methods
 
@@ -643,32 +680,6 @@ for cde in cdes:
 | `limit` | `int \| None` | `None` | Maximum number of results. |
 | `offset` | `int` | `0` | Number of results to skip. |
 
-### `list_pvs(...)`
-
-```python
-pvs = client.list_pvs(
-    model_key="gc",
-    version="2",
-    cde_key="sex",
-    include_inactive=False,
-    query="Male",
-    limit=100,
-)
-
-for pv in pvs:
-    print(f"{pv.value} (active={pv.is_active})")
-```
-
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `model_key` | `str` | - | Required. Data model key. |
-| `version` | `str` | - | Required. Concrete model version string used by the Data Model Store route. |
-| `cde_key` | `str` | - | Required. CDE key. |
-| `include_inactive` | `bool` | `False` | Include inactive permissible values. |
-| `query` | `str \| None` | `None` | Substring search on PV value. |
-| `limit` | `int \| None` | `None` | Maximum number of results. |
-| `offset` | `int` | `0` | Number of results to skip. |
-
 ### `get_pv_set(...)`
 
 Fetch all permissible values as a `frozenset` for O(1) membership testing. Auto-paginates to retrieve all values.
@@ -697,6 +708,10 @@ is_valid = client.validate_value(
     cde_key="sex",
 )
 ```
+
+---
+
+
 
 ---
 
