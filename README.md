@@ -95,7 +95,9 @@ Duplicate headers are allowed. The stable column key (`col_0000`, `col_0001`, ..
 
 At the CDE recommendation boundary, the client sends display headers as
 `column_name` and relies on the ordered response to map results back to stable
-column keys. This keeps matching semantic while preserving duplicate and blank
+column keys. For this API version, request column `columns[N]` must map to
+response result `results[N]`; `column_name` is display metadata and may be
+blank. This keeps matching semantic while preserving duplicate and blank
 headers locally.
 
 Supported tabular formats are exposed in code:
