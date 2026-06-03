@@ -175,6 +175,7 @@ result = client.harmonize(
     source_path=Path("data/patients.xlsx"),
     manifest=manifest,                           # from discover_*
     data_commons_key="GC",                       # target data commons
+    version_number=1,                            # target data model version number
     sheet_name="Patients",                       # optional; XLSX defaults to the first sheet
     output_path=Path("output/harmonized.xlsx"),  # optional
     manifest_output_path=Path("output/manifest.json"),  # optional
@@ -192,6 +193,7 @@ print(result.job_id)       # API job id for tracking
 | `source_path` | `Path` | - | **Required.** Path to the source tabular file (`.csv`, `.tsv`, or `.xlsx`). |
 | `manifest` | `Path \| Mapping[str, object]` | - | **Required.** Mapping manifest (from discovery) or path to a JSON manifest file. |
 | `data_commons_key` | `str` | - | **Required.** Target data commons identifier (e.g., `"GC"`). |
+| `version_number` | `int` | - | **Required.** Target data model version number. Sent as top-level `version_number` in the harmonization request. |
 | `output_path` | `Path \| None` | `None` | Where to write the harmonized file. Auto-generated with the same suffix as the source, such as `source.harmonized.tsv` for TSV input. |
 | `manifest_output_path` | `Path \| None` | `None` | Where to write the manifest JSON for debugging. |
 | `sheet_name` | `str \| None` | `None` | Worksheet to read and update for XLSX input. Defaults to the first sheet. |
@@ -434,7 +436,12 @@ manifest = client.discover_mapping_from_tabular(
     source_path=Path("data/patients.tsv"),
     target_schema="ccdi",
 )
-result = client.harmonize(source_path=Path("data/patients.tsv"), manifest=manifest, data_commons_key="GC")
+result = client.harmonize(
+    source_path=Path("data/patients.tsv"),
+    manifest=manifest,
+    data_commons_key="GC",
+    version_number=1,
+)
 
 # Async usage (FastAPI, async frameworks)
 async def process_file():
@@ -446,6 +453,7 @@ async def process_file():
         source_path=Path("data/patients.tsv"),
         manifest=manifest,
         data_commons_key="GC",
+        version_number=1,
     )
     return result
 ```
@@ -483,7 +491,7 @@ The client raises typed exceptions that inherit from `NetriasClientError`:
 from netrias_client import NetriasClient, NetriasClientError, NetriasAPIUnavailable
 
 try:
-    result = client.harmonize(source_path=csv_path, manifest=manifest, data_commons_key="GC")
+    result = client.harmonize(source_path=csv_path, manifest=manifest, data_commons_key="GC", version_number=1)
 except NetriasAPIUnavailable as e:
     print(f"Service unavailable: {e}")
 except NetriasClientError as e:

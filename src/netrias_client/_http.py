@@ -19,25 +19,27 @@ from ._models import ColumnSamples
 from ._tabular import read_tabular
 
 SCHEMA_VERSION: Final[str] = "1.0"
-DEFAULT_MODEL_VERSION: Final[str] = "v1"
 MAX_COMPRESSED_BYTES: Final[int] = 10 * 1024 * 1024
+
 
 def build_harmonize_payload(
     source_path: Path,
     manifest: Path | Mapping[str, object] | None,
     data_commons_key: str,
-    model_version: str = DEFAULT_MODEL_VERSION,
+    *,
+    version_number: int,
     sheet_name: str | None = None,
     use_cache: bool = True,
 ) -> bytes:
     """Return gzip-compressed harmonization payload for the given tabular source and manifest."""
 
     dataset = read_tabular(source_path, sheet_name=sheet_name)
+    validated_version_number = _validate_version_number(version_number)
 
     envelope: dict[str, object] = {
         "schemaVersion": SCHEMA_VERSION,
-        "modelVersion": model_version,
         "data_commons_key": data_commons_key,
+        "version_number": validated_version_number,
         "use_cache": use_cache,
         "document": {
             "name": source_path.name,
@@ -56,6 +58,13 @@ def build_harmonize_payload(
     if len(compressed) > MAX_COMPRESSED_BYTES:
         raise ValueError("compressed harmonization payload exceeds 10 MiB")
     return compressed
+
+
+def _validate_version_number(version_number: object) -> int:
+    if isinstance(version_number, bool) or not isinstance(version_number, int):
+        raise ValueError("version_number must be an integer")
+    return version_number
+
 
 async def submit_harmonize_job(
     base_url: str,

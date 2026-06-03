@@ -22,7 +22,7 @@ def main() -> None:
 
     manifest = client.discover_mapping_from_tabular(source_path=CSV_PATH, target_schema="ccdi", target_version="v1")
 
-    result = client.harmonize(source_path=CSV_PATH, manifest=manifest, data_commons_key="ccdi")
+    result = client.harmonize(source_path=CSV_PATH, manifest=manifest, data_commons_key="ccdi", version_number=1)
 
     print(f"Harmonize status: {result.status}")
     print(f"Harmonized file: {result.file_path}")

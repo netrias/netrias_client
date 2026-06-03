@@ -86,7 +86,7 @@ The SDK owns one runtime mirror of the `Harmonization` literal (`HARMONIZATION_V
 
 ## Harmonization Workflow
 1. Validate inputs (`validate_source_path`, `validate_manifest_path`, `validate_output_path`). Output validation automatically versions existing destinations (`.harmonized.v1.csv`, `.v2`, …) rather than overwriting and uses the source suffix for default output naming.
-2. Build a gzip-compressed payload containing schema/document data plus the mapping manifest (`_http.build_harmonize_payload`). Hard fail if compression exceeds 10 MiB.
+2. Build a gzip-compressed payload containing schema/document data, the top-level data-model `version_number`, and the mapping manifest (`_http.build_harmonize_payload`). Hard fail if compression exceeds 10 MiB.
 3. Submit the job via `POST <harmonization_url>/v1/jobs/harmonize` with `Bearer` authentication; capture `job_id`. Requests include `use_cache=true` by default, or `use_cache=false` when callers disable cache use.
 4. Poll `GET <harmonization_url>/v1/jobs/{job_id}` until the status is `SUCCEEDED` or `FAILED`. INFO logs include elapsed seconds per heartbeat; timeouts emit the accumulated duration before raising `HarmonizationJobError`.
 5. Download an optional manifest artifact from `manifest_url` to an SDK-owned path derived from the validated harmonized output path (`.manifest.parquet`, versioned as needed).

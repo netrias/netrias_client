@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -33,6 +34,7 @@ def test_missing_source_file_raises(
             source_path=missing_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
+            version_number=1,
             output_path=output_directory,
         )
 
@@ -59,6 +61,7 @@ def test_directory_source_path_rejected(
             source_path=directory_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
+            version_number=1,
             output_path=output_directory,
         )
 
@@ -87,6 +90,7 @@ def test_invalid_source_extension_rejected(
             source_path=wrong_extension,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
+            version_number=1,
             output_path=output_directory,
         )
 
@@ -120,6 +124,7 @@ def test_source_file_too_large(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
+            version_number=1,
             output_path=output_directory,
         )
 
@@ -148,11 +153,32 @@ def test_manifest_must_be_json(
             source_path=sample_csv_path,
             manifest=bad_manifest,
             data_commons_key="ccdi",
+            version_number=1,
             output_path=output_directory,
         )
 
     # Then the error highlights the extension issue
     assert "manifest" in str(exc.value)
+
+
+def test_version_number_must_be_integer(
+    configured_client: NetriasClient,
+    sample_csv_path: Path,
+    sample_manifest_path: Path,
+    output_directory: Path,
+) -> None:
+    """Reject version labels before submitting a harmonization job."""
+
+    # Given a label-shaped version value
+    # When harmonize executes
+    with pytest.raises(ValueError, match="version_number"):
+        _ = configured_client.harmonize(
+            source_path=sample_csv_path,
+            manifest=sample_manifest_path,
+            data_commons_key="ccdi",
+            version_number=cast(int, cast(object, "v1")),
+            output_path=output_directory,
+        )
 
 
 def test_output_path_existing_file_versioned(
@@ -179,6 +205,7 @@ def test_output_path_existing_file_versioned(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         data_commons_key="ccdi",
+        version_number=1,
         output_path=output_directory,
     )
 
@@ -221,10 +248,9 @@ def test_output_directory_must_be_writable(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
+            version_number=1,
             output_path=target,
         )
 
     # Then an OutputLocationError is raised with a helpful message
     assert "not writable" in str(exc.value)
-
-
