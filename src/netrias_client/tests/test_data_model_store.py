@@ -47,7 +47,7 @@ def test_list_data_models_success(configured_client: NetriasClient, monkeypatch:
 def test_list_data_models_with_versions(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
     """Parse version data when include_versions is true.
 
-    'why': callers need version labels for CDE/PV queries
+    'why': callers need external version numbers they can pass forward
     """
 
     payload = {
@@ -60,8 +60,8 @@ def test_list_data_models_with_versions(configured_client: NetriasClient, monkey
                 "description": "Test",
                 "is_active": True,
                 "versions": [
-                    {"version_label": "v1"},
-                    {"version_label": "v2"},
+                    {"external_version_number": "11.0.4"},
+                    {"external_version_number": "11.0.5"},
                 ],
             },
         ],
@@ -75,16 +75,16 @@ def test_list_data_models_with_versions(configured_client: NetriasClient, monkey
     assert models[0].key == "ccdi"
     assert models[0].versions is not None
     assert len(models[0].versions) == 2
-    assert models[0].versions[0] == DataModelVersion(version_label="v1")
-    assert models[0].versions[1] == DataModelVersion(version_label="v2")
+    assert models[0].versions[0] == DataModelVersion(external_version_number="11.0.4")
+    assert models[0].versions[1] == DataModelVersion(external_version_number="11.0.5")
 
 
-def test_list_data_models_with_version_number(
+def test_list_data_models_preserves_legacy_version_number(
     configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Parse version_number (int) from the actual DMS API response format.
+    """Parse version_number from older DMS API response formats.
 
-    'why': the DMS API returns version_number (int), not version_label (str)
+    'why': older responses used version_number; callers still need a string value
     """
 
     payload = {
@@ -110,8 +110,8 @@ def test_list_data_models_with_version_number(
 
     assert models[0].versions is not None
     assert len(models[0].versions) == 2
-    assert models[0].versions[0] == DataModelVersion(version_label="1")
-    assert models[0].versions[1] == DataModelVersion(version_label="2")
+    assert models[0].versions[0] == DataModelVersion(external_version_number="1")
+    assert models[0].versions[1] == DataModelVersion(external_version_number="2")
 
 
 def test_list_data_models_empty(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:

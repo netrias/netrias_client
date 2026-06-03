@@ -40,7 +40,7 @@ def test_harmonize_streaming_success(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         data_commons_key="ccdi",
-        version_number=1,
+        external_version_number="11.0.4",
         output_path=output_directory,
     )
 
@@ -60,8 +60,9 @@ def test_harmonize_streaming_success(
     assert submit_request.headers.get("x-api-key") == "test-api-key"
     submit_body = _decode_submit_body(submit_request)
     assert submit_body.get("use_cache") is True
-    assert submit_body.get("version_number") == 1
+    assert submit_body.get("external_version_number") == "11.0.4"
     assert "modelVersion" not in submit_body
+    assert "version_number" not in submit_body
     assert "version_label" not in submit_body
     assert poll_request.method == "GET"
     assert "/v1/jobs/" in poll_request.url.path
@@ -89,7 +90,7 @@ def test_harmonize_handles_api_failure(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         data_commons_key="ccdi",
-        version_number=1,
+        external_version_number="11.0.4",
         output_path=output_directory,
     )
 
@@ -124,7 +125,7 @@ def test_harmonize_raises_on_transport_error(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
-            version_number=1,
+            external_version_number="11.0.4",
             output_path=output_directory,
         )
 
@@ -154,7 +155,7 @@ def test_harmonize_accepts_manifest_mapping(
         source_path=sample_csv_path,
         manifest=sample_manifest_mapping,
         data_commons_key="ccdi",
-        version_number=1,
+        external_version_number="11.0.4",
         output_path=output_directory,
     )
 
@@ -187,7 +188,7 @@ def test_harmonize_writes_manifest_when_requested(
         source_path=sample_csv_path,
         manifest=sample_manifest_mapping,
         data_commons_key="ccdi",
-        version_number=1,
+        external_version_number="11.0.4",
         output_path=output_directory,
         manifest_output_path=manifest_output,
     )
@@ -226,7 +227,7 @@ def test_harmonize_downloads_manifest_from_status_payload(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         data_commons_key="ccdi",
-        version_number=1,
+        external_version_number="11.0.4",
         output_path=output_directory,
     )
 
@@ -256,7 +257,7 @@ def test_harmonize_can_disable_cache(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         data_commons_key="ccdi",
-        version_number=1,
+        external_version_number="11.0.4",
         output_path=output_directory,
         use_cache=False,
     )
@@ -288,7 +289,7 @@ async def test_harmonize_async_success(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         data_commons_key="ccdi",
-        version_number=1,
+        external_version_number="11.0.4",
         output_path=output_directory,
     )
 

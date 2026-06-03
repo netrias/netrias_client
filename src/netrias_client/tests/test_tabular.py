@@ -216,7 +216,7 @@ def test_harmonize_tsv_writes_tsv_output(
         source_path=sample_tsv_path,
         manifest=manifest,
         data_commons_key="ccdi",
-        version_number=1,
+        external_version_number="11.0.4",
         output_path=output_directory,
     )
 
@@ -272,7 +272,7 @@ def test_harmonize_xlsx_writes_xlsx_output_for_selected_sheet(
         source_path=source,
         manifest=manifest,
         data_commons_key="ccdi",
-        version_number=1,
+        external_version_number="11.0.4",
         output_path=output_directory,
         sheet_name="Patients",
     )

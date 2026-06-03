@@ -46,7 +46,7 @@ Introduce a `NetriasClient` class that encapsulates configuration state and expo
      client = NetriasClient()
      client.configure(api_key="...", log_level=LogLevel.INFO)
      manifest = client.discover_mapping_from_csv(Path("data.csv"), target_schema="ccdi")
-     result = client.harmonize(Path("data.csv"), manifest, data_commons_key="ccdi", version_number=1, manifest_output_path=Path("manifest.json"))
+     result = client.harmonize(Path("data.csv"), manifest, data_commons_key="ccdi", external_version_number="11.0.4", manifest_output_path=Path("manifest.json"))
      ```
    - Highlight async usage (`await client.harmonize_async(...)`) and mention that multiple clients can operate simultaneously with different credentials.
 

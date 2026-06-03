@@ -231,14 +231,14 @@ def _raise_for_error_status(response: httpx.Response) -> None:
 
 def _parse_json_body(response: httpx.Response) -> Mapping[str, object]:
     try:
-        body = response.json()
+        body = cast(object, response.json())
     except (json.JSONDecodeError, ValueError) as exc:
         raise DataModelStoreError(f"invalid JSON response: {exc}") from exc
 
     if not isinstance(body, dict):
         raise DataModelStoreError("unexpected response format: expected object")
 
-    return body
+    return cast(Mapping[str, object], body)
 
 
 def _extract_error_message(response: httpx.Response) -> str:
@@ -266,7 +266,7 @@ def _try_extract_message_from_json(response: httpx.Response) -> str | None:
 def _response_json_mapping(response: httpx.Response) -> Mapping[str, object] | None:
     """Decode JSON body and return it only if it is a Mapping."""
     try:
-        body = response.json()
+        body = cast(object, response.json())
     except (json.JSONDecodeError, ValueError):
         return None
     if not isinstance(body, Mapping):
@@ -288,17 +288,18 @@ def _parse_data_models(body: Mapping[str, object]) -> tuple[DataModel, ...]:
         return ()
 
     models: list[DataModel] = []
-    for item in items:
-        if not isinstance(item, dict):
+    for item in cast(list[object], items):
+        if not isinstance(item, Mapping):
             continue
-        versions = _parse_versions(item.get("versions"))
+        model_item = cast(Mapping[str, object], item)
+        versions = _parse_versions(model_item.get("versions"))
         models.append(
             DataModel(
-                data_commons_id=int(item.get("data_commons_id", 0)),
-                key=str(item.get("key", "")),
-                name=str(item.get("name", "")),
-                description=item.get("description") if item.get("description") else None,
-                is_active=bool(item.get("is_active", True)),
+                data_commons_id=_int_or_zero(model_item.get("data_commons_id")),
+                key=str(model_item.get("key", "")),
+                name=str(model_item.get("name", "")),
+                description=_optional_string(model_item.get("description")),
+                is_active=bool(model_item.get("is_active", True)),
                 versions=versions,
             )
         )
@@ -310,20 +311,36 @@ def _parse_versions(raw: object) -> tuple[DataModelVersion, ...] | None:
     """Extract version list from API response."""
     if not isinstance(raw, list):
         return None
-    versions = [v for item in raw if (v := _parse_version_item(item)) is not None]
+    versions = [v for item in cast(list[object], raw) if (v := _parse_version_item(item)) is not None]
     return tuple(versions) if versions else None
 
 
 def _parse_version_item(item: object) -> DataModelVersion | None:
-    if not isinstance(item, dict):
+    if not isinstance(item, Mapping):
         return None
-    # API returns version_number (int); domain uses version_label (str)
-    raw = item.get("version_number")
-    if raw is None:
-        raw = item.get("version_label")
+    raw = _first_version_value(cast(Mapping[str, object], item))
     if raw is not None and str(raw):
-        return DataModelVersion(version_label=str(raw))
+        return DataModelVersion(external_version_number=str(raw))
     return None
+
+
+def _first_version_value(item: Mapping[str, object]) -> object:
+    for key in ("external_version_number", "version_number", "version_label"):
+        if (raw := item.get(key)) is not None:
+            return raw
+    return None
+
+
+def _optional_string(raw: object) -> str | None:
+    return str(raw) if raw else None
+
+
+def _int_or_zero(raw: object) -> int:
+    if isinstance(raw, bool):
+        return int(raw)
+    if isinstance(raw, int | float | str):
+        return int(raw)
+    return 0
 
 
 def _parse_cdes(body: Mapping[str, object]) -> tuple[CDE, ...]:
@@ -332,15 +349,16 @@ def _parse_cdes(body: Mapping[str, object]) -> tuple[CDE, ...]:
         return ()
 
     cdes: list[CDE] = []
-    for item in items:
-        if not isinstance(item, dict):
+    for item in cast(list[object], items):
+        if not isinstance(item, Mapping):
             continue
+        cde_item = cast(Mapping[str, object], item)
         cdes.append(
             CDE(
-                cde_key=str(item.get("cde_key", "")),
-                cde_id=int(item.get("cde_id", 0)),
-                cde_version_id=int(item.get("cde_version_id", 0)),
-                description=item.get("column_description") if item.get("column_description") else None,
+                cde_key=str(cde_item.get("cde_key", "")),
+                cde_id=_int_or_zero(cde_item.get("cde_id")),
+                cde_version_id=_int_or_zero(cde_item.get("cde_version_id")),
+                description=_optional_string(cde_item.get("column_description")),
             )
         )
 

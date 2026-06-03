@@ -27,19 +27,19 @@ def build_harmonize_payload(
     manifest: Path | Mapping[str, object] | None,
     data_commons_key: str,
     *,
-    version_number: int,
+    external_version_number: str,
     sheet_name: str | None = None,
     use_cache: bool = True,
 ) -> bytes:
     """Return gzip-compressed harmonization payload for the given tabular source and manifest."""
 
+    validated_external_version_number = _validate_external_version_number(external_version_number)
     dataset = read_tabular(source_path, sheet_name=sheet_name)
-    validated_version_number = _validate_version_number(version_number)
 
     envelope: dict[str, object] = {
         "schemaVersion": SCHEMA_VERSION,
         "data_commons_key": data_commons_key,
-        "version_number": validated_version_number,
+        "external_version_number": validated_external_version_number,
         "use_cache": use_cache,
         "document": {
             "name": source_path.name,
@@ -60,10 +60,15 @@ def build_harmonize_payload(
     return compressed
 
 
-def _validate_version_number(version_number: object) -> int:
-    if isinstance(version_number, bool) or not isinstance(version_number, int):
-        raise ValueError("version_number must be an integer")
-    return version_number
+def _validate_external_version_number(external_version_number: object) -> str:
+    if not isinstance(external_version_number, str):
+        raise ValueError("external_version_number must be a non-empty string")
+    normalized = external_version_number.strip()
+    if not normalized:
+        raise ValueError("external_version_number must be a non-empty string")
+    if normalized.lower() == "latest":
+        raise ValueError("external_version_number must be a concrete external data-model version, not 'latest'")
+    return normalized
 
 
 async def submit_harmonize_job(

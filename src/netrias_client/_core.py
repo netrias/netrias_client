@@ -40,7 +40,7 @@ async def harmonize_async(
     manifest: Path | Mapping[str, object],
     data_commons_key: str,
     *,
-    version_number: int,
+    external_version_number: str,
     output_path: Path | None = None,
     manifest_output_path: Path | None = None,
     logger: logging.Logger | None = None,
@@ -70,7 +70,7 @@ async def harmonize_async(
             csv_path,
             manifest_input,
             data_commons_key,
-            version_number=version_number,
+            external_version_number=external_version_number,
             sheet_name=sheet_name,
             use_cache=use_cache,
         )

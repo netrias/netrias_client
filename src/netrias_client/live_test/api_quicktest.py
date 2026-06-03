@@ -21,6 +21,7 @@ CSV_PATH: Final[Path] = DATA_DIR / "primary_diagnosis_1.csv"
 # Test constants
 MODEL_KEY: Final[str] = "ccdi"
 VERSION: Final[str] = "v1"
+EXTERNAL_VERSION_NUMBER: Final[str] = "11.0.4"
 CDE_KEY: Final[str] = "sex_at_birth"
 
 
@@ -245,7 +246,7 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
             source_path=CSV_PATH,
             manifest=discovered_manifest,
             data_commons_key=MODEL_KEY,
-            version_number=1,
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
         print(f"  harmonize({CSV_PATH.name})")
         print(f"    - Status: {result.status}")
