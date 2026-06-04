@@ -117,7 +117,7 @@ Reads a supported tabular file, samples values, and returns a manifest keyed by 
 manifest = client.discover_mapping_from_tabular(
     source_path=Path("data/patients.xlsx"),
     target_schema="ccdi",
-    target_version="latest",
+    target_version="v1",
     sheet_name="Patients",                      # optional; XLSX defaults to the first sheet
     sample_limit=25,
     top_k=3,
@@ -129,7 +129,7 @@ manifest = client.discover_mapping_from_tabular(
 |-----------|------|---------|-------------|
 | `source_path` | `Path` | - | **Required.** Path to a supported tabular file (`.csv`, `.tsv`, or `.xlsx`). |
 | `target_schema` | `str` | - | **Required.** Target schema key. |
-| `target_version` | `str` | `"latest"` | Schema version to target. |
+| `target_version` | `str` | - | **Required.** Concrete discovery schema version to target. `latest` is rejected. |
 | `sheet_name` | `str \| None` | `None` | Worksheet to read for XLSX input. Defaults to the first sheet. |
 | `sample_limit` | `int` | `25` | Maximum rows to sample for discovery. |
 | `top_k` | `int` | `3` | Number of top recommendations to return per column. |
@@ -438,6 +438,7 @@ client = NetriasClient(api_key="your-api-key")
 manifest = client.discover_mapping_from_tabular(
     source_path=Path("data/patients.tsv"),
     target_schema="ccdi",
+    target_version="v1",
 )
 result = client.harmonize(
     source_path=Path("data/patients.tsv"),
@@ -451,6 +452,7 @@ async def process_file():
     manifest = await client.discover_mapping_from_tabular_async(
         source_path=Path("data/patients.tsv"),
         target_schema="ccdi",
+        target_version="v1",
     )
     result = await client.harmonize_async(
         source_path=Path("data/patients.tsv"),

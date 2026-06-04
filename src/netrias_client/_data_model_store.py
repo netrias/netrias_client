@@ -395,10 +395,11 @@ def _data_model_versions_from_json(raw: object) -> tuple[_DataModelVersionItem, 
 
 
 def _external_version_number_from_json(body: Mapping[str, object]) -> str | None:
-    for key in ("external_version_number", "version_number", "version_label"):
-        if (raw := body.get(key)) is not None and str(raw):
-            return str(raw)
-    return None
+    raw = body.get("external_version_number")
+    if not isinstance(raw, str):
+        return None
+    candidate = raw.strip()
+    return candidate or None
 
 
 @dataclass(frozen=True)
