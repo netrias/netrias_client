@@ -6,13 +6,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import cast
 
 import pytest
 
 from netrias_client import NetriasClient
 from netrias_client._errors import FileValidationError, OutputLocationError
 from netrias_client._validators import HARD_MAX_CSV_BYTES
+
+from ._utils import EXTERNAL_VERSION_NUMBER
 
 
 def test_missing_source_file_raises(
@@ -34,7 +35,7 @@ def test_missing_source_file_raises(
             source_path=missing_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
-            external_version_number="11.0.4",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
 
@@ -61,7 +62,7 @@ def test_directory_source_path_rejected(
             source_path=directory_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
-            external_version_number="11.0.4",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
 
@@ -90,7 +91,7 @@ def test_invalid_source_extension_rejected(
             source_path=wrong_extension,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
-            external_version_number="11.0.4",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
 
@@ -124,7 +125,7 @@ def test_source_file_too_large(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
-            external_version_number="11.0.4",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
 
@@ -153,7 +154,7 @@ def test_manifest_must_be_json(
             source_path=sample_csv_path,
             manifest=bad_manifest,
             data_commons_key="ccdi",
-            external_version_number="11.0.4",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
 
@@ -161,35 +162,54 @@ def test_manifest_must_be_json(
     assert "manifest" in str(exc.value)
 
 
-def test_external_version_number_must_be_concrete_string(
+def test_external_version_number_must_not_be_empty(
     configured_client: NetriasClient,
     sample_csv_path: Path,
     sample_manifest_path: Path,
     output_directory: Path,
 ) -> None:
-    """Reject non-concrete external versions before submitting a harmonization job."""
+    """Reject blank external versions before submitting a harmonization job."""
 
-    # Given a non-string external version value
-    # When harmonize executes
-    with pytest.raises(ValueError, match="external_version_number"):
+    # Given: a blank external version number
+    external_version_number = " "
+
+    # When: harmonization executes
+    with pytest.raises(ValueError) as exc:
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
-            external_version_number=cast(str, cast(object, 1)),
+            external_version_number=external_version_number,
             output_path=output_directory,
         )
 
-    # Given the old discovery default
-    # When harmonize executes
-    with pytest.raises(ValueError, match="external_version_number"):
+    # Then: the error names the external version field
+    assert "external_version_number" in str(exc.value)
+
+
+def test_harmonize_rejects_latest_external_version(
+    configured_client: NetriasClient,
+    sample_csv_path: Path,
+    sample_manifest_path: Path,
+    output_directory: Path,
+) -> None:
+    """Reject the discovery default for harmonization submission."""
+
+    # Given: the old discovery default instead of a concrete external version
+    external_version_number = "latest"
+
+    # When: harmonization executes
+    with pytest.raises(ValueError) as exc:
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
-            external_version_number="latest",
+            external_version_number=external_version_number,
             output_path=output_directory,
         )
+
+    # Then: the error names the external version field
+    assert "external_version_number" in str(exc.value)
 
 
 def test_output_path_existing_file_versioned(
@@ -216,7 +236,7 @@ def test_output_path_existing_file_versioned(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
         data_commons_key="ccdi",
-        external_version_number="11.0.4",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
 
@@ -259,7 +279,7 @@ def test_output_directory_must_be_writable(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
             data_commons_key="ccdi",
-            external_version_number="11.0.4",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=target,
         )
 
