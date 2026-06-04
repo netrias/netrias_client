@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
-ROOT: Final[Path] = Path(__file__).resolve().parent
-ENV_PATH: Final[Path] = ROOT / ".env"
-DATA_DIR: Final[Path] = ROOT / "data"
+LIVE_TEST_DIR: Final[Path] = Path(__file__).resolve().parent
+ENV_PATH: Final[Path] = LIVE_TEST_DIR / ".env"
+DATA_DIR: Final[Path] = LIVE_TEST_DIR / "data"
 CSV_PATH: Final[Path] = DATA_DIR / "primary_diagnosis_1.csv"
 
 MODEL_KEY: Final[str] = "ccdi"
