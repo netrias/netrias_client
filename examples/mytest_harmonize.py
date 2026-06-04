@@ -13,7 +13,7 @@ client.configure(
    log_directory=Path("./logs"),
 )
 
-source = Path("raw_test_files/sampled_2019-07-25-clin.csv")
+source = Path("examples/data/demo_overlap.csv")
 
 # Step 1: discover column → CDE mappings
 manifest = client.discover_mapping_from_tabular(
@@ -31,11 +31,11 @@ for col_key, mapping in manifest["column_mappings"].items():
       print(f"  {col_key} ({mapping['column_name']}) → {mapping['cde_key']}")
 
 
-# Step 2: harmonize using that manifest
-result = client.harmonize(
-      source_path=source,
-      manifest=manifest,
-      data_commons_key="ccdi",                        
-      output_path=Path("output/harmonized.csv"),
-      manifest_output_path=Path("output/manifest.json"),
-)
+# # Step 2: harmonize using that manifest
+# result = client.harmonize(
+#       source_path=source,
+#       manifest=manifest,
+#       data_commons_key="ccdi",                        
+#       output_path=Path("output/harmonized.csv"),
+#       manifest_output_path=Path("output/manifest.json"),
+# )

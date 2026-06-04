@@ -17,13 +17,15 @@ from ._tabular import TabularDataset
 from ._data_model_store import get_pv_set_async
 from ._models import ColumnKeyedManifestPayload, Settings
 
-SKIP_THRESHOLD = 50
 
 
 def _normalize(v: object) -> str | None:
     if pd.isna(v):
         return None
-    return str(v).strip().lower()
+    s = str(v).strip().lower()
+    if not s:
+        return None
+    return s
 
 
 async def run_overlap_analysis(
@@ -75,15 +77,10 @@ async def run_overlap_analysis(
 
         distinct_raw_counts = df[col_name].value_counts(dropna=False)
         distinct_count = len(distinct_raw_counts)
-        missing_count = int(df[col_name].isna().sum())
+        missing_count = sum(1 for v in df[col_name] if _normalize(v) is None)
         total_rows = len(df[col_name])
-        non_null_rows = total_rows - missing_count
+        non_null_rows = len(df[col_name]) - missing_count
         entry["distinct_raw_values"] = distinct_count
-
-        if distinct_count > SKIP_THRESHOLD:
-            entry["status"] = "skipped_too_many_distinct"
-            report.append(entry)
-            continue
 
         try:
             pv_set = await get_pv_set_async(

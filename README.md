@@ -548,8 +548,8 @@ Returns a `ColumnKeyedManifestPayload`, a dictionary suitable for passing to `ha
 
 Two files are written to `overlap_report_output_dir`:
 
-- `overlap_report.json` — per-column null and non-null match rates, top matched/unmatched values, null counts.
-```python
+- `overlap_report.json` — per-column null and non-null match rates, top 3 matched/unmatched values, null counts.
+```json
 {
   "column_name": "race",
   "cde_key": "race",

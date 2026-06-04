@@ -127,7 +127,7 @@ class NetriasClient:
     ) -> ColumnKeyedManifestPayload:
         """Derive column samples from a tabular file and return mappings by column key.
 
-        When generate_overlap_report is True, compares raw column values against
+        When generate_raw_overlap_report is True, compares raw column values against
         full CDE permissible value sets and writes overlap_report.json and
         overlap_report.csv to overlap_report_output_dir (defaults to 'output/').
         Supports all tabular formats handled by read_tabular (CSV, Excel),
