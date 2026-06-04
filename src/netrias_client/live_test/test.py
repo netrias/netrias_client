@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import cast, Final
+from typing import cast
 
 from dotenv import dotenv_values
 
 from .. import NetriasClient
+from ._constants import CSV_PATH, DISCOVERY_TARGET_VERSION, ENV_PATH, EXTERNAL_VERSION_NUMBER, MODEL_KEY
 
 
-ROOT: Final[Path] = Path(__file__).resolve().parent
-ENV = dotenv_values(ROOT / ".env")
-CSV_PATH: Final[Path] = ROOT / "data" / "primary_diagnosis_1.csv"
+ENV = dotenv_values(ENV_PATH)
 
 
 def main() -> None:
@@ -20,13 +18,17 @@ def main() -> None:
 
     client = NetriasClient(api_key=api_key)
 
-    manifest = client.discover_mapping_from_tabular(source_path=CSV_PATH, target_schema="ccdi", target_version="v1")
+    manifest = client.discover_mapping_from_tabular(
+        source_path=CSV_PATH,
+        target_schema=MODEL_KEY,
+        target_version=DISCOVERY_TARGET_VERSION,
+    )
 
     result = client.harmonize(
         source_path=CSV_PATH,
         manifest=manifest,
-        data_commons_key="ccdi",
-        external_version_number="11.0.4",
+        data_commons_key=MODEL_KEY,
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
     print(f"Harmonize status: {result.status}")

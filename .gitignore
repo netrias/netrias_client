@@ -138,6 +138,9 @@ celerybeat.pid
 .env
 .envrc
 .venv
+
+# Local Codex project notes
+.codex/principles.md
 env/
 venv/
 ENV/

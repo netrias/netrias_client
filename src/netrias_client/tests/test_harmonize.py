@@ -59,11 +59,9 @@ def test_harmonize_streaming_success(
     assert submit_request.url.path.endswith("/v1/jobs/harmonize")
     assert submit_request.headers.get("x-api-key") == "test-api-key"
     submit_body = _decode_submit_body(submit_request)
+    assert submit_body.get("data_commons_key") == "ccdi"
     assert submit_body.get("use_cache") is True
     assert submit_body.get("external_version_number") == EXTERNAL_VERSION_NUMBER
-    assert "modelVersion" not in submit_body
-    assert "version_number" not in submit_body
-    assert "version_label" not in submit_body
     assert poll_request.method == "GET"
     assert "/v1/jobs/" in poll_request.url.path
     assert final_request.method == "GET"

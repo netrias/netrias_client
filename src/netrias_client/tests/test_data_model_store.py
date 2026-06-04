@@ -12,7 +12,15 @@ import pytest
 from netrias_client import CDE, DataModel, DataModelStoreError, DataModelVersion, NetriasClient
 from netrias_client._errors import NetriasAPIUnavailable
 
-from ._utils import MockTransportCapture, install_mock_transport, json_failure, json_success, paginated_pv_responses
+from ._utils import (
+    EXTERNAL_VERSION_NUMBER,
+    NEXT_EXTERNAL_VERSION_NUMBER,
+    MockTransportCapture,
+    install_mock_transport,
+    json_failure,
+    json_success,
+    paginated_pv_responses,
+)
 
 
 def test_list_data_models_success(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -60,8 +68,8 @@ def test_list_data_models_with_versions(configured_client: NetriasClient, monkey
                 "description": "Test",
                 "is_active": True,
                 "versions": [
-                    {"external_version_number": "11.0.4"},
-                    {"external_version_number": "11.0.5"},
+                    {"external_version_number": EXTERNAL_VERSION_NUMBER},
+                    {"external_version_number": NEXT_EXTERNAL_VERSION_NUMBER},
                 ],
             },
         ],
@@ -75,8 +83,10 @@ def test_list_data_models_with_versions(configured_client: NetriasClient, monkey
     assert models[0].key == "ccdi"
     assert models[0].versions is not None
     assert len(models[0].versions) == 2
-    assert models[0].versions[0] == DataModelVersion(external_version_number="11.0.4")
-    assert models[0].versions[1] == DataModelVersion(external_version_number="11.0.5")
+    assert models[0].versions == (
+        DataModelVersion(external_version_number=EXTERNAL_VERSION_NUMBER),
+        DataModelVersion(external_version_number=NEXT_EXTERNAL_VERSION_NUMBER),
+    )
 
 
 def test_list_data_models_requires_external_version_number(
@@ -101,7 +111,7 @@ def test_list_data_models_requires_external_version_number(
                     {"data_model_version_id": 2, "version_label": "v2"},
                     {"external_version_number": 3},
                     {"external_version_number": " "},
-                    {"external_version_number": "11.0.4"},
+                    {"external_version_number": EXTERNAL_VERSION_NUMBER},
                 ],
             },
         ],
@@ -112,7 +122,7 @@ def test_list_data_models_requires_external_version_number(
     models = configured_client.list_data_models(include_versions=True)
 
     assert models[0].versions is not None
-    assert models[0].versions == (DataModelVersion(external_version_number="11.0.4"),)
+    assert models[0].versions == (DataModelVersion(external_version_number=EXTERNAL_VERSION_NUMBER),)
 
 
 def test_list_data_models_empty(configured_client: NetriasClient, monkeypatch: pytest.MonkeyPatch) -> None:
