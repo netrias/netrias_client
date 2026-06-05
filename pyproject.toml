@@ -43,9 +43,7 @@ Documentation = "https://github.com/netrias/netrias_client#readme"
 
 # Run with `uv run test` etc
 [project.scripts]
-test = "pytest:main"
 check = "netrias_client.scripts:check"
-live_check = "netrias_client.scripts:live_check"
 release = "netrias_client.scripts:release"
 
 
@@ -83,6 +81,7 @@ exclude = [
 packages = ["src/netrias_client"]
 exclude = [
     "src/netrias_client/tests/**",
+    "src/netrias_client/live_test/**",
     "src/netrias_client/associate_api_key.py",
 ]
 

@@ -24,7 +24,7 @@ from netrias_client import (
     write_tabular,
 )
 
-from ._utils import install_mock_transport, job_success, json_success
+from ._utils import EXTERNAL_VERSION_NUMBER, install_mock_transport, job_success, json_success
 
 
 def _active_sheet(workbook: Workbook) -> Worksheet:
@@ -216,6 +216,7 @@ def test_harmonize_tsv_writes_tsv_output(
         source_path=sample_tsv_path,
         manifest=manifest,
         data_commons_key="ccdi",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
 
@@ -271,6 +272,7 @@ def test_harmonize_xlsx_writes_xlsx_output_for_selected_sheet(
         source_path=source,
         manifest=manifest,
         data_commons_key="ccdi",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
         sheet_name="Patients",
     )

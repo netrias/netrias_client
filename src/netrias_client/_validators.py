@@ -66,11 +66,13 @@ def validate_target_schema(schema: str) -> str:
 
 
 def validate_target_version(version: str) -> str:
-    """Ensure the target version identifier is a non-empty string."""
+    """Ensure the target version identifier is concrete."""
 
     candidate = (version or "").strip()
     if not candidate:
         raise MappingValidationError("target_version must be a non-empty string")
+    if candidate.lower() == "latest":
+        raise MappingValidationError("target_version must be concrete, not 'latest'")
     return candidate
 
 

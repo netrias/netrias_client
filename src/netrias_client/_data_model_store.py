@@ -7,7 +7,8 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Mapping
-from typing import cast
+from dataclasses import dataclass
+from typing import TypeGuard
 
 import httpx
 
@@ -62,7 +63,7 @@ async def list_data_models_async(
         raise NetriasAPIUnavailable(f"data model store request failed: {exc}") from exc
 
     body = _interpret_response(response)
-    return _parse_data_models(body)
+    return _DataModelsResponse.from_json(body).to_domain()
 
 
 async def list_cdes_async(
@@ -99,7 +100,7 @@ async def list_cdes_async(
         raise NetriasAPIUnavailable(f"data model store request failed: {exc}") from exc
 
     body = _interpret_response(response)
-    return _parse_cdes(body)
+    return _CdesResponse.from_json(body).to_domain()
 
 
 async def get_pv_set_async(
@@ -172,7 +173,7 @@ async def _fetch_pv_page_values(
         offset=offset,
     )
     body = _interpret_response(response)
-    return _extract_pv_values(body)
+    return list(_PvPageResponse.from_json(body).values)
 
 
 async def _request_pv_page(
@@ -203,21 +204,7 @@ async def _request_pv_page(
         raise NetriasAPIUnavailable(f"data model store request failed: {exc}") from exc
 
 
-def _extract_pv_values(body: Mapping[str, object]) -> list[str]:
-    items = body.get("items")
-    if not isinstance(items, list):
-        return []
-    return [value for item in cast(list[object], items) if (value := _value_from_item(item)) is not None]
-
-
-def _value_from_item(item: object) -> str | None:
-    if not isinstance(item, Mapping):
-        return None
-    value = cast(Mapping[str, object], item).get("value")
-    return value if isinstance(value, str) else None
-
-
-def _interpret_response(response: httpx.Response) -> Mapping[str, object]:
+def _interpret_response(response: httpx.Response) -> dict[str, object]:
     _raise_for_error_status(response)
     return _parse_json_body(response)
 
@@ -229,16 +216,17 @@ def _raise_for_error_status(response: httpx.Response) -> None:
         raise DataModelStoreError(f"data model store request failed: {_extract_error_message(response)}")
 
 
-def _parse_json_body(response: httpx.Response) -> Mapping[str, object]:
+def _parse_json_body(response: httpx.Response) -> dict[str, object]:
     try:
-        body = response.json()
+        body = _decode_response_json(response)
     except (json.JSONDecodeError, ValueError) as exc:
         raise DataModelStoreError(f"invalid JSON response: {exc}") from exc
 
-    if not isinstance(body, dict):
+    parsed = _json_object(body)
+    if parsed is None:
         raise DataModelStoreError("unexpected response format: expected object")
 
-    return body
+    return parsed
 
 
 def _extract_error_message(response: httpx.Response) -> str:
@@ -260,88 +248,221 @@ def _try_extract_message_from_json(response: httpx.Response) -> str | None:
     body = _response_json_mapping(response)
     if body is None:
         return None
-    return _first_present_message(body)
+    return _ErrorResponse.from_json(body).message
 
 
-def _response_json_mapping(response: httpx.Response) -> Mapping[str, object] | None:
+def _response_json_mapping(response: httpx.Response) -> dict[str, object] | None:
     """Decode JSON body and return it only if it is a Mapping."""
     try:
-        body = response.json()
+        body = _decode_response_json(response)
     except (json.JSONDecodeError, ValueError):
         return None
-    if not isinstance(body, Mapping):
+    return _json_object(body)
+
+
+def _decode_response_json(response: httpx.Response) -> object:
+    return response.json()  # pyright: ignore[reportAny]
+
+
+def _optional_string(raw: object) -> str | None:
+    return str(raw) if raw else None
+
+
+def _int_or_zero(raw: object) -> int:
+    if isinstance(raw, bool):
+        return int(raw)
+    if isinstance(raw, int | float | str):
+        return int(raw)
+    return 0
+
+
+def _json_object(raw: object) -> dict[str, object] | None:
+    if not _is_object_dict(raw):
         return None
-    return cast(Mapping[str, object], body)
+    parsed: dict[str, object] = {}
+    for key, value in raw.items():
+        if not isinstance(key, str):
+            return None
+        parsed[key] = value
+    return parsed
 
 
-def _first_present_message(body: Mapping[str, object]) -> str | None:
-    for key in ("message", "detail", "error", "description"):
-        value = body.get(key)
-        if value:
-            return str(value)
-    return None
+def _json_array(raw: object) -> list[object] | None:
+    if not _is_object_list(raw):
+        return None
+    parsed: list[object] = []
+    for item in raw:
+        parsed.append(item)
+    return parsed
 
 
-def _parse_data_models(body: Mapping[str, object]) -> tuple[DataModel, ...]:
-    items = body.get("items")
-    if not isinstance(items, list):
-        return ()
+def _is_object_dict(raw: object) -> TypeGuard[dict[object, object]]:
+    return isinstance(raw, dict)
 
-    models: list[DataModel] = []
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        versions = _parse_versions(item.get("versions"))
-        models.append(
-            DataModel(
-                data_commons_id=int(item.get("data_commons_id", 0)),
-                key=str(item.get("key", "")),
-                name=str(item.get("name", "")),
-                description=item.get("description") if item.get("description") else None,
-                is_active=bool(item.get("is_active", True)),
-                versions=versions,
-            )
+
+def _is_object_list(raw: object) -> TypeGuard[list[object]]:
+    return isinstance(raw, list)
+
+
+@dataclass(frozen=True)
+class _ErrorResponse:
+    message: str | None
+
+    @classmethod
+    def from_json(cls, body: Mapping[str, object]) -> _ErrorResponse:
+        for key in ("message", "detail", "error", "description"):
+            value = body.get(key)
+            if value:
+                return cls(message=str(value))
+        return cls(message=None)
+
+
+@dataclass(frozen=True)
+class _DataModelsResponse:
+    items: tuple[_DataModelItem, ...]
+
+    @classmethod
+    def from_json(cls, body: Mapping[str, object]) -> _DataModelsResponse:
+        items = _json_array(body.get("items"))
+        if items is None:
+            return cls(items=())
+        parsed = tuple(item for raw in items if (item := _DataModelItem.from_json(raw)) is not None)
+        return cls(items=parsed)
+
+    def to_domain(self) -> tuple[DataModel, ...]:
+        return tuple(item.to_domain() for item in self.items)
+
+
+@dataclass(frozen=True)
+class _DataModelItem:
+    data_commons_id: int
+    key: str
+    name: str
+    description: str | None
+    is_active: bool
+    versions: tuple[_DataModelVersionItem, ...] | None
+
+    @classmethod
+    def from_json(cls, raw: object) -> _DataModelItem | None:
+        body = _json_object(raw)
+        if body is None:
+            return None
+        return cls(
+            data_commons_id=_int_or_zero(body.get("data_commons_id")),
+            key=str(body.get("key", "")),
+            name=str(body.get("name", "")),
+            description=_optional_string(body.get("description")),
+            is_active=bool(body.get("is_active", True)),
+            versions=_data_model_versions_from_json(body.get("versions")),
         )
 
-    return tuple(models)
-
-
-def _parse_versions(raw: object) -> tuple[DataModelVersion, ...] | None:
-    """Extract version list from API response."""
-    if not isinstance(raw, list):
-        return None
-    versions = [v for item in raw if (v := _parse_version_item(item)) is not None]
-    return tuple(versions) if versions else None
-
-
-def _parse_version_item(item: object) -> DataModelVersion | None:
-    if not isinstance(item, dict):
-        return None
-    # API returns version_number (int); domain uses version_label (str)
-    raw = item.get("version_number")
-    if raw is None:
-        raw = item.get("version_label")
-    if raw is not None and str(raw):
-        return DataModelVersion(version_label=str(raw))
-    return None
-
-
-def _parse_cdes(body: Mapping[str, object]) -> tuple[CDE, ...]:
-    items = body.get("items")
-    if not isinstance(items, list):
-        return ()
-
-    cdes: list[CDE] = []
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        cdes.append(
-            CDE(
-                cde_key=str(item.get("cde_key", "")),
-                cde_id=int(item.get("cde_id", 0)),
-                cde_version_id=int(item.get("cde_version_id", 0)),
-                description=item.get("column_description") if item.get("column_description") else None,
-            )
+    def to_domain(self) -> DataModel:
+        versions = None if self.versions is None else tuple(version.to_domain() for version in self.versions)
+        return DataModel(
+            data_commons_id=self.data_commons_id,
+            key=self.key,
+            name=self.name,
+            description=self.description,
+            is_active=self.is_active,
+            versions=versions,
         )
 
-    return tuple(cdes)
+
+@dataclass(frozen=True)
+class _DataModelVersionItem:
+    external_version_number: str
+
+    @classmethod
+    def from_json(cls, raw: object) -> _DataModelVersionItem | None:
+        body = _json_object(raw)
+        if body is None:
+            return None
+        external_version_number = _external_version_number_from_json(body)
+        if external_version_number is None:
+            return None
+        return cls(external_version_number=external_version_number)
+
+    def to_domain(self) -> DataModelVersion:
+        return DataModelVersion(external_version_number=self.external_version_number)
+
+
+def _data_model_versions_from_json(raw: object) -> tuple[_DataModelVersionItem, ...] | None:
+    items = _json_array(raw)
+    if items is None:
+        return None
+    versions = tuple(item for raw_item in items if (item := _DataModelVersionItem.from_json(raw_item)) is not None)
+    return versions or None
+
+
+def _external_version_number_from_json(body: Mapping[str, object]) -> str | None:
+    raw = body.get("external_version_number")
+    if not isinstance(raw, str):
+        return None
+    candidate = raw.strip()
+    return candidate or None
+
+
+@dataclass(frozen=True)
+class _CdesResponse:
+    items: tuple[_CdeItem, ...]
+
+    @classmethod
+    def from_json(cls, body: Mapping[str, object]) -> _CdesResponse:
+        items = _json_array(body.get("items"))
+        if items is None:
+            return cls(items=())
+        parsed = tuple(item for raw in items if (item := _CdeItem.from_json(raw)) is not None)
+        return cls(items=parsed)
+
+    def to_domain(self) -> tuple[CDE, ...]:
+        return tuple(item.to_domain() for item in self.items)
+
+
+@dataclass(frozen=True)
+class _CdeItem:
+    cde_key: str
+    cde_id: int
+    cde_version_id: int
+    description: str | None
+
+    @classmethod
+    def from_json(cls, raw: object) -> _CdeItem | None:
+        body = _json_object(raw)
+        if body is None:
+            return None
+        return cls(
+            cde_key=str(body.get("cde_key", "")),
+            cde_id=_int_or_zero(body.get("cde_id")),
+            cde_version_id=_int_or_zero(body.get("cde_version_id")),
+            description=_optional_string(body.get("column_description")),
+        )
+
+    def to_domain(self) -> CDE:
+        return CDE(
+            cde_key=self.cde_key,
+            cde_id=self.cde_id,
+            cde_version_id=self.cde_version_id,
+            description=self.description,
+        )
+
+
+@dataclass(frozen=True)
+class _PvPageResponse:
+    values: tuple[str, ...]
+
+    @classmethod
+    def from_json(cls, body: Mapping[str, object]) -> _PvPageResponse:
+        items = _json_array(body.get("items"))
+        if items is None:
+            return cls(values=())
+
+        values = [value for raw in items if (value := _pv_value_from_json(raw)) is not None]
+        return cls(values=tuple(values))
+
+
+def _pv_value_from_json(raw: object) -> str | None:
+    item = _json_object(raw)
+    if item is None:
+        return None
+    value = item.get("value")
+    return value if isinstance(value, str) else None

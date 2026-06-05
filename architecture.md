@@ -86,7 +86,7 @@ The SDK owns one runtime mirror of the `Harmonization` literal (`HARMONIZATION_V
 
 ## Harmonization Workflow
 1. Validate inputs (`validate_source_path`, `validate_manifest_path`, `validate_output_path`). Output validation automatically versions existing destinations (`.harmonized.v1.csv`, `.v2`, …) rather than overwriting and uses the source suffix for default output naming.
-2. Build a gzip-compressed payload containing schema/document data plus the mapping manifest (`_http.build_harmonize_payload`). Hard fail if compression exceeds 10 MiB.
+2. Build a gzip-compressed payload containing schema/document data, the top-level external data-model `external_version_number`, and the mapping manifest (`_http.build_harmonize_payload`). Hard fail if compression exceeds 10 MiB.
 3. Submit the job via `POST <harmonization_url>/v1/jobs/harmonize` with `Bearer` authentication; capture `job_id`. Requests include `use_cache=true` by default, or `use_cache=false` when callers disable cache use.
 4. Poll `GET <harmonization_url>/v1/jobs/{job_id}` until the status is `SUCCEEDED` or `FAILED`. INFO logs include elapsed seconds per heartbeat; timeouts emit the accumulated duration before raising `HarmonizationJobError`.
 5. Download an optional manifest artifact from `manifest_url` to an SDK-owned path derived from the validated harmonized output path (`.manifest.parquet`, versioned as needed).
@@ -95,7 +95,7 @@ The SDK owns one runtime mirror of the `Harmonization` literal (`HARMONIZATION_V
 ## Data Model Store Workflow
 The Data Model Store API provides read-only access to reference data for validation use cases.
 
-1. **List data models**: Query available data commons via `GET /data-models`. Returns `DataModel` instances with key, name, and description.
+1. **List data models**: Query available data commons via `GET /data-models`. Returns `DataModel` instances with key, name, description, and optional `DataModelVersion.external_version_number` values callers can pass to harmonization.
 2. **List CDEs**: Query CDEs for a model version via `GET /data-models/{key}/versions/{version}/cdes`. Returns `CDE` instances with key, IDs, and optional description.
 3. **List PVs**: Query permissible values for a CDE via `GET /data-models/{key}/versions/{version}/cdes/{cde_key}/pvs`. Returns `PermissibleValue` instances.
 4. **Validation helpers**: `get_pv_set()` auto-paginates and returns `frozenset[str]` for O(1) membership testing. `validate_value()` provides a one-liner for checking a single value.

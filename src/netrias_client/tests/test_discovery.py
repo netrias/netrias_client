@@ -143,6 +143,22 @@ def test_discover_mapping_from_tabular_handles_api_error(
     assert "unsupported schema" in str(exc.value)
 
 
+def test_discover_mapping_from_tabular_rejects_latest_target_version(
+    configured_client: NetriasClient,
+    sample_csv_path: Path,
+) -> None:
+    """Reject manifests requested with the old implicit latest target."""
+
+    with pytest.raises(MappingValidationError) as exc:
+        _ = configured_client.discover_mapping_from_tabular(
+            source_path=sample_csv_path,
+            target_schema="ccdi",
+            target_version="latest",
+        )
+
+    assert "target_version" in str(exc.value)
+
+
 def test_discover_mapping_from_tabular_raises_on_transport_error(
     configured_client: NetriasClient,
     monkeypatch: pytest.MonkeyPatch,

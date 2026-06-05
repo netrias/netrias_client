@@ -117,7 +117,7 @@ Reads a supported tabular file, samples values, and returns a manifest keyed by 
 manifest = client.discover_mapping_from_tabular(
     source_path=Path("data/patients.xlsx"),
     target_schema="ccdi",
-    target_version="latest",
+    target_version="v1",
     sheet_name="Patients",                      # optional; XLSX defaults to the first sheet
     sample_limit=25,
     top_k=3,
@@ -129,7 +129,7 @@ manifest = client.discover_mapping_from_tabular(
 |-----------|------|---------|-------------|
 | `source_path` | `Path` | - | **Required.** Path to a supported tabular file (`.csv`, `.tsv`, or `.xlsx`). |
 | `target_schema` | `str` | - | **Required.** Target schema key. |
-| `target_version` | `str` | `"latest"` | Schema version to target. |
+| `target_version` | `str` | - | **Required.** Concrete discovery schema version to target. `latest` is rejected. |
 | `sheet_name` | `str \| None` | `None` | Worksheet to read for XLSX input. Defaults to the first sheet. |
 | `sample_limit` | `int` | `25` | Maximum rows to sample for discovery. |
 | `top_k` | `int` | `3` | Number of top recommendations to return per column. |
@@ -175,6 +175,7 @@ result = client.harmonize(
     source_path=Path("data/patients.xlsx"),
     manifest=manifest,                           # from discover_*
     data_commons_key="GC",                       # target data commons
+    external_version_number="11.0.4",            # external data-model version shown by DMS
     sheet_name="Patients",                       # optional; XLSX defaults to the first sheet
     output_path=Path("output/harmonized.xlsx"),  # optional
     manifest_output_path=Path("output/manifest.json"),  # optional
@@ -192,6 +193,7 @@ print(result.job_id)       # API job id for tracking
 | `source_path` | `Path` | - | **Required.** Path to the source tabular file (`.csv`, `.tsv`, or `.xlsx`). |
 | `manifest` | `Path \| Mapping[str, object]` | - | **Required.** Mapping manifest (from discovery) or path to a JSON manifest file. |
 | `data_commons_key` | `str` | - | **Required.** Target data commons identifier (e.g., `"GC"`). |
+| `external_version_number` | `str` | - | **Required.** Concrete external data-model version number (e.g., `"11.0.4"`). Sent as top-level `external_version_number` in the harmonization request. |
 | `output_path` | `Path \| None` | `None` | Where to write the harmonized file. Auto-generated with the same suffix as the source, such as `source.harmonized.tsv` for TSV input. |
 | `manifest_output_path` | `Path \| None` | `None` | Where to write the manifest JSON for debugging. |
 | `sheet_name` | `str \| None` | `None` | Worksheet to read and update for XLSX input. Defaults to the first sheet. |
@@ -229,6 +231,8 @@ models = client.list_data_models(
 
 for model in models:
     print(f"{model.key}: {model.name}")
+    for version in model.versions or ():
+        print(f"  {version.external_version_number}")
 ```
 
 | Parameter | Type | Default | Description |
@@ -248,12 +252,13 @@ for model in models:
 | `name` | `str` | Display name. |
 | `description` | `str \| None` | Optional description. |
 | `is_active` | `bool` | Whether the model is active. |
+| `versions` | `tuple[DataModelVersion, ...] \| None` | Optional versions. Each version exposes `external_version_number`, which can be passed to `harmonize(...)`. |
 
 **Example:**
 
 ```python
 (
-    DataModel(data_commons_id=1, key="ccdi", name="CCDI", description="Childhood Cancer Data Initiative", is_active=True),
+    DataModel(data_commons_id=1, key="ccdi", name="CCDI", description="Childhood Cancer Data Initiative", is_active=True, versions=(DataModelVersion(external_version_number="11.0.4"),)),
     DataModel(data_commons_id=2, key="gc", name="Genomic Commons", description=None, is_active=True),
 )
 ```
@@ -433,19 +438,27 @@ client = NetriasClient(api_key="your-api-key")
 manifest = client.discover_mapping_from_tabular(
     source_path=Path("data/patients.tsv"),
     target_schema="ccdi",
+    target_version="v1",
 )
-result = client.harmonize(source_path=Path("data/patients.tsv"), manifest=manifest, data_commons_key="GC")
+result = client.harmonize(
+    source_path=Path("data/patients.tsv"),
+    manifest=manifest,
+    data_commons_key="GC",
+    external_version_number="11.0.4",
+)
 
 # Async usage (FastAPI, async frameworks)
 async def process_file():
     manifest = await client.discover_mapping_from_tabular_async(
         source_path=Path("data/patients.tsv"),
         target_schema="ccdi",
+        target_version="v1",
     )
     result = await client.harmonize_async(
         source_path=Path("data/patients.tsv"),
         manifest=manifest,
         data_commons_key="GC",
+        external_version_number="11.0.4",
     )
     return result
 ```
@@ -483,7 +496,12 @@ The client raises typed exceptions that inherit from `NetriasClientError`:
 from netrias_client import NetriasClient, NetriasClientError, NetriasAPIUnavailable
 
 try:
-    result = client.harmonize(source_path=csv_path, manifest=manifest, data_commons_key="GC")
+    result = client.harmonize(
+        source_path=csv_path,
+        manifest=manifest,
+        data_commons_key="GC",
+        external_version_number="11.0.4",
+    )
 except NetriasAPIUnavailable as e:
     print(f"Service unavailable: {e}")
 except NetriasClientError as e:

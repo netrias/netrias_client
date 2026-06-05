@@ -12,6 +12,9 @@ from typing import override
 import httpx
 from pytest import MonkeyPatch
 
+EXTERNAL_VERSION_NUMBER = "11.0.4"
+NEXT_EXTERNAL_VERSION_NUMBER = "11.0.5"
+
 
 @dataclass(slots=True)
 class MockTransportCapture:

@@ -196,7 +196,7 @@ class DataModelStoreEndpoints:
 class DataModelVersion:
     """Represent a version of a data model."""
 
-    version_label: str
+    external_version_number: str
 
 
 @dataclass(frozen=True)
