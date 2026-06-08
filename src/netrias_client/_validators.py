@@ -65,14 +65,14 @@ def validate_target_schema(schema: str) -> str:
     return candidate
 
 
-def validate_target_version(version: str) -> str:
-    """Ensure the target version identifier is concrete."""
+def validate_external_version_number(external_version_number: str) -> str:
+    """Ensure the external data-model version identifier is concrete."""
 
-    candidate = (version or "").strip()
+    candidate = (external_version_number or "").strip()
     if not candidate:
-        raise MappingValidationError("target_version must be a non-empty string")
+        raise MappingValidationError("external_version_number must be a non-empty string")
     if candidate.lower() == "latest":
-        raise MappingValidationError("target_version must be concrete, not 'latest'")
+        raise MappingValidationError("external_version_number must be concrete, not 'latest'")
     return candidate
 
 

@@ -14,7 +14,7 @@ import pytest
 from netrias_client import ColumnKeyedManifestPayload, ColumnMappingRecord, NetriasClient, column_key_for_index
 from netrias_client._errors import MappingDiscoveryError, MappingValidationError, NetriasAPIUnavailable
 
-from ._utils import install_mock_transport, json_failure, json_success, transport_error
+from ._utils import EXTERNAL_VERSION_NUMBER, install_mock_transport, json_failure, json_success, transport_error
 
 
 def _array_payload(results: list[dict[str, object]]) -> dict[str, object]:
@@ -64,7 +64,7 @@ def test_discover_mapping_from_tabular_success(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
     column_mappings = _column_slots(manifest, 3)
@@ -88,7 +88,7 @@ def test_discover_mapping_from_tabular_success(
     assert request.headers.get("x-api-key") == "test-api-key"
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     assert content.get("target_schema") == "ccdi"
-    assert content.get("target_version") == "v1"
+    assert content.get("target_version") == EXTERNAL_VERSION_NUMBER
 
 
 def test_discover_mapping_from_tabular_samples_data(
@@ -111,7 +111,7 @@ def test_discover_mapping_from_tabular_samples_data(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         sample_limit=1,
     )
 
@@ -137,26 +137,26 @@ def test_discover_mapping_from_tabular_handles_api_error(
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="bogus",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
     assert "unsupported schema" in str(exc.value)
 
 
-def test_discover_mapping_from_tabular_rejects_latest_target_version(
+def test_discover_mapping_from_tabular_rejects_latest_external_version_number(
     configured_client: NetriasClient,
     sample_csv_path: Path,
 ) -> None:
-    """Reject manifests requested with the old implicit latest target."""
+    """Reject discovery requested with the old implicit latest version."""
 
     with pytest.raises(MappingValidationError) as exc:
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="ccdi",
-            target_version="latest",
+            external_version_number="latest",
         )
 
-    assert "target_version" in str(exc.value)
+    assert "external_version_number" in str(exc.value)
 
 
 def test_discover_mapping_from_tabular_raises_on_transport_error(
@@ -173,7 +173,7 @@ def test_discover_mapping_from_tabular_raises_on_transport_error(
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
 
@@ -198,7 +198,7 @@ async def test_discover_mapping_from_tabular_async(
     manifest = await configured_client.discover_mapping_from_tabular_async(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
     assert isinstance(manifest["column_mappings"], dict)
 
@@ -223,7 +223,7 @@ def test_discover_mapping_from_tabular_sends_top_k_parameter(
     _ = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="gc",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         top_k=5,
     )
 
@@ -238,7 +238,7 @@ async def test_discover_mapping_from_tabular_async_includes_version(
     monkeypatch: pytest.MonkeyPatch,
     sample_csv_path: Path,
 ) -> None:
-    """Async tabular discovery wrapper includes target_version in request."""
+    """Async tabular discovery sends the external version on the current wire key."""
 
     payload = _array_payload(
         [
@@ -253,14 +253,14 @@ async def test_discover_mapping_from_tabular_async_includes_version(
     manifest = await configured_client.discover_mapping_from_tabular_async(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         sample_limit=1,
     )
 
     assert isinstance(manifest["column_mappings"], dict)
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    assert content.get("target_version") == "v1"
+    assert content.get("target_version") == EXTERNAL_VERSION_NUMBER
 
 
 def test_discover_mapping_handles_array_results_format(
@@ -294,7 +294,7 @@ def test_discover_mapping_handles_array_results_format(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="gc",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
     column_mappings = _column_slots(manifest, 3)
@@ -344,7 +344,7 @@ def test_discovery_entry_uses_column_name(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
     entry = _column_slots(manifest, 3)[0]
@@ -384,7 +384,7 @@ def test_discovery_entry_has_no_target_field(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
     entry = _column_slots(manifest, 3)[0]
@@ -450,7 +450,7 @@ def test_positional_parity_all_columns_matched(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
     # Then request length == 3, manifest length == 3, every entry is non-None with matching column_name
@@ -498,7 +498,7 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
         _ = configured_client.discover_mapping_from_tabular(
             source_path=csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
     message = str(exc.value)
@@ -554,7 +554,7 @@ def test_blank_header_column_is_preserved_by_position(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
     # Then: the blank header is sent and mapped back through its list position
@@ -594,7 +594,7 @@ def test_positional_parity_below_threshold_becomes_none(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         confidence_threshold=0.8,
     )
 
@@ -628,7 +628,7 @@ def test_parses_real_api_confidence_and_emits_cde_key(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=csv_path,
         target_schema="gc",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         confidence_threshold=0.7,
     )
 
@@ -666,7 +666,7 @@ def test_alternative_entries_preserve_confidence_field(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=csv_path,
         target_schema="gc",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         confidence_threshold=0.7,
     )
 
@@ -734,7 +734,7 @@ def test_harmonization_surfaces_on_every_alternative_and_top_level(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=csv_path,
         target_schema="gc",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         confidence_threshold=0.4,
     )
 
@@ -802,7 +802,7 @@ def test_positional_parity_rejects_reordered_response_of_equal_length(
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
     message = str(exc.value)
@@ -832,7 +832,7 @@ def test_zero_column_tabular_file_rejected_at_boundary(
         _ = configured_client.discover_mapping_from_tabular(
             source_path=csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
     message = str(exc.value)
@@ -871,7 +871,7 @@ def test_discovery_strict_rejects_response_missing_harmonization(
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
     assert "harmonization" in str(exc.value)

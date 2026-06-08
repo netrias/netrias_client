@@ -7,7 +7,7 @@ from typing import cast
 from dotenv import dotenv_values
 
 from .. import NetriasClient
-from ._constants import CSV_PATH, DISCOVERY_TARGET_VERSION, ENV_PATH, EXTERNAL_VERSION_NUMBER, MODEL_KEY
+from ._constants import CSV_PATH, DISCOVERY_EXTERNAL_VERSION_NUMBER, ENV_PATH, EXTERNAL_VERSION_NUMBER, MODEL_KEY
 
 
 ENV = dotenv_values(ENV_PATH)
@@ -21,7 +21,7 @@ def main() -> None:
     manifest = client.discover_mapping_from_tabular(
         source_path=CSV_PATH,
         target_schema=MODEL_KEY,
-        target_version=DISCOVERY_TARGET_VERSION,
+        external_version_number=DISCOVERY_EXTERNAL_VERSION_NUMBER,
     )
 
     result = client.harmonize(

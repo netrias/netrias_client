@@ -39,7 +39,7 @@ class _SessionProtocol(Protocol):
 
 def invoke_cde_recommendation_alias(
     target_schema: str,
-    target_version: str,
+    external_version_number: str,
     columns: list[ColumnSamples],
     function_name: str = "cde-recommendation",
     alias: str | None = None,
@@ -61,7 +61,9 @@ def invoke_cde_recommendation_alias(
     )
     body_dict: dict[str, object] = {
         "target_schema": target_schema,
-        "target_version": target_version,
+        # CDE recommendation currently names this wire field target_version; keep
+        # that transport name confined here.
+        "target_version": external_version_number,
         "columns": columns,
     }
     if top_k is not None:
@@ -228,5 +230,3 @@ def _extract_error_message(body: Mapping[str, object]) -> str:
         if isinstance(value, str) and value.strip():
             return value.strip()
     return "unknown error"
-
-

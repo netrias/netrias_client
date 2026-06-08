@@ -167,7 +167,7 @@ def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=duplicate_headers_tsv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
     # Then: callers receive stable source column keys, not backend names

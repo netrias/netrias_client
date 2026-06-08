@@ -15,7 +15,7 @@ from dotenv import dotenv_values
 from ._constants import (
     CDE_KEY,
     CSV_PATH,
-    DISCOVERY_TARGET_VERSION,
+    DISCOVERY_EXTERNAL_VERSION_NUMBER,
     ENV_PATH,
     EXTERNAL_VERSION_NUMBER,
     MODEL_KEY,
@@ -124,8 +124,8 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
     # --- list_cdes ---
 
     def test_list_cdes_basic() -> None:
-        cdes = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_TARGET_VERSION, limit=10)
-        print(f"  list_cdes({MODEL_KEY}, {DISCOVERY_TARGET_VERSION}, limit=10) -> {len(cdes)} CDEs")
+        cdes = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, limit=10)
+        print(f"  list_cdes({MODEL_KEY}, {DISCOVERY_EXTERNAL_VERSION_NUMBER}, limit=10) -> {len(cdes)} CDEs")
         assert len(cdes) > 0, "Expected at least one CDE"
         for c in cdes[:3]:
             print(f"    - cde_key={c.cde_key!r}, cde_id={c.cde_id}")
@@ -135,7 +135,7 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
     def test_list_cdes_include_description() -> None:
         cdes = client.list_cdes(
             model_key=MODEL_KEY,
-            version=DISCOVERY_TARGET_VERSION,
+            version=DISCOVERY_EXTERNAL_VERSION_NUMBER,
             include_description=True,
             limit=5,
         )
@@ -146,7 +146,7 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
     results.append(run_test("list_cdes(include_description)", test_list_cdes_include_description))
 
     def test_list_cdes_query() -> None:
-        cdes = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_TARGET_VERSION, query="sex", limit=10)
+        cdes = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, query="sex", limit=10)
         print(f"  list_cdes(query='sex') -> {len(cdes)} CDEs")
         for c in cdes[:3]:
             print(f"    - {c.cde_key}")
@@ -154,8 +154,8 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
     results.append(run_test("list_cdes(query)", test_list_cdes_query))
 
     def test_list_cdes_pagination() -> None:
-        page1 = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_TARGET_VERSION, limit=5, offset=0)
-        page2 = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_TARGET_VERSION, limit=5, offset=5)
+        page1 = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, limit=5, offset=0)
+        page2 = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, limit=5, offset=5)
         print(f"  list_cdes(pagination) -> page1={len(page1)}, page2={len(page2)}")
 
     results.append(run_test("list_cdes(pagination)", test_list_cdes_pagination))
@@ -163,8 +163,8 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
     # --- get_pv_set ---
 
     def test_get_pv_set() -> None:
-        pv_set = client.get_pv_set(model_key=MODEL_KEY, version=DISCOVERY_TARGET_VERSION, cde_key=CDE_KEY)
-        print(f"  get_pv_set({MODEL_KEY}, {DISCOVERY_TARGET_VERSION}, {CDE_KEY}) -> {len(pv_set)} values")
+        pv_set = client.get_pv_set(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, cde_key=CDE_KEY)
+        print(f"  get_pv_set({MODEL_KEY}, {DISCOVERY_EXTERNAL_VERSION_NUMBER}, {CDE_KEY}) -> {len(pv_set)} values")
         assert len(pv_set) > 0, "Expected at least one PV"
         assert isinstance(pv_set, frozenset), "Expected frozenset"
         sample = sorted(pv_set)[:5]
@@ -173,7 +173,7 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
     results.append(run_test("get_pv_set", test_get_pv_set))
 
     def test_get_pv_set_membership() -> None:
-        pv_set = client.get_pv_set(model_key=MODEL_KEY, version=DISCOVERY_TARGET_VERSION, cde_key=CDE_KEY)
+        pv_set = client.get_pv_set(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, cde_key=CDE_KEY)
         print(f"  get_pv_set membership check -> 'Female' in pv_set == {'Female' in pv_set}")
         print(f"  get_pv_set membership check -> 'InvalidValue123' in pv_set == {'InvalidValue123' in pv_set}")
         assert "InvalidValue123" not in pv_set, "Expected 'InvalidValue123' to not be in PV set"
@@ -200,7 +200,7 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
         discovered_manifest = client.discover_mapping_from_tabular(
             source_path=CSV_PATH,
             target_schema=MODEL_KEY,
-            target_version=DISCOVERY_TARGET_VERSION,
+            external_version_number=DISCOVERY_EXTERNAL_VERSION_NUMBER,
             sample_limit=10,
             top_k=3,
         )
@@ -219,7 +219,7 @@ def main() -> int:  # noqa: C901 (test runner is intentionally complex)
         manifest = client.discover_mapping_from_tabular(
             source_path=CSV_PATH,
             target_schema=MODEL_KEY,
-            target_version=DISCOVERY_TARGET_VERSION,
+            external_version_number=DISCOVERY_EXTERNAL_VERSION_NUMBER,
             sample_limit=10,
             top_k=3,
             confidence_threshold=0.5,

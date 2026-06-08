@@ -109,7 +109,7 @@ async def request_mapping_discovery(
     api_key: str,
     timeout: float,
     schema: str,
-    version: str,
+    external_version_number: str,
     columns: list[ColumnSamples],
     top_k: int | None = None,
 ) -> httpx.Response:
@@ -120,9 +120,11 @@ async def request_mapping_discovery(
         "Content-Type": "application/json",
         API_KEY_HEADER: api_key,
     }
+    # CDE recommendation currently names this wire field target_version; keep
+    # that transport name confined here.
     body: dict[str, object] = {
         "target_schema": schema,
-        "target_version": version,
+        "target_version": external_version_number,
         "columns": columns,
     }
     if top_k is not None:
