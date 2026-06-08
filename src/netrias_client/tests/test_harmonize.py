@@ -187,6 +187,7 @@ def test_harmonize_tsv_writes_tsv_output(
 ) -> None:
     """TSV input produces TSV output while the remote CSV stream is converted."""
 
+    # Given: a TSV source, a column-keyed manifest, and a remote CSV result stream
     manifest: ColumnKeyedManifestPayload = {
         "column_mappings": {
             "col_0000": {
@@ -200,7 +201,11 @@ def test_harmonize_tsv_writes_tsv_output(
     }
     capture = job_success(chunks=(b'name,note\nAlice,"keeps, comma"\n',))
     install_mock_transport(monkeypatch, capture)
+    expected = output_directory / "sample.harmonized.tsv"
+    assert not expected.exists()
+    assert capture.requests == []
 
+    # When: the user harmonizes the TSV file
     result = configured_client.harmonize(
         source_path=sample_tsv_path,
         manifest=manifest,
@@ -209,10 +214,11 @@ def test_harmonize_tsv_writes_tsv_output(
         output_path=output_directory,
     )
 
-    expected = output_directory / "sample.harmonized.tsv"
+    # Then: the SDK writes a TSV output and preserves comma-containing values as one cell
     assert result.file_path == expected
     assert expected.read_text(encoding="utf-8") == "name\tnote\nAlice\tkeeps, comma\n"
 
+    # And: the submit payload uses the tabular document and manifest the backend consumes
     submit_request = capture.requests[0]
     envelope = _decode_submit_body(submit_request)
     document = cast(dict[str, object], envelope["document"])
@@ -230,6 +236,7 @@ def test_harmonize_xlsx_writes_xlsx_output_for_selected_sheet(
 ) -> None:
     """XLSX input produces XLSX output while updating only the selected worksheet."""
 
+    # Given: a workbook with one untouched sheet and one selected patient sheet
     source = tmp_path / "patients.xlsx"
     workbook = Workbook()
     keep = _active_sheet(workbook)
@@ -252,9 +259,13 @@ def test_harmonize_xlsx_writes_xlsx_output_for_selected_sheet(
             }
         }
     }
+    expected = output_directory / "patients.harmonized.xlsx"
     capture = job_success(chunks=(b"name,note\nAlice,updated\n",))
     install_mock_transport(monkeypatch, capture)
+    assert not expected.exists()
+    assert capture.requests == []
 
+    # When: the user harmonizes only the selected worksheet
     result = configured_client.harmonize(
         source_path=source,
         manifest=manifest,
@@ -264,13 +275,14 @@ def test_harmonize_xlsx_writes_xlsx_output_for_selected_sheet(
         sheet_name="Patients",
     )
 
-    expected = output_directory / "patients.harmonized.xlsx"
+    # Then: the output workbook keeps the untouched sheet and updates the selected one
     assert result.file_path == expected
     output_workbook = load_workbook(expected, data_only=True)
     assert output_workbook.sheetnames == ["Keep", "Patients"]
     assert _workbook_cell_value(expected, "Keep", "A2") == "unchanged"
     assert _workbook_cell_value(expected, "Patients", "B2") == "updated"
 
+    # And: the backend submission names the selected sheet and original row values
     submit_request = capture.requests[0]
     envelope = _decode_submit_body(submit_request)
     document = cast(dict[str, object], envelope["document"])

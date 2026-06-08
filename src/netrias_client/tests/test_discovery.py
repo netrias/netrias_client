@@ -206,6 +206,7 @@ def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
 ) -> None:
     """Expose stable column keys while sending display headers."""
 
+    # Given: a duplicate-header TSV and a recommendation response in input order
     payload = _array_payload(
         [
             {
@@ -235,19 +236,23 @@ def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
     )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
+    assert capture.requests == []
 
+    # When: discovery runs through the tabular API
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=duplicate_headers_tsv_path,
         target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
+    # Then: callers receive stable source column keys, not duplicate display names
     column_mappings = manifest["column_mappings"]
     assert list(column_mappings) == ["col_0000", "col_0001"]
     assert column_mappings["col_0000"]["cde_key"] == "first_name"
     assert column_mappings["col_0000"]["column_name"] == "name"
     assert column_mappings["col_0001"]["cde_key"] == "last_name"
 
+    # And: the outbound recommendation request still preserves user-visible headers
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     columns = cast(list[dict[str, object]], content["columns"])
