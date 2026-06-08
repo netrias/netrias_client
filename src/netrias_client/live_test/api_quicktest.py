@@ -57,9 +57,23 @@ def main() -> int:
 
     _print_header()
     results = [
-        _run_step("data_model_store", lambda: _check_data_model_store(context.client)),
-        _run_step("discovery", lambda: _check_discovery(context)),
-        _run_step("harmonization", lambda: _check_harmonization(context)),
+        _run_step("data_model_store_lists_gc_model", lambda: _assert_data_model_store_lists_gc_model(context.client)),
+        _run_step(
+            "data_model_store_lists_sex_cde_for_external_version",
+            lambda: _assert_data_model_store_lists_sex_cde_for_external_version(context.client),
+        ),
+        _run_step(
+            "data_model_store_returns_sex_permissible_values",
+            lambda: _assert_data_model_store_returns_sex_permissible_values(context.client),
+        ),
+        _run_step(
+            "discovery_returns_column_keyed_manifest",
+            lambda: _assert_discovery_returns_column_keyed_manifest(context),
+        ),
+        _run_step(
+            "harmonization_returns_expected_status_for_discovered_manifest",
+            lambda: _assert_harmonization_returns_expected_status_for_discovered_manifest(context),
+        ),
     ]
     return _print_results(results)
 
@@ -88,15 +102,19 @@ def _print_header() -> None:
     print()
 
 
-def _check_data_model_store(client: NetriasClient) -> None:
-    # Given: a configured client and the known-good staging model/version/CDE identifiers
+def _assert_data_model_store_lists_gc_model(client: NetriasClient) -> None:
+    # Given: a configured client and the known-good model key
     # When: the user searches Data Model Store for that model
     models = client.list_data_models(query=MODEL_KEY, include_versions=True, limit=5)
 
-    # Then: the Data Model Store exposes the model needed by discovery and harmonization smoke checks
+    # Then: the Data Model Store exposes that model
     assert any(model.key == MODEL_KEY for model in models), f"Expected {MODEL_KEY!r} in data models"
+    print(f"  data model store model: {MODEL_KEY} listed in {len(models)} results")
 
-    # When: the user queries CDEs for the external model version
+
+def _assert_data_model_store_lists_sex_cde_for_external_version(client: NetriasClient) -> None:
+    # Given: a configured client, model key, external version number, and CDE key
+    # When: the user queries CDEs for that external model version
     cdes = client.list_cdes(
         model_key=MODEL_KEY,
         version=DISCOVERY_EXTERNAL_VERSION_NUMBER,
@@ -105,9 +123,13 @@ def _check_data_model_store(client: NetriasClient) -> None:
         limit=10,
     )
 
-    # Then: at least one matching CDE is available
+    # Then: the expected CDE is available
     assert len(cdes) > 0, f"Expected at least one CDE matching {CDE_KEY!r}"
+    print(f"  data model store CDE: {CDE_KEY} listed in {len(cdes)} results")
 
+
+def _assert_data_model_store_returns_sex_permissible_values(client: NetriasClient) -> None:
+    # Given: a configured client, model key, external version number, and CDE key
     # When: the user asks for permissible values for that CDE
     pv_set = client.get_pv_set(
         model_key=MODEL_KEY,
@@ -118,10 +140,10 @@ def _check_data_model_store(client: NetriasClient) -> None:
     # Then: permissible values are returned as the public frozenset contract
     assert isinstance(pv_set, frozenset)
     assert len(pv_set) > 0, f"Expected permissible values for {CDE_KEY!r}"
-    print(f"  data model store: {len(models)} models, {len(cdes)} CDEs, {len(pv_set)} PVs")
+    print(f"  data model store PVs: {len(pv_set)} values for {CDE_KEY}")
 
 
-def _check_discovery(context: SmokeContext) -> None:
+def _assert_discovery_returns_column_keyed_manifest(context: SmokeContext) -> None:
     # Given: discovery has not yet produced a manifest for the harmonization step
     assert context.manifest is None
 
@@ -140,7 +162,7 @@ def _check_discovery(context: SmokeContext) -> None:
     print(f"  discovery: {len(mappings)} column mappings")
 
 
-def _check_harmonization(context: SmokeContext) -> None:
+def _assert_harmonization_returns_expected_status_for_discovered_manifest(context: SmokeContext) -> None:
     # Given: discovery already produced the manifest that harmonization consumes
     if context.manifest is None:
         raise RuntimeError("Discovery must run before harmonization")
@@ -154,7 +176,7 @@ def _check_harmonization(context: SmokeContext) -> None:
     )
     print(f"  harmonization: {result.status}")
 
-    # Then: either harmonization succeeds, or the known staging data-source mismatch is reported explicitly
+    # Then: the live service returns either success or the known staging data-source mismatch
     is_known_failure = result.status == "failed" and (
         "unknown cde id" in result.description.lower() or "invalid" in result.description.lower()
     )
