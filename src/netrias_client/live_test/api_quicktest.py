@@ -89,9 +89,14 @@ def _print_header() -> None:
 
 
 def _check_data_model_store(client: NetriasClient) -> None:
+    # Given: a configured client and the known-good staging model/version/CDE identifiers
+    # When: the user searches Data Model Store for that model
     models = client.list_data_models(query=MODEL_KEY, include_versions=True, limit=5)
+
+    # Then: the Data Model Store exposes the model needed by discovery and harmonization smoke checks
     assert any(model.key == MODEL_KEY for model in models), f"Expected {MODEL_KEY!r} in data models"
 
+    # When: the user queries CDEs for the external model version
     cdes = client.list_cdes(
         model_key=MODEL_KEY,
         version=DISCOVERY_EXTERNAL_VERSION_NUMBER,
@@ -99,19 +104,28 @@ def _check_data_model_store(client: NetriasClient) -> None:
         include_description=True,
         limit=10,
     )
+
+    # Then: at least one matching CDE is available
     assert len(cdes) > 0, f"Expected at least one CDE matching {CDE_KEY!r}"
 
+    # When: the user asks for permissible values for that CDE
     pv_set = client.get_pv_set(
         model_key=MODEL_KEY,
         version=DISCOVERY_EXTERNAL_VERSION_NUMBER,
         cde_key=CDE_KEY,
     )
+
+    # Then: permissible values are returned as the public frozenset contract
     assert isinstance(pv_set, frozenset)
     assert len(pv_set) > 0, f"Expected permissible values for {CDE_KEY!r}"
     print(f"  data model store: {len(models)} models, {len(cdes)} CDEs, {len(pv_set)} PVs")
 
 
 def _check_discovery(context: SmokeContext) -> None:
+    # Given: discovery has not yet produced a manifest for the harmonization step
+    assert context.manifest is None
+
+    # When: the user asks for CDE recommendations with an external version number
     context.manifest = context.client.discover_mapping_from_tabular(
         source_path=CSV_PATH,
         target_schema=MODEL_KEY,
@@ -119,14 +133,19 @@ def _check_discovery(context: SmokeContext) -> None:
         sample_limit=10,
         top_k=3,
     )
+
+    # Then: discovery returns a column-keyed manifest usable by harmonization
     mappings = context.manifest["column_mappings"]
     assert len(mappings) > 0, "Expected discovery to return column mappings"
     print(f"  discovery: {len(mappings)} column mappings")
 
 
 def _check_harmonization(context: SmokeContext) -> None:
+    # Given: discovery already produced the manifest that harmonization consumes
     if context.manifest is None:
         raise RuntimeError("Discovery must run before harmonization")
+
+    # When: the user submits the same source file and discovered manifest for harmonization
     result = context.client.harmonize(
         source_path=CSV_PATH,
         manifest=context.manifest,
@@ -135,6 +154,7 @@ def _check_harmonization(context: SmokeContext) -> None:
     )
     print(f"  harmonization: {result.status}")
 
+    # Then: either harmonization succeeds, or the known staging data-source mismatch is reported explicitly
     is_known_failure = result.status == "failed" and (
         "unknown cde id" in result.description.lower() or "invalid" in result.description.lower()
     )
