@@ -75,10 +75,10 @@ def release(argv: Sequence[str] | None = None) -> None:
 
     options = _parse_release_args(argv)
     _ensure_logging()
-    target_version = _determine_target_version(options)
+    release_version = _determine_release_version(options)
     check()
-    _update_versions(target_version)
-    _LOGGER.info("version synchronized → %s", target_version)
+    _update_versions(release_version)
+    _LOGGER.info("version synchronized → %s", release_version)
     artifacts = _build_distributions()
     _verify_artifacts(artifacts)
     if options.repository:
@@ -139,7 +139,7 @@ def _parse_release_args(argv: Sequence[str] | None) -> ReleaseOptions:
     return ReleaseOptions(version=version_arg, bump=bump, repository=repository_arg)
 
 
-def _determine_target_version(options: ReleaseOptions) -> str:
+def _determine_release_version(options: ReleaseOptions) -> str:
     """Decide the release version based on explicit input or a bump type.
 
     'why': ensure both pyproject and package versions stay aligned

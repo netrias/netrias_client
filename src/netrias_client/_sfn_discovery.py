@@ -61,11 +61,9 @@ def _start_execution(
     api_key: str | None = None,
 ) -> str:
     """POST request body to API Gateway, get executionArn back."""
-    # CDE recommendation currently names this wire field target_version; keep
-    # that transport name confined here.
     payload = {
         "target_schema": schema,
-        "target_version": external_version_number,
+        "external_version_number": external_version_number,
         "columns": columns,
         "top_k": top_k,
     }

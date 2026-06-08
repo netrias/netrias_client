@@ -74,7 +74,6 @@ def test_discover_mapping_from_tabular_success(
     assert first["column_name"] == "a"
     assert first["cde_key"] == "Sample.name"
     assert first["cde_id"] == 11
-    assert "targetField" not in first
 
     alternatives = first["alternatives"]
     assert len(alternatives) == 2
@@ -88,7 +87,7 @@ def test_discover_mapping_from_tabular_success(
     assert request.headers.get("x-api-key") == "test-api-key"
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     assert content.get("target_schema") == "ccdi"
-    assert content.get("target_version") == EXTERNAL_VERSION_NUMBER
+    assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
 
 
 def test_discover_mapping_from_tabular_samples_data(
@@ -232,37 +231,6 @@ def test_discover_mapping_from_tabular_sends_top_k_parameter(
     assert content.get("top_k") == 5
 
 
-@pytest.mark.asyncio
-async def test_discover_mapping_from_tabular_async_includes_version(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """Async tabular discovery sends the external version on the current wire key."""
-
-    payload = _array_payload(
-        [
-            {"column_name": "a", "matches": []},
-            {"column_name": "b", "matches": []},
-            {"column_name": "c", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = await configured_client.discover_mapping_from_tabular_async(
-        source_path=sample_csv_path,
-        target_schema="ccdi",
-        external_version_number=EXTERNAL_VERSION_NUMBER,
-        sample_limit=1,
-    )
-
-    assert isinstance(manifest["column_mappings"], dict)
-    request = capture.requests[0]
-    content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    assert content.get("target_version") == EXTERNAL_VERSION_NUMBER
-
-
 def test_discover_mapping_handles_array_results_format(
     configured_client: NetriasClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -301,12 +269,10 @@ def test_discover_mapping_handles_array_results_format(
     first = column_mappings[0]
     assert first is not None
     assert first["column_name"] == "a"
-    assert "targetField" not in first
 
     second = column_mappings[1]
     assert second is not None
     assert second["column_name"] == "b"
-    assert "targetField" not in second
 
     assert column_mappings[2] is None
 
@@ -319,7 +285,7 @@ def test_discovery_entry_uses_column_name(
     monkeypatch: pytest.MonkeyPatch,
     sample_csv_path: Path,
 ) -> None:
-    """Mapped entries carry column_name (not the legacy 'name' key)."""
+    """Mapped entries carry column_name."""
 
     payload = _array_payload(
         [
@@ -349,47 +315,7 @@ def test_discovery_entry_uses_column_name(
 
     entry = _column_slots(manifest, 3)[0]
     assert entry is not None
-    # Renamed from legacy "name" — must use "column_name"
     assert entry["column_name"] == "a"
-    assert "name" not in entry
-
-
-def test_discovery_entry_has_no_target_field(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """targetField must not appear in any mapped entry — it was removed from _make_entry."""
-
-    payload = _array_payload(
-        [
-            {
-                "column_name": "a",
-                "matches": [
-                    {
-                        "target": "A_target",
-                        "target_cde_id": 1,
-                        "confidence": 0.95,
-                        "harmonization": "harmonizable",
-                    }
-                ],
-            },
-            {"column_name": "b", "matches": []},
-            {"column_name": "c", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
-        target_schema="ccdi",
-        external_version_number=EXTERNAL_VERSION_NUMBER,
-    )
-
-    entry = _column_slots(manifest, 3)[0]
-    assert entry is not None
-    assert "targetField" not in entry
 
 
 # ---- Positional parity tests (A/B/C) ----

@@ -61,9 +61,7 @@ def invoke_cde_recommendation_alias(
     )
     body_dict: dict[str, object] = {
         "target_schema": target_schema,
-        # CDE recommendation currently names this wire field target_version; keep
-        # that transport name confined here.
-        "target_version": external_version_number,
+        "external_version_number": external_version_number,
         "columns": columns,
     }
     if top_k is not None:
