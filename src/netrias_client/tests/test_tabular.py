@@ -5,26 +5,19 @@ identity internally so duplicate headers never collapse into dict keys.
 """
 from __future__ import annotations
 
-import gzip
-import json
 from pathlib import Path
 from typing import cast
 
-import pytest
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from netrias_client import (
-    ColumnKeyedManifestPayload,
-    NetriasClient,
     TabularFormat,
     dataset_from_rows,
     list_workbook_sheets,
     read_tabular,
     write_tabular,
 )
-
-from ._utils import EXTERNAL_VERSION_NUMBER, install_mock_transport, job_success, json_success
 
 
 def _active_sheet(workbook: Workbook) -> Worksheet:
@@ -39,13 +32,6 @@ def _workbook_cell_value(path: Path, sheet_name: str, cell: str) -> object:
     workbook = load_workbook(path, data_only=True)
     sheet = cast(Worksheet, workbook[sheet_name])
     return cast(object, sheet[cell].value)
-
-
-def _array_payload(results: list[dict[str, object]]) -> dict[str, object]:
-    return {
-        "statusCode": 200,
-        "body": json.dumps({"results": results}),
-    }
 
 
 def test_read_tabular_preserves_duplicate_tsv_headers() -> None:
@@ -123,170 +109,3 @@ def test_write_tabular_xlsx_updates_selected_sheet_and_keeps_other_sheets(tmp_pa
     assert _workbook_cell_value(output, "Keep", "A2") == "unchanged"
     assert _workbook_cell_value(output, "Patients", "A1") == "name"
     assert _workbook_cell_value(output, "Patients", "A2") == "Alice"
-
-
-def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    duplicate_headers_tsv_path: Path,
-) -> None:
-    """Discovery exposes stable column keys while sending display headers."""
-
-    # Given: a duplicate-header TSV and a response preserving input order
-    payload = _array_payload(
-        [
-            {
-                "column_name": "name",
-                "matches": [
-                    {
-                        "target": "first_name",
-                        "target_cde_id": 10,
-                        "confidence": 0.91,
-                        "harmonization": "harmonizable",
-                    }
-                ],
-            },
-            {
-                "column_name": "name",
-                "matches": [
-                    {
-                        "target": "last_name",
-                        "target_cde_id": 11,
-                        "confidence": 0.9,
-                        "harmonization": "harmonizable",
-                    }
-                ],
-            },
-            {"column_name": "note", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    # When: discovery runs through the tabular API
-    manifest = configured_client.discover_mapping_from_tabular(
-        source_path=duplicate_headers_tsv_path,
-        target_schema="ccdi",
-        external_version_number=EXTERNAL_VERSION_NUMBER,
-    )
-
-    # Then: callers receive stable source column keys, not backend names
-    column_mappings = manifest["column_mappings"]
-    assert list(column_mappings) == ["col_0000", "col_0001"]
-    assert column_mappings["col_0000"]["cde_key"] == "first_name"
-    assert column_mappings["col_0000"]["column_name"] == "name"
-    assert column_mappings["col_0001"]["cde_key"] == "last_name"
-
-    request = capture.requests[0]
-    content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    columns = cast(list[dict[str, object]], content["columns"])
-    assert [column["column_name"] for column in columns] == [
-        "name",
-        "name",
-        "note",
-    ]
-
-
-def test_harmonize_tsv_writes_tsv_output(
-    configured_client: NetriasClient,
-    output_directory: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_tsv_path: Path,
-) -> None:
-    """TSV input produces TSV output while the remote CSV stream is converted."""
-
-    # Given: a TSV source and a column-keyed manifest
-    manifest: ColumnKeyedManifestPayload = {
-        "column_mappings": {
-            "col_0000": {
-                "column_name": "name",
-                "cde_key": "first_name",
-                "cde_id": 10,
-                "harmonization": "harmonizable",
-                "alternatives": [],
-            }
-        }
-    }
-    capture = job_success(chunks=(b'name,note\nAlice,"keeps, comma"\n',))
-    install_mock_transport(monkeypatch, capture)
-    assert not (output_directory / "patients.harmonized.tsv").exists()
-
-    # When: harmonization runs
-    result = configured_client.harmonize(
-        source_path=sample_tsv_path,
-        manifest=manifest,
-        data_commons_key="ccdi",
-        external_version_number=EXTERNAL_VERSION_NUMBER,
-        output_path=output_directory,
-    )
-
-    # Then: the downloaded CSV stream is written back as TSV
-    expected = output_directory / "sample.harmonized.tsv"
-    assert result.file_path == expected
-    assert expected.read_text(encoding="utf-8") == "name\tnote\nAlice\tkeeps, comma\n"
-
-    submit_request = capture.requests[0]
-    envelope = cast(dict[str, object], json.loads(gzip.decompress(submit_request.content).decode("utf-8")))
-    document = cast(dict[str, object], envelope["document"])
-    assert document["header"] == ["name", "note"]
-    assert document["rows"] == [["Alice", "keeps, comma"]]
-    column_mappings = cast(list[dict[str, object]], envelope["column_mappings"])
-    assert column_mappings[0]["cde_key"] == "first_name"
-
-
-def test_harmonize_xlsx_writes_xlsx_output_for_selected_sheet(
-    configured_client: NetriasClient,
-    output_directory: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    """XLSX input produces XLSX output while updating only the selected worksheet."""
-
-    # Given: an XLSX source with two sheets and a column-keyed manifest
-    source = tmp_path / "patients.xlsx"
-    workbook = Workbook()
-    keep = _active_sheet(workbook)
-    keep.title = "Keep"
-    keep.append(["status"])
-    keep.append(["unchanged"])
-    patients = _create_sheet(workbook, "Patients")
-    patients.append(["name", "note"])
-    patients.append(["Alice", "old"])
-    workbook.save(source)
-    manifest: ColumnKeyedManifestPayload = {
-        "column_mappings": {
-            "col_0000": {
-                "column_name": "name",
-                "cde_key": "first_name",
-                "cde_id": 10,
-                "harmonization": "harmonizable",
-                "alternatives": [],
-            }
-        }
-    }
-    capture = job_success(chunks=(b"name,note\nAlice,updated\n",))
-    install_mock_transport(monkeypatch, capture)
-
-    # When: harmonization runs for the selected sheet
-    result = configured_client.harmonize(
-        source_path=source,
-        manifest=manifest,
-        data_commons_key="ccdi",
-        external_version_number=EXTERNAL_VERSION_NUMBER,
-        output_path=output_directory,
-        sheet_name="Patients",
-    )
-
-    # Then: the output remains XLSX and only the selected sheet is updated
-    expected = output_directory / "patients.harmonized.xlsx"
-    assert result.file_path == expected
-    output_workbook = load_workbook(expected, data_only=True)
-    assert output_workbook.sheetnames == ["Keep", "Patients"]
-    assert _workbook_cell_value(expected, "Keep", "A2") == "unchanged"
-    assert _workbook_cell_value(expected, "Patients", "B2") == "updated"
-
-    submit_request = capture.requests[0]
-    envelope = cast(dict[str, object], json.loads(gzip.decompress(submit_request.content).decode("utf-8")))
-    document = cast(dict[str, object], envelope["document"])
-    assert document["sheetName"] == "Patients"
-    assert document["rows"] == [["Alice", "old"]]

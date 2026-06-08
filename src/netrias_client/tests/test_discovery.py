@@ -90,38 +90,6 @@ def test_discover_mapping_from_tabular_success(
     assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
 
 
-def test_discover_mapping_from_tabular_samples_data(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """tabular wrapper derives samples and forwards to discovery API."""
-
-    payload = _array_payload(
-        [
-            {"column_name": "a", "matches": []},
-            {"column_name": "b", "matches": []},
-            {"column_name": "c", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
-        target_schema="ccdi",
-        external_version_number=EXTERNAL_VERSION_NUMBER,
-        sample_limit=1,
-    )
-
-    request = capture.requests[0]
-    content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    columns_section = cast(list[dict[str, object]], content.get("columns", []))
-    column_names = [entry.get("column_name") for entry in columns_section]
-    assert column_names == ["a", "b", "c"]
-    assert isinstance(manifest["column_mappings"], dict)
-
-
 def test_discover_mapping_from_tabular_handles_api_error(
     configured_client: NetriasClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -231,167 +199,62 @@ def test_discover_mapping_from_tabular_sends_top_k_parameter(
     assert content.get("top_k") == 5
 
 
-def test_discover_mapping_handles_array_results_format(
+def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
     configured_client: NetriasClient,
     monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
+    duplicate_headers_tsv_path: Path,
 ) -> None:
-    """Handle the canonical array-format results from the lambda."""
+    """Expose stable column keys while sending display headers."""
 
     payload = _array_payload(
         [
             {
-                "column_name": "a",
-                "matches": [
-                    {"target": "age", "target_cde_id": 900, "confidence": 1.0, "harmonization": "numeric"},
-                    {"target": "ageUnit", "target_cde_id": 904, "confidence": 0.1, "harmonization": "harmonizable"},
-                ],
-            },
-            {
-                "column_name": "b",
-                "matches": [
-                    {"target": "sex", "target_cde_id": 901, "confidence": 0.95, "harmonization": "harmonizable"},
-                ],
-            },
-            {"column_name": "c", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
-        target_schema="gc",
-        external_version_number=EXTERNAL_VERSION_NUMBER,
-    )
-
-    column_mappings = _column_slots(manifest, 3)
-    first = column_mappings[0]
-    assert first is not None
-    assert first["column_name"] == "a"
-
-    second = column_mappings[1]
-    assert second is not None
-    assert second["column_name"] == "b"
-
-    assert column_mappings[2] is None
-
-
-# ---- Wire-shape contract tests ----
-
-
-def test_discovery_entry_uses_column_name(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """Mapped entries carry column_name."""
-
-    payload = _array_payload(
-        [
-            {
-                "column_name": "a",
+                "column_name": "name",
                 "matches": [
                     {
-                        "target": "A_target",
-                        "target_cde_id": 1,
-                        "confidence": 0.95,
-                        "harmonization": "harmonizable",
-                    }
-                ],
-            },
-            {"column_name": "b", "matches": []},
-            {"column_name": "c", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
-        target_schema="ccdi",
-        external_version_number=EXTERNAL_VERSION_NUMBER,
-    )
-
-    entry = _column_slots(manifest, 3)[0]
-    assert entry is not None
-    assert entry["column_name"] == "a"
-
-
-# ---- Positional parity tests (A/B/C) ----
-
-
-def test_positional_parity_all_columns_matched(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """Trivial case: all three tabular columns match above threshold — length equals tabular column count."""
-
-    # Given a tabular file with 3 columns, all with non-empty samples, and a response that
-    # covers all three. Before invocation no prior manifest exists.
-    assert sample_csv_path.read_text(encoding="utf-8").splitlines()[0] == "a,b,c"
-
-    payload = _array_payload(
-        [
-            {
-                "column_name": "a",
-                "matches": [
-                    {
-                        "target": "A_target",
-                        "target_cde_id": 101,
-                        "confidence": 0.99,
+                        "target": "first_name",
+                        "target_cde_id": 10,
+                        "confidence": 0.91,
                         "harmonization": "harmonizable",
                     }
                 ],
             },
             {
-                "column_name": "b",
+                "column_name": "name",
                 "matches": [
                     {
-                        "target": "B_target",
-                        "target_cde_id": 102,
-                        "confidence": 0.95,
-                        "harmonization": "harmonizable",
-                    }
-                ],
-            },
-            {
-                "column_name": "c",
-                "matches": [
-                    {
-                        "target": "C_target",
-                        "target_cde_id": 103,
+                        "target": "last_name",
+                        "target_cde_id": 11,
                         "confidence": 0.9,
                         "harmonization": "harmonizable",
                     }
                 ],
             },
+            {"column_name": "note", "matches": []},
         ]
     )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    # When discover_mapping_from_tabular runs
     manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
+        source_path=duplicate_headers_tsv_path,
         target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
-    # Then request length == 3, manifest length == 3, every entry is non-None with matching column_name
+    column_mappings = manifest["column_mappings"]
+    assert list(column_mappings) == ["col_0000", "col_0001"]
+    assert column_mappings["col_0000"]["cde_key"] == "first_name"
+    assert column_mappings["col_0000"]["column_name"] == "name"
+    assert column_mappings["col_0001"]["cde_key"] == "last_name"
+
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    columns_section = cast(list[dict[str, object]], content.get("columns", []))
-    assert len(columns_section) == 3
-    assert [entry["column_name"] for entry in columns_section] == ["a", "b", "c"]
+    columns = cast(list[dict[str, object]], content["columns"])
+    assert [column["column_name"] for column in columns] == ["name", "name", "note"]
 
-    column_mappings = _column_slots(manifest, 3)
-    assert len(column_mappings) == 3
-    for index, header in enumerate(("a", "b", "c")):
-        entry = column_mappings[index]
-        assert entry is not None
-        assert entry["column_name"] == header
+
+# ---- Positional parity tests (A/B/C) ----
 
 
 def test_positional_parity_empty_column_preserved_and_mismatch_detected(

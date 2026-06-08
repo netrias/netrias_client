@@ -64,7 +64,7 @@ def live_check() -> None:
     'why': exercise production endpoints without duplicating CLI plumbing
     """
 
-    _run_command_or_raise(("python", "-m", "netrias_client.live_test.test"))
+    _run_command_or_raise(("python", "-m", "netrias_client.live_test.api_quicktest"))
 
 
 def release(argv: Sequence[str] | None = None) -> None:

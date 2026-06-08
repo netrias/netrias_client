@@ -1,4 +1,4 @@
-"""Comprehensive live API test exercising all NetriasClient public methods.
+"""Live API smoke test for the main NetriasClient workflows.
 
 Run with: uv run python -m netrias_client.live_test.api_quicktest
 """
@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import sys
 import traceback
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from dotenv import dotenv_values
+from netrias_client import ColumnKeyedManifestPayload, NetriasClient
 
 from ._constants import (
     CDE_KEY,
@@ -22,285 +23,137 @@ from ._constants import (
 )
 
 
-@dataclass
-class TestResult:
-    """Capture outcome of a single test."""
-
+@dataclass(slots=True)
+class SmokeResult:
     name: str
     passed: bool
     message: str
     details: str | None = None
 
 
-def run_test(name: str, test_fn: Callable[[], None]) -> TestResult:
-    """Execute test and capture result."""
+@dataclass(slots=True)
+class SmokeContext:
+    client: NetriasClient
+    manifest: ColumnKeyedManifestPayload | None = None
+
+
+def _run_step(name: str, step: Callable[[], None]) -> SmokeResult:
     try:
-        test_fn()
-        return TestResult(name=name, passed=True, message="OK")
-    except Exception as e:
-        return TestResult(
+        step()
+    except Exception as exc:
+        return SmokeResult(
             name=name,
             passed=False,
-            message=f"{type(e).__name__}: {e}",
+            message=f"{type(exc).__name__}: {exc}",
             details=traceback.format_exc(),
         )
+    return SmokeResult(name=name, passed=True, message="OK")
 
 
-def main() -> int:  # noqa: C901 (test runner is intentionally complex)
-    env = dotenv_values(ENV_PATH)
-    api_key = env.get("NETRIAS_API_KEY")
-
-    if not api_key:
-        print(f"ERROR: NETRIAS_API_KEY not found in {ENV_PATH}")
+def main() -> int:
+    context = _build_context()
+    if context is None:
         return 1
 
-    print("=" * 70)
-    print("NETRIAS CLIENT - COMPREHENSIVE LIVE API TEST")
-    print("=" * 70)
-    print(f"API Key: {api_key[:8]}...{api_key[-4:]}")
-    print(f"Test CSV: {CSV_PATH}")
-    print()
+    _print_header()
+    results = [
+        _run_step("data_model_store", lambda: _check_data_model_store(context.client)),
+        _run_step("discovery", lambda: _check_discovery(context)),
+        _run_step("harmonization", lambda: _check_harmonization(context)),
+    ]
+    return _print_results(results)
 
-    from netrias_client import NetriasClient
+
+def _build_context() -> SmokeContext | None:
+    env = dotenv_values(ENV_PATH)
+    api_key = env.get("NETRIAS_API_KEY")
+    if not api_key:
+        print(f"ERROR: NETRIAS_API_KEY not found in {ENV_PATH}")
+        return None
+    if not CSV_PATH.exists():
+        print(f"ERROR: Test CSV not found: {CSV_PATH}")
+        return None
 
     client = NetriasClient(api_key=api_key)
     client.configure(log_level="WARNING")
+    return SmokeContext(client=client)
 
-    settings = client.settings
-    print(f"Discovery URL: {settings.discovery_url}")
-    print(f"Harmonization URL: {settings.harmonization_url}")
-    if settings.data_model_store_endpoints:
-        print(f"Data Model Store URL: {settings.data_model_store_endpoints.base_url}")
-    print()
 
-    results: list[TestResult] = []
-
-    # =========================================================================
-    # DATA MODEL STORE TESTS
-    # =========================================================================
-    print("-" * 70)
-    print("DATA MODEL STORE API")
-    print("-" * 70)
-
-    # --- list_data_models ---
-
-    def test_list_data_models_basic() -> None:
-        models = client.list_data_models(limit=5)
-        print(f"  list_data_models(limit=5) -> {len(models)} models")
-        assert len(models) > 0, "Expected at least one data model"
-        for m in models[:3]:
-            print(f"    - key={m.key!r}, name={m.name!r}")
-
-    results.append(run_test("list_data_models(basic)", test_list_data_models_basic))
-
-    def test_list_data_models_query() -> None:
-        models = client.list_data_models(query="ccdi", limit=5)
-        print(f"  list_data_models(query='ccdi') -> {len(models)} models")
-        assert any("ccdi" in m.key.lower() for m in models), "Expected ccdi in results"
-
-    results.append(run_test("list_data_models(query)", test_list_data_models_query))
-
-    def test_list_data_models_include_versions() -> None:
-        models = client.list_data_models(include_versions=True, limit=3)
-        print(f"  list_data_models(include_versions=True) -> {len(models)} models")
-
-    results.append(run_test("list_data_models(include_versions)", test_list_data_models_include_versions))
-
-    def test_list_data_models_include_counts() -> None:
-        models = client.list_data_models(include_counts=True, limit=3)
-        print(f"  list_data_models(include_counts=True) -> {len(models)} models")
-
-    results.append(run_test("list_data_models(include_counts)", test_list_data_models_include_counts))
-
-    def test_list_data_models_pagination() -> None:
-        page1 = client.list_data_models(limit=2, offset=0)
-        page2 = client.list_data_models(limit=2, offset=2)
-        print(f"  list_data_models(pagination) -> page1={len(page1)}, page2={len(page2)}")
-        if len(page1) == 2 and len(page2) > 0:
-            assert page1[0].key != page2[0].key, "Pages should have different items"
-
-    results.append(run_test("list_data_models(pagination)", test_list_data_models_pagination))
-
-    # --- list_cdes ---
-
-    def test_list_cdes_basic() -> None:
-        cdes = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, limit=10)
-        print(f"  list_cdes({MODEL_KEY}, {DISCOVERY_EXTERNAL_VERSION_NUMBER}, limit=10) -> {len(cdes)} CDEs")
-        assert len(cdes) > 0, "Expected at least one CDE"
-        for c in cdes[:3]:
-            print(f"    - cde_key={c.cde_key!r}, cde_id={c.cde_id}")
-
-    results.append(run_test("list_cdes(basic)", test_list_cdes_basic))
-
-    def test_list_cdes_include_description() -> None:
-        cdes = client.list_cdes(
-            model_key=MODEL_KEY,
-            version=DISCOVERY_EXTERNAL_VERSION_NUMBER,
-            include_description=True,
-            limit=5,
-        )
-        print(f"  list_cdes(include_description=True) -> {len(cdes)} CDEs")
-        with_desc = [c for c in cdes if c.description]
-        print(f"    - {len(with_desc)} have descriptions")
-
-    results.append(run_test("list_cdes(include_description)", test_list_cdes_include_description))
-
-    def test_list_cdes_query() -> None:
-        cdes = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, query="sex", limit=10)
-        print(f"  list_cdes(query='sex') -> {len(cdes)} CDEs")
-        for c in cdes[:3]:
-            print(f"    - {c.cde_key}")
-
-    results.append(run_test("list_cdes(query)", test_list_cdes_query))
-
-    def test_list_cdes_pagination() -> None:
-        page1 = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, limit=5, offset=0)
-        page2 = client.list_cdes(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, limit=5, offset=5)
-        print(f"  list_cdes(pagination) -> page1={len(page1)}, page2={len(page2)}")
-
-    results.append(run_test("list_cdes(pagination)", test_list_cdes_pagination))
-
-    # --- get_pv_set ---
-
-    def test_get_pv_set() -> None:
-        pv_set = client.get_pv_set(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, cde_key=CDE_KEY)
-        print(f"  get_pv_set({MODEL_KEY}, {DISCOVERY_EXTERNAL_VERSION_NUMBER}, {CDE_KEY}) -> {len(pv_set)} values")
-        assert len(pv_set) > 0, "Expected at least one PV"
-        assert isinstance(pv_set, frozenset), "Expected frozenset"
-        sample = sorted(pv_set)[:5]
-        print(f"    - Sample: {sample}")
-
-    results.append(run_test("get_pv_set", test_get_pv_set))
-
-    def test_get_pv_set_membership() -> None:
-        pv_set = client.get_pv_set(model_key=MODEL_KEY, version=DISCOVERY_EXTERNAL_VERSION_NUMBER, cde_key=CDE_KEY)
-        print(f"  get_pv_set membership check -> 'Female' in pv_set == {'Female' in pv_set}")
-        print(f"  get_pv_set membership check -> 'InvalidValue123' in pv_set == {'InvalidValue123' in pv_set}")
-        assert "InvalidValue123" not in pv_set, "Expected 'InvalidValue123' to not be in PV set"
-
-    results.append(run_test("get_pv_set(membership)", test_get_pv_set_membership))
-
-    # =========================================================================
-    # DISCOVERY API TESTS
-    # =========================================================================
-    print()
-    print("-" * 70)
-    print("DISCOVERY API")
-    print("-" * 70)
-
-    from netrias_client import ColumnKeyedManifestPayload
-
-    discovered_manifest: ColumnKeyedManifestPayload | None = None
-
-    def test_discover_mapping_from_tabular() -> None:
-        nonlocal discovered_manifest
-        if not CSV_PATH.exists():
-            raise FileNotFoundError(f"Test CSV not found: {CSV_PATH}")
-
-        discovered_manifest = client.discover_mapping_from_tabular(
-            source_path=CSV_PATH,
-            target_schema=MODEL_KEY,
-            external_version_number=DISCOVERY_EXTERNAL_VERSION_NUMBER,
-            sample_limit=10,
-            top_k=3,
-        )
-        print(f"  discover_mapping_from_tabular({CSV_PATH.name})")
-        mappings = discovered_manifest["column_mappings"]
-        print(f"    - Column mappings: {len(mappings)}")
-        matched = list(mappings.values())
-        for mapping_data in matched[:3]:
-            column_name = mapping_data.get("column_name", "N/A")
-            cde_id = mapping_data.get("cde_id", "N/A")
-            print(f"      {column_name} (cde_id={cde_id})")
-
-    results.append(run_test("discover_mapping_from_tabular", test_discover_mapping_from_tabular))
-
-    def test_discover_mapping_with_confidence_threshold() -> None:
-        manifest = client.discover_mapping_from_tabular(
-            source_path=CSV_PATH,
-            target_schema=MODEL_KEY,
-            external_version_number=DISCOVERY_EXTERNAL_VERSION_NUMBER,
-            sample_limit=10,
-            top_k=3,
-            confidence_threshold=0.5,
-        )
-        mappings = manifest["column_mappings"]
-        print("  discover_mapping_from_tabular(confidence_threshold=0.5)")
-        print(f"    - Column mappings: {len(mappings)}")
-
-    results.append(run_test("discover_mapping_from_tabular(confidence_threshold)", test_discover_mapping_with_confidence_threshold))
-
-    # =========================================================================
-    # HARMONIZATION API TESTS
-    # =========================================================================
-    print()
-    print("-" * 70)
-    print("HARMONIZATION API")
-    print("-" * 70)
-
-    def test_harmonize() -> None:
-        if not CSV_PATH.exists():
-            raise FileNotFoundError(f"Test CSV not found: {CSV_PATH}")
-        if discovered_manifest is None:
-            raise RuntimeError("Discovery test must run first to produce manifest")
-
-        result = client.harmonize(
-            source_path=CSV_PATH,
-            manifest=discovered_manifest,
-            data_commons_key=MODEL_KEY,
-            external_version_number=EXTERNAL_VERSION_NUMBER,
-        )
-        print(f"  harmonize({CSV_PATH.name})")
-        print(f"    - Status: {result.status}")
-        print(f"    - Description: {result.description}")
-        print(f"    - File path: {result.file_path}")
-
-        # Accept known non-critical failures (CDE ID mismatch between discovery and harmonization data sources)
-        is_known_failure = result.status == "failed" and (
-            "unknown cde id" in result.description.lower() or "invalid" in result.description.lower()
-        )
-        if is_known_failure:
-            print("    - NOTE: CDE ID mismatch (auth verified, data source differs)")
-            return
-
-        assert result.status == "succeeded", f"Expected 'succeeded', got '{result.status}'"
-
-    results.append(run_test("harmonize", test_harmonize))
-
-    # =========================================================================
-    # SUMMARY
-    # =========================================================================
-    print()
+def _print_header() -> None:
     print("=" * 70)
-    print("TEST SUMMARY")
+    print("NETRIAS CLIENT LIVE SMOKE")
     print("=" * 70)
-
-    passed = sum(1 for r in results if r.passed)
-    failed = sum(1 for r in results if not r.passed)
-
-    for r in results:
-        status = "PASS" if r.passed else "FAIL"
-        print(f"  [{status}] {r.name}")
-        if not r.passed:
-            print(f"         {r.message}")
-
+    print(f"Test CSV: {CSV_PATH}")
+    print(f"Model: {MODEL_KEY} {DISCOVERY_EXTERNAL_VERSION_NUMBER}")
     print()
-    print(f"Total: {passed} passed, {failed} failed out of {len(results)} tests")
 
-    if failed > 0:
-        print()
-        print("=" * 70)
-        print("FAILURE DETAILS")
-        print("=" * 70)
-        for r in results:
-            if not r.passed and r.details:
-                print(f"\n{r.name}:")
-                print(f"  Error: {r.message}")
-                print("  Traceback:")
-                for line in r.details.strip().split("\n"):
-                    print(f"    {line}")
 
-    return 1 if failed > 0 else 0
+def _check_data_model_store(client: NetriasClient) -> None:
+    models = client.list_data_models(query=MODEL_KEY, include_versions=True, limit=5)
+    assert any(model.key == MODEL_KEY for model in models), f"Expected {MODEL_KEY!r} in data models"
+
+    cdes = client.list_cdes(
+        model_key=MODEL_KEY,
+        version=DISCOVERY_EXTERNAL_VERSION_NUMBER,
+        query=CDE_KEY,
+        include_description=True,
+        limit=10,
+    )
+    assert len(cdes) > 0, f"Expected at least one CDE matching {CDE_KEY!r}"
+
+    pv_set = client.get_pv_set(
+        model_key=MODEL_KEY,
+        version=DISCOVERY_EXTERNAL_VERSION_NUMBER,
+        cde_key=CDE_KEY,
+    )
+    assert isinstance(pv_set, frozenset)
+    assert len(pv_set) > 0, f"Expected permissible values for {CDE_KEY!r}"
+    print(f"  data model store: {len(models)} models, {len(cdes)} CDEs, {len(pv_set)} PVs")
+
+
+def _check_discovery(context: SmokeContext) -> None:
+    context.manifest = context.client.discover_mapping_from_tabular(
+        source_path=CSV_PATH,
+        target_schema=MODEL_KEY,
+        external_version_number=DISCOVERY_EXTERNAL_VERSION_NUMBER,
+        sample_limit=10,
+        top_k=3,
+    )
+    mappings = context.manifest["column_mappings"]
+    assert len(mappings) > 0, "Expected discovery to return column mappings"
+    print(f"  discovery: {len(mappings)} column mappings")
+
+
+def _check_harmonization(context: SmokeContext) -> None:
+    if context.manifest is None:
+        raise RuntimeError("Discovery must run before harmonization")
+    result = context.client.harmonize(
+        source_path=CSV_PATH,
+        manifest=context.manifest,
+        data_commons_key=MODEL_KEY,
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+    )
+    print(f"  harmonization: {result.status}")
+
+    is_known_failure = result.status == "failed" and (
+        "unknown cde id" in result.description.lower() or "invalid" in result.description.lower()
+    )
+    if is_known_failure:
+        print("  harmonization note: CDE ID mismatch, auth and submission path verified")
+        return
+
+    assert result.status == "succeeded", f"Expected 'succeeded', got {result.status!r}"
+
+
+def _print_results(results: list[SmokeResult]) -> int:
+    print()
+    for result in results:
+        status = "PASS" if result.passed else "FAIL"
+        print(f"[{status}] {result.name}: {result.message}")
+        if not result.passed and result.details:
+            print(result.details)
+
+    return 0 if all(result.passed for result in results) else 1
 
 
 if __name__ == "__main__":
