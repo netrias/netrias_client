@@ -4,7 +4,10 @@
 """
 from __future__ import annotations
 
+import base64
+import io
 import json
+import logging
 from pathlib import Path
 from typing import cast
 
@@ -13,6 +16,9 @@ import pytest
 
 from netrias_client import ColumnKeyedManifestPayload, ColumnMappingRecord, NetriasClient, column_key_for_index
 from netrias_client._errors import MappingDiscoveryError, MappingValidationError, NetriasAPIUnavailable
+from netrias_client._gateway_bypass import invoke_cde_recommendation_alias
+from netrias_client._models import ColumnSamples
+from netrias_client._sfn_discovery import discover_via_step_functions
 
 from ._utils import EXTERNAL_VERSION_NUMBER, install_mock_transport, json_failure, json_success, transport_error
 
@@ -36,6 +42,33 @@ def _recorded_payload(recorded: dict[str, object]) -> dict[str, object]:
 def _column_slots(manifest: ColumnKeyedManifestPayload, column_count: int) -> list[ColumnMappingRecord | None]:
     mappings = manifest["column_mappings"]
     return [mappings.get(column_key_for_index(index)) for index in range(column_count)]
+
+
+class _RecordingLambdaClient:
+    def __init__(self) -> None:
+        self.payload: bytes | None = None
+
+    def invoke(
+        self,
+        FunctionName: str,
+        Payload: bytes,
+        Qualifier: str = "",
+    ) -> dict[str, object]:
+        _ = (FunctionName, Qualifier)
+        self.payload = Payload
+        body = json.dumps({"results": []})
+        return {"StatusCode": 200, "Payload": io.BytesIO(json.dumps({"statusCode": 200, "body": body}).encode("utf-8"))}
+
+
+class _SuccessfulStepFunctionsClient:
+    def describe_execution(self, executionArn: str) -> dict[str, object]:
+        assert executionArn == "arn:aws:states:us-east-2:123:execution:machine:run"
+        body = json.dumps({"results": []})
+        return {"status": "SUCCEEDED", "output": json.dumps({"statusCode": 200, "body": body})}
+
+
+def _sample_columns() -> list[ColumnSamples]:
+    return [{"column_name": "diagnosis", "values": ["glioma"]}]
 
 
 def test_discover_mapping_from_tabular_success(
@@ -93,6 +126,103 @@ def test_discover_mapping_from_tabular_success(
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     assert content.get("target_schema") == "ccdi"
     assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
+
+
+def test_gateway_bypass_lambda_proxy_body_preserves_discovery_request(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Lambda bypass emits the public discovery request inside the proxy body."""
+
+    # Given: the gateway-bypass path is configured with a recording Lambda client
+    lambda_client = _RecordingLambdaClient()
+
+    def build_lambda_client(
+        region_name: str,
+        profile_name: str | None,
+        timeout_seconds: float | None,
+    ) -> _RecordingLambdaClient:
+        _ = (region_name, profile_name, timeout_seconds)
+        return lambda_client
+
+    monkeypatch.setattr("netrias_client._gateway_bypass._build_lambda_client", build_lambda_client)
+    columns = _sample_columns()
+
+    # When: discovery invokes the Lambda alias directly
+    _ = invoke_cde_recommendation_alias(
+        target_schema="gc",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        columns=columns,
+        top_k=5,
+    )
+
+    # Then: the Lambda proxy event body carries the current public request contract
+    assert lambda_client.payload is not None
+    event = cast(dict[str, object], json.loads(lambda_client.payload.decode("utf-8")))
+    body = event.get("body")
+    assert isinstance(body, str)
+    content = cast(dict[str, object], json.loads(body))
+    assert content.get("target_schema") == "gc"
+    assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
+    assert content.get("columns") == columns
+    assert content.get("top_k") == 5
+
+
+def test_step_functions_encoded_payload_preserves_discovery_request(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Step Functions discovery wraps the public request without changing its fields."""
+
+    # Given: the async discovery path receives a successful execution ARN response
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            200,
+            json={"executionArn": "arn:aws:states:us-east-2:123:execution:machine:run"},
+            request=request,
+        )
+
+    class PatchedClient(httpx.Client):
+        def __init__(self, **kwargs: object) -> None:  # type: ignore[override]
+            kwdict: dict[str, object] = dict(kwargs)
+            kwdict["transport"] = httpx.MockTransport(handler)
+            super().__init__(**kwdict)  # pyright: ignore[reportArgumentType]
+
+    monkeypatch.setattr("netrias_client._sfn_discovery.httpx.Client", PatchedClient)
+    columns = _sample_columns()
+
+    def boto_client(service_name: str, *, region_name: str) -> _SuccessfulStepFunctionsClient:
+        assert service_name == "stepfunctions"
+        assert region_name == "us-east-2"
+        return _SuccessfulStepFunctionsClient()
+
+    monkeypatch.setattr("netrias_client._sfn_discovery.boto3.client", boto_client)
+
+    # When: discovery runs through the Step Functions-backed transport
+    result = discover_via_step_functions(
+        api_url="https://example.test",
+        target_schema="gc",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        columns=columns,
+        timeout=5,
+        logger=logging.getLogger("netrias_client.tests"),
+        top_k=5,
+        api_key="test-api-key",
+    )
+
+    # Then: the posted wrapper decodes to the current public request contract
+    assert result == {"results": []}
+    assert len(requests) == 1
+    request = requests[0]
+    wrapper = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
+    encoded_payload = wrapper.get("encoded_payload")
+    assert isinstance(encoded_payload, str)
+    content = cast(dict[str, object], json.loads(base64.b64decode(encoded_payload).decode("utf-8")))
+    assert content.get("target_schema") == "gc"
+    assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
+    assert content.get("columns") == columns
+    assert content.get("top_k") == 5
 
 
 def test_discover_mapping_from_tabular_handles_api_error(
