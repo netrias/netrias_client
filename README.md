@@ -107,7 +107,7 @@ For General Commons v2, use:
 | Purpose | Value |
 |---|---|
 | Discovery schema | `target_schema="gc"` |
-| Discovery version | `target_version="2"` |
+| Discovery external version number | `external_version_number="11.0.4"` |
 | Harmonization data commons key | `data_commons_key="gc"` |
 | Harmonization external version number | `external_version_number="11.0.4"` |
 
@@ -131,7 +131,7 @@ source_path = Path("cds_submission_10col.csv")
 manifest = client.discover_mapping_from_tabular(
     source_path=source_path,
     target_schema="gc",
-    target_version="2",
+    external_version_number="11.0.4",
     sample_limit=25,
     top_k=3,
     confidence_threshold=None,
@@ -358,23 +358,23 @@ uv sync
 
 ## Concepts
 
-### Discovery version vs. harmonization version
+### External version number
 
-The client uses two different version concepts:
-- **Note: These are in the process of being unified.**
+Discovery and harmonization both use the external Data Model Store version number.
+For General Commons, use the same concrete value with the discovery schema and
+the harmonization data commons key:
 
 | Field | Used by | Example | Meaning |
 |---|---|---|---|
-| `target_version` | `discover_mapping_from_tabular()` | `"2"` | Discovery schema version used for CDE recommendation |
+| `external_version_number` | `discover_mapping_from_tabular()` | `"11.0.4"` | External data-model version number used for CDE recommendation |
 | `external_version_number` | `harmonize()` | `"11.0.4"` | External data-model version number used by harmonization |
 
 For General Commons v2:
 
 ```python
 target_schema = "gc"
-target_version = "2"
-data_commons_key = "gc"
 external_version_number = "11.0.4"
+data_commons_key = "gc"
 ```
 
 ### Data commons key casing
@@ -500,8 +500,8 @@ from pathlib import Path
 manifest = client.discover_mapping_from_tabular(
     source_path=Path("cds_submission_10col.xlsx"),
     target_schema="gc",
-    target_version="2",
-        sample_limit=25,
+    external_version_number="11.0.4",
+    sample_limit=25,
     top_k=3,
     confidence_threshold=0.8,
 )
@@ -511,7 +511,7 @@ manifest = client.discover_mapping_from_tabular(
 |---|---|---|---|
 | `source_path` | `Path` | - | Required. Path to a supported tabular file: CSV, TSV, or XLSX. |
 | `target_schema` | `str` | - | Required. Target schema key, such as `"gc"`. |
-| `target_version` | `str` | - | Required. Concrete discovery schema version. Do not use `"latest"`. |
+| `external_version_number` | `str` | - | Required. Concrete external data-model version number, such as `"11.0.4"`. Do not use `"latest"`. |
 | `sheet_name` | `str \| None` | `None` | Worksheet to read for XLSX input. Defaults to the first sheet. |
 | `sample_limit` | `int` | `25` | Maximum rows to sample for discovery. |
 | `top_k` | `int` | `3` | Number of top recommendations to return per column. |
@@ -717,7 +717,7 @@ async def process_file():
     manifest = await client.discover_mapping_from_tabular_async(
         source_path=Path("cds_submission_10col.csv"),
         target_schema="gc",
-        target_version="2",
+        external_version_number="11.0.4",
     )
 
     result = await client.harmonize_async(

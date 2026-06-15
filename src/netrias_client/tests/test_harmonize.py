@@ -11,12 +11,28 @@ from typing import cast
 
 import httpx
 import pytest
+from openpyxl import Workbook, load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
-from netrias_client import NetriasClient
+from netrias_client import ColumnKeyedManifestPayload, NetriasClient
 from netrias_client._errors import NetriasAPIUnavailable
 from netrias_client._models import HarmonizationResult
 
 from ._utils import EXTERNAL_VERSION_NUMBER, install_mock_transport, job_success, json_failure, transport_error
+
+
+def _active_sheet(workbook: Workbook) -> Worksheet:
+    return cast(Worksheet, workbook.active)
+
+
+def _create_sheet(workbook: Workbook, title: str) -> Worksheet:
+    return cast(Worksheet, workbook.create_sheet(title))
+
+
+def _workbook_cell_value(path: Path, sheet_name: str, cell: str) -> object:
+    workbook = load_workbook(path, data_only=True)
+    sheet = cast(Worksheet, workbook[sheet_name])
+    return cast(object, sheet[cell].value)
 
 
 def test_harmonize_streaming_success(
@@ -161,6 +177,117 @@ def test_harmonize_accepts_manifest_mapping(
     assert result.status == "succeeded"
     assert result.file_path == expected_output
     assert expected_output.exists()
+
+
+def test_harmonize_tsv_writes_tsv_output(
+    configured_client: NetriasClient,
+    output_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    sample_tsv_path: Path,
+) -> None:
+    """TSV input produces TSV output while the remote CSV stream is converted."""
+
+    # Given: a TSV source, a column-keyed manifest, and a remote CSV result stream
+    manifest: ColumnKeyedManifestPayload = {
+        "column_mappings": {
+            "col_0000": {
+                "column_name": "name",
+                "cde_key": "first_name",
+                "cde_id": 10,
+                "harmonization": "harmonizable",
+                "alternatives": [],
+            }
+        }
+    }
+    capture = job_success(chunks=(b'name,note\nAlice,"keeps, comma"\n',))
+    install_mock_transport(monkeypatch, capture)
+    expected = output_directory / "sample.harmonized.tsv"
+    assert not expected.exists()
+    assert capture.requests == []
+
+    # When: the user harmonizes the TSV file
+    result = configured_client.harmonize(
+        source_path=sample_tsv_path,
+        manifest=manifest,
+        data_commons_key="ccdi",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        output_path=output_directory,
+    )
+
+    # Then: the SDK writes a TSV output and preserves comma-containing values as one cell
+    assert result.file_path == expected
+    assert expected.read_text(encoding="utf-8") == "name\tnote\nAlice\tkeeps, comma\n"
+
+    # And: the submit payload uses the tabular document and manifest the backend consumes
+    submit_request = capture.requests[0]
+    envelope = _decode_submit_body(submit_request)
+    document = cast(dict[str, object], envelope["document"])
+    assert document["header"] == ["name", "note"]
+    assert document["rows"] == [["Alice", "keeps, comma"]]
+    column_mappings = cast(list[dict[str, object]], envelope["column_mappings"])
+    assert column_mappings[0]["cde_key"] == "first_name"
+
+
+def test_harmonize_xlsx_writes_xlsx_output_for_selected_sheet(
+    configured_client: NetriasClient,
+    output_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """XLSX input produces XLSX output while updating only the selected worksheet."""
+
+    # Given: a workbook with one untouched sheet and one selected patient sheet
+    source = tmp_path / "patients.xlsx"
+    workbook = Workbook()
+    keep = _active_sheet(workbook)
+    keep.title = "Keep"
+    keep.append(["status"])
+    keep.append(["unchanged"])
+    patients = _create_sheet(workbook, "Patients")
+    patients.append(["name", "note"])
+    patients.append(["Alice", "old"])
+    workbook.save(source)
+
+    manifest: ColumnKeyedManifestPayload = {
+        "column_mappings": {
+            "col_0000": {
+                "column_name": "name",
+                "cde_key": "first_name",
+                "cde_id": 10,
+                "harmonization": "harmonizable",
+                "alternatives": [],
+            }
+        }
+    }
+    expected = output_directory / "patients.harmonized.xlsx"
+    capture = job_success(chunks=(b"name,note\nAlice,updated\n",))
+    install_mock_transport(monkeypatch, capture)
+    assert not expected.exists()
+    assert capture.requests == []
+
+    # When: the user harmonizes only the selected worksheet
+    result = configured_client.harmonize(
+        source_path=source,
+        manifest=manifest,
+        data_commons_key="ccdi",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        output_path=output_directory,
+        sheet_name="Patients",
+    )
+
+    # Then: the output workbook keeps the untouched sheet and updates the selected one
+    assert result.file_path == expected
+    output_workbook = load_workbook(expected, data_only=True)
+    assert output_workbook.sheetnames == ["Keep", "Patients"]
+    assert _workbook_cell_value(expected, "Keep", "A2") == "unchanged"
+    assert _workbook_cell_value(expected, "Patients", "B2") == "updated"
+
+    # And: the backend submission names the selected sheet and original row values
+    submit_request = capture.requests[0]
+    envelope = _decode_submit_body(submit_request)
+    document = cast(dict[str, object], envelope["document"])
+    assert document["sheetName"] == "Patients"
+    assert document["rows"] == [["Alice", "old"]]
 
 
 def test_harmonize_writes_manifest_when_requested(

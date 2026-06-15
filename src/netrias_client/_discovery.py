@@ -41,13 +41,13 @@ from ._models import (
 )
 from ._sfn_discovery import discover_via_step_functions
 from ._tabular import TabularDataset, read_tabular
-from ._validators import validate_source_path, validate_target_schema, validate_target_version, validate_top_k
+from ._validators import validate_external_version_number, validate_source_path, validate_target_schema, validate_top_k
 
 
 async def _discover_mapping_async(
     settings: Settings,
     target_schema: str,
-    target_version: str,
+    external_version_number: str,
     columns: list[ColumnSamples],
     logger: logging.Logger,
     top_k: int | None = None,
@@ -56,17 +56,28 @@ async def _discover_mapping_async(
     """Perform mapping discovery via the recommendation endpoint."""
 
     schema = validate_target_schema(target_schema)
-    version = validate_target_version(target_version)
+    validated_external_version_number = validate_external_version_number(external_version_number)
     validated_top_k = validate_top_k(top_k)
     threshold = validated_confidence_threshold(confidence_threshold)
     column_count = len(columns)
     started = time.perf_counter()
-    logger.info("discover mapping start: schema=%s version=%s columns=%s", schema, version, column_count)
+    logger.info(
+        "discover mapping start: schema=%s external_version_number=%s columns=%s",
+        schema,
+        validated_external_version_number,
+        column_count,
+    )
 
     outbound_names = tuple(column["column_name"] for column in columns)
     try:
         result = await _discover_with_backend(
-            settings, schema, version, columns, outbound_names, logger, validated_top_k
+            settings,
+            schema,
+            validated_external_version_number,
+            columns,
+            outbound_names,
+            logger,
+            validated_top_k,
         )
     except (httpx.TimeoutException, httpx.HTTPError, GatewayBypassError, AsyncDiscoveryError) as exc:
         _handle_discovery_error(schema, started, exc, logger)
@@ -79,9 +90,9 @@ async def _discover_mapping_async(
     )
     elapsed = time.perf_counter() - started
     logger.info(
-        "discover mapping complete: schema=%s version=%s columns=%s duration=%.2fs",
+        "discover mapping complete: schema=%s external_version_number=%s columns=%s duration=%.2fs",
         schema,
-        version,
+        validated_external_version_number,
         len(manifest["column_mappings"]),
         elapsed,
     )
@@ -92,7 +103,7 @@ async def discover_mapping_from_tabular_async(
     settings: Settings,
     source_path: Path,
     target_schema: str,
-    target_version: str,
+    external_version_number: str,
     sample_limit: int,
     logger: logging.Logger,
     top_k: int | None = None,
@@ -107,7 +118,7 @@ async def discover_mapping_from_tabular_async(
     positional_manifest = await _discover_mapping_async(
         settings=settings,
         target_schema=target_schema,
-        target_version=target_version,
+        external_version_number=external_version_number,
         columns=columns,
         logger=logger,
         top_k=top_k,
@@ -119,7 +130,7 @@ async def discover_mapping_from_tabular_async(
 async def _discover_with_backend(
     settings: Settings,
     schema: str,
-    version: str,
+    external_version_number: str,
     columns: list[ColumnSamples],
     outbound_names: tuple[str, ...],
     logger: logging.Logger,
@@ -132,7 +143,7 @@ async def _discover_with_backend(
             discover_via_step_functions,
             api_url=ASYNC_API_URL,
             target_schema=schema,
-            target_version=version,
+            external_version_number=external_version_number,
             columns=columns,
             timeout=settings.timeout,
             logger=logger,
@@ -147,7 +158,7 @@ async def _discover_with_backend(
         payload = await asyncio.to_thread(
             invoke_cde_recommendation_alias,
             target_schema=schema,
-            target_version=version,
+            external_version_number=external_version_number,
             columns=columns,
             function_name=BYPASS_FUNCTION,
             alias=BYPASS_ALIAS,
@@ -164,7 +175,7 @@ async def _discover_with_backend(
         api_key=settings.api_key,
         timeout=settings.timeout,
         schema=schema,
-        version=version,
+        external_version_number=external_version_number,
         columns=columns,
         top_k=top_k,
     )

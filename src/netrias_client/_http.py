@@ -109,7 +109,7 @@ async def request_mapping_discovery(
     api_key: str,
     timeout: float,
     schema: str,
-    version: str,
+    external_version_number: str,
     columns: list[ColumnSamples],
     top_k: int | None = None,
 ) -> httpx.Response:
@@ -122,7 +122,7 @@ async def request_mapping_discovery(
     }
     body: dict[str, object] = {
         "target_schema": schema,
-        "target_version": version,
+        "external_version_number": external_version_number,
         "columns": columns,
     }
     if top_k is not None:

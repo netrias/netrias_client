@@ -13,7 +13,7 @@ Introduce a `NetriasClient` class that encapsulates configuration state and expo
 - `configure(api_key=..., ...)` is the only configuration entry point; discovery and harmonization URLs are fixed internally (`https://api.netriasbdf.cloud` and `https://tbdxz7nffi.execute-api.us-east-2.amazonaws.com`). Gateway bypass defaults to `True`.
 - Discovery helpers (`discover_mapping*`) now return manifest payloads (`{"column_mappings": {...}}`), not the raw `MappingDiscoveryResult` dataclass. `_adapter` is an internal detail.
 - `harmonize`/`harmonize_async` accept either a manifest mapping or a `Path`, with optional `manifest_output_path` to persist the JSON.
-- Live harness resides under `netrias_client/live_test/` and is runnable via `uv run python -m netrias_client.live_test.test` (expects `.env` with credentials).
+- Live harness resides under `netrias_client/live_test/` and is runnable via `uv run python -m netrias_client.live_test.api_quicktest` (expects `.env` with credentials).
 - Tests expect the single-key flow (bypass is disabled in fixtures) and assert that manifests already contain the resolved `column_mappings` structure.
 - Logging, timeout configuration, and gateway bypass options remain centralized in `_config`; settings now also capture per-client log level and optional log directory paths.
 
@@ -68,7 +68,7 @@ Introduce a `NetriasClient` class that encapsulates configuration state and expo
 ## Additional Notes
 - Discovery API unit tests currently simulate HTTP responses via `json_success`; ensure the new return type expectations (manifest dict) remain aligned when refactoring internals.
 - Harmonization tests rely on the `job_success` helper to emulate submit/poll/download; the client refactor must continue to allow injection of custom transports for these scenarios.
-- Keep the CLI workflows (`uv run test`, `uv run python -m netrias_client.live_test.test`) working throughout the refactor so developer experience remains stable.
+- Keep the CLI workflows (`uv run test`, `uv run python -m netrias_client.live_test.api_quicktest`) working throughout the refactor so developer experience remains stable.
 - Watch for logging semantics: the current logger is module-global; if moving to per-client logging, update tests that assert on log content.
 
 ## Pros

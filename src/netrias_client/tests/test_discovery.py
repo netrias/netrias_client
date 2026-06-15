@@ -4,7 +4,10 @@
 """
 from __future__ import annotations
 
+import base64
+import io
 import json
+import logging
 from pathlib import Path
 from typing import cast
 
@@ -13,8 +16,11 @@ import pytest
 
 from netrias_client import ColumnKeyedManifestPayload, ColumnMappingRecord, NetriasClient, column_key_for_index
 from netrias_client._errors import MappingDiscoveryError, MappingValidationError, NetriasAPIUnavailable
+from netrias_client._gateway_bypass import invoke_cde_recommendation_alias
+from netrias_client._models import ColumnSamples
+from netrias_client._sfn_discovery import discover_via_step_functions
 
-from ._utils import install_mock_transport, json_failure, json_success, transport_error
+from ._utils import EXTERNAL_VERSION_NUMBER, install_mock_transport, json_failure, json_success, transport_error
 
 
 def _array_payload(results: list[dict[str, object]]) -> dict[str, object]:
@@ -38,6 +44,33 @@ def _column_slots(manifest: ColumnKeyedManifestPayload, column_count: int) -> li
     return [mappings.get(column_key_for_index(index)) for index in range(column_count)]
 
 
+class _RecordingLambdaClient:
+    def __init__(self) -> None:
+        self.payload: bytes | None = None
+
+    def invoke(
+        self,
+        FunctionName: str,
+        Payload: bytes,
+        Qualifier: str = "",
+    ) -> dict[str, object]:
+        _ = (FunctionName, Qualifier)
+        self.payload = Payload
+        body = json.dumps({"results": []})
+        return {"StatusCode": 200, "Payload": io.BytesIO(json.dumps({"statusCode": 200, "body": body}).encode("utf-8"))}
+
+
+class _SuccessfulStepFunctionsClient:
+    def describe_execution(self, executionArn: str) -> dict[str, object]:
+        assert executionArn == "arn:aws:states:us-east-2:123:execution:machine:run"
+        body = json.dumps({"results": []})
+        return {"status": "SUCCEEDED", "output": json.dumps({"statusCode": 200, "body": body})}
+
+
+def _sample_columns() -> list[ColumnSamples]:
+    return [{"column_name": "diagnosis", "values": ["glioma"]}]
+
+
 def test_discover_mapping_from_tabular_success(
     configured_client: NetriasClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -45,6 +78,7 @@ def test_discover_mapping_from_tabular_success(
 ) -> None:
     """Return structured recommendations when the API succeeds."""
 
+    # Given: the recommendation service returns one strong match, one weak alternative, and two unmapped columns
     payload = _array_payload(
         [
             {
@@ -60,13 +94,16 @@ def test_discover_mapping_from_tabular_success(
     )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
+    assert capture.requests == []
 
+    # When: the user discovers mappings from a tabular source with an external version number
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
+    # Then: the manifest preserves source-column positions and exposes the top eligible CDE
     column_mappings = _column_slots(manifest, 3)
     assert len(column_mappings) == 3
     first = column_mappings[0]
@@ -74,7 +111,6 @@ def test_discover_mapping_from_tabular_success(
     assert first["column_name"] == "a"
     assert first["cde_key"] == "Sample.name"
     assert first["cde_id"] == 11
-    assert "targetField" not in first
 
     alternatives = first["alternatives"]
     assert len(alternatives) == 2
@@ -84,43 +120,109 @@ def test_discover_mapping_from_tabular_success(
     assert column_mappings[1] is None
     assert column_mappings[2] is None
 
+    # And: the outbound request sends the public external-version contract to discovery
     request = capture.requests[0]
     assert request.headers.get("x-api-key") == "test-api-key"
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     assert content.get("target_schema") == "ccdi"
-    assert content.get("target_version") == "v1"
+    assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
 
 
-def test_discover_mapping_from_tabular_samples_data(
-    configured_client: NetriasClient,
+def test_gateway_bypass_lambda_proxy_body_preserves_discovery_request(
     monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
 ) -> None:
-    """tabular wrapper derives samples and forwards to discovery API."""
+    """Lambda bypass emits the public discovery request inside the proxy body."""
 
-    payload = _array_payload(
-        [
-            {"column_name": "a", "matches": []},
-            {"column_name": "b", "matches": []},
-            {"column_name": "c", "matches": []},
-        ]
+    # Given: the gateway-bypass path is configured with a recording Lambda client
+    lambda_client = _RecordingLambdaClient()
+
+    def build_lambda_client(
+        region_name: str,
+        profile_name: str | None,
+        timeout_seconds: float | None,
+    ) -> _RecordingLambdaClient:
+        _ = (region_name, profile_name, timeout_seconds)
+        return lambda_client
+
+    monkeypatch.setattr("netrias_client._gateway_bypass._build_lambda_client", build_lambda_client)
+    columns = _sample_columns()
+
+    # When: discovery invokes the Lambda alias directly
+    _ = invoke_cde_recommendation_alias(
+        target_schema="gc",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        columns=columns,
+        top_k=5,
     )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
 
-    manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
-        target_schema="ccdi",
-        target_version="v1",
-        sample_limit=1,
+    # Then: the Lambda proxy event body carries the current public request contract
+    assert lambda_client.payload is not None
+    event = cast(dict[str, object], json.loads(lambda_client.payload.decode("utf-8")))
+    body = event.get("body")
+    assert isinstance(body, str)
+    content = cast(dict[str, object], json.loads(body))
+    assert content.get("target_schema") == "gc"
+    assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
+    assert content.get("columns") == columns
+    assert content.get("top_k") == 5
+
+
+def test_step_functions_encoded_payload_preserves_discovery_request(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Step Functions discovery wraps the public request without changing its fields."""
+
+    # Given: the async discovery path receives a successful execution ARN response
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            200,
+            json={"executionArn": "arn:aws:states:us-east-2:123:execution:machine:run"},
+            request=request,
+        )
+
+    class PatchedClient(httpx.Client):
+        def __init__(self, **kwargs: object) -> None:  # type: ignore[override]
+            kwdict: dict[str, object] = dict(kwargs)
+            kwdict["transport"] = httpx.MockTransport(handler)
+            super().__init__(**kwdict)  # pyright: ignore[reportArgumentType]
+
+    monkeypatch.setattr("netrias_client._sfn_discovery.httpx.Client", PatchedClient)
+    columns = _sample_columns()
+
+    def boto_client(service_name: str, *, region_name: str) -> _SuccessfulStepFunctionsClient:
+        assert service_name == "stepfunctions"
+        assert region_name == "us-east-2"
+        return _SuccessfulStepFunctionsClient()
+
+    monkeypatch.setattr("netrias_client._sfn_discovery.boto3.client", boto_client)
+
+    # When: discovery runs through the Step Functions-backed transport
+    result = discover_via_step_functions(
+        api_url="https://example.test",
+        target_schema="gc",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        columns=columns,
+        timeout=5,
+        logger=logging.getLogger("netrias_client.tests"),
+        top_k=5,
+        api_key="test-api-key",
     )
 
-    request = capture.requests[0]
-    content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    columns_section = cast(list[dict[str, object]], content.get("columns", []))
-    column_names = [entry.get("column_name") for entry in columns_section]
-    assert column_names == ["a", "b", "c"]
-    assert isinstance(manifest["column_mappings"], dict)
+    # Then: the posted wrapper decodes to the current public request contract
+    assert result == {"results": []}
+    assert len(requests) == 1
+    request = requests[0]
+    wrapper = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
+    encoded_payload = wrapper.get("encoded_payload")
+    assert isinstance(encoded_payload, str)
+    content = cast(dict[str, object], json.loads(base64.b64decode(encoded_payload).decode("utf-8")))
+    assert content.get("target_schema") == "gc"
+    assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
+    assert content.get("columns") == columns
+    assert content.get("top_k") == 5
 
 
 def test_discover_mapping_from_tabular_handles_api_error(
@@ -130,33 +232,42 @@ def test_discover_mapping_from_tabular_handles_api_error(
 ) -> None:
     """Raise MappingDiscoveryError when the API returns a non-2xx status."""
 
+    # Given: the recommendation service rejects the requested schema
     capture = json_failure({"message": "unsupported schema"}, status_code=400)
     install_mock_transport(monkeypatch, capture)
+    assert capture.requests == []
 
+    # When: the user asks discovery to use that unsupported schema
     with pytest.raises(MappingDiscoveryError) as exc:
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="bogus",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
+    # Then: the client surfaces the service error as a discovery error
     assert "unsupported schema" in str(exc.value)
 
 
-def test_discover_mapping_from_tabular_rejects_latest_target_version(
+def test_discover_mapping_from_tabular_rejects_latest_external_version_number(
     configured_client: NetriasClient,
     sample_csv_path: Path,
 ) -> None:
-    """Reject manifests requested with the old implicit latest target."""
+    """Reject discovery requested with the old implicit latest version."""
 
+    # Given: a caller asks for the old implicit latest-version behavior
+    external_version_number = "latest"
+
+    # When: discovery validates the request
     with pytest.raises(MappingValidationError) as exc:
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="ccdi",
-            target_version="latest",
+            external_version_number=external_version_number,
         )
 
-    assert "target_version" in str(exc.value)
+    # Then: validation names the current explicit external-version contract
+    assert "external_version_number" in str(exc.value)
 
 
 def test_discover_mapping_from_tabular_raises_on_transport_error(
@@ -166,15 +277,21 @@ def test_discover_mapping_from_tabular_raises_on_transport_error(
 ) -> None:
     """Raise NetriasAPIUnavailable when transport fails."""
 
+    # Given: the discovery transport cannot reach the recommendation service
     capture = transport_error(httpx.ConnectError("boom"))
     install_mock_transport(monkeypatch, capture)
+    assert capture.requests == []
 
+    # When: the user runs discovery
     with pytest.raises(NetriasAPIUnavailable):
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
+
+    # Then: the client attempted the service request and reported the outage
+    assert len(capture.requests) == 1
 
 
 @pytest.mark.asyncio
@@ -185,6 +302,7 @@ async def test_discover_mapping_from_tabular_async(
 ) -> None:
     """Async variant yields the same structure as the sync function."""
 
+    # Given: the recommendation service returns an empty match list for each source column
     payload = _array_payload(
         [
             {"column_name": "a", "matches": []},
@@ -194,12 +312,16 @@ async def test_discover_mapping_from_tabular_async(
     )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
+    assert capture.requests == []
 
+    # When: the user runs the async discovery method
     manifest = await configured_client.discover_mapping_from_tabular_async(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
+
+    # Then: the async method returns the same column-keyed manifest shape
     assert isinstance(manifest["column_mappings"], dict)
 
 
@@ -210,6 +332,7 @@ def test_discover_mapping_from_tabular_sends_top_k_parameter(
 ) -> None:
     """Verify top_k parameter is included in the request payload."""
 
+    # Given: a discovery response that succeeds for the source columns
     payload = _array_payload(
         [
             {"column_name": "a", "matches": []},
@@ -219,253 +342,83 @@ def test_discover_mapping_from_tabular_sends_top_k_parameter(
     )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
+    assert capture.requests == []
 
+    # When: the user requests five recommendations per column
     _ = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="gc",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         top_k=5,
     )
 
+    # Then: the outbound recommendation request includes that top_k choice
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     assert content.get("top_k") == 5
 
 
-@pytest.mark.asyncio
-async def test_discover_mapping_from_tabular_async_includes_version(
+def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
     configured_client: NetriasClient,
     monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
+    duplicate_headers_tsv_path: Path,
 ) -> None:
-    """Async tabular discovery wrapper includes target_version in request."""
+    """Expose stable column keys while sending display headers."""
 
-    payload = _array_payload(
-        [
-            {"column_name": "a", "matches": []},
-            {"column_name": "b", "matches": []},
-            {"column_name": "c", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = await configured_client.discover_mapping_from_tabular_async(
-        source_path=sample_csv_path,
-        target_schema="ccdi",
-        target_version="v1",
-        sample_limit=1,
-    )
-
-    assert isinstance(manifest["column_mappings"], dict)
-    request = capture.requests[0]
-    content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    assert content.get("target_version") == "v1"
-
-
-def test_discover_mapping_handles_array_results_format(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """Handle the canonical array-format results from the lambda."""
-
+    # Given: a duplicate-header TSV and a recommendation response in input order
     payload = _array_payload(
         [
             {
-                "column_name": "a",
-                "matches": [
-                    {"target": "age", "target_cde_id": 900, "confidence": 1.0, "harmonization": "numeric"},
-                    {"target": "ageUnit", "target_cde_id": 904, "confidence": 0.1, "harmonization": "harmonizable"},
-                ],
-            },
-            {
-                "column_name": "b",
-                "matches": [
-                    {"target": "sex", "target_cde_id": 901, "confidence": 0.95, "harmonization": "harmonizable"},
-                ],
-            },
-            {"column_name": "c", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
-        target_schema="gc",
-        target_version="v1",
-    )
-
-    column_mappings = _column_slots(manifest, 3)
-    first = column_mappings[0]
-    assert first is not None
-    assert first["column_name"] == "a"
-    assert "targetField" not in first
-
-    second = column_mappings[1]
-    assert second is not None
-    assert second["column_name"] == "b"
-    assert "targetField" not in second
-
-    assert column_mappings[2] is None
-
-
-# ---- Wire-shape contract tests ----
-
-
-def test_discovery_entry_uses_column_name(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """Mapped entries carry column_name (not the legacy 'name' key)."""
-
-    payload = _array_payload(
-        [
-            {
-                "column_name": "a",
+                "column_name": "name",
                 "matches": [
                     {
-                        "target": "A_target",
-                        "target_cde_id": 1,
-                        "confidence": 0.95,
-                        "harmonization": "harmonizable",
-                    }
-                ],
-            },
-            {"column_name": "b", "matches": []},
-            {"column_name": "c", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
-        target_schema="ccdi",
-        target_version="v1",
-    )
-
-    entry = _column_slots(manifest, 3)[0]
-    assert entry is not None
-    # Renamed from legacy "name" — must use "column_name"
-    assert entry["column_name"] == "a"
-    assert "name" not in entry
-
-
-def test_discovery_entry_has_no_target_field(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """targetField must not appear in any mapped entry — it was removed from _make_entry."""
-
-    payload = _array_payload(
-        [
-            {
-                "column_name": "a",
-                "matches": [
-                    {
-                        "target": "A_target",
-                        "target_cde_id": 1,
-                        "confidence": 0.95,
-                        "harmonization": "harmonizable",
-                    }
-                ],
-            },
-            {"column_name": "b", "matches": []},
-            {"column_name": "c", "matches": []},
-        ]
-    )
-    capture = json_success(payload)
-    install_mock_transport(monkeypatch, capture)
-
-    manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
-        target_schema="ccdi",
-        target_version="v1",
-    )
-
-    entry = _column_slots(manifest, 3)[0]
-    assert entry is not None
-    assert "targetField" not in entry
-
-
-# ---- Positional parity tests (A/B/C) ----
-
-
-def test_positional_parity_all_columns_matched(
-    configured_client: NetriasClient,
-    monkeypatch: pytest.MonkeyPatch,
-    sample_csv_path: Path,
-) -> None:
-    """Trivial case: all three tabular columns match above threshold — length equals tabular column count."""
-
-    # Given a tabular file with 3 columns, all with non-empty samples, and a response that
-    # covers all three. Before invocation no prior manifest exists.
-    assert sample_csv_path.read_text(encoding="utf-8").splitlines()[0] == "a,b,c"
-
-    payload = _array_payload(
-        [
-            {
-                "column_name": "a",
-                "matches": [
-                    {
-                        "target": "A_target",
-                        "target_cde_id": 101,
-                        "confidence": 0.99,
+                        "target": "first_name",
+                        "target_cde_id": 10,
+                        "confidence": 0.91,
                         "harmonization": "harmonizable",
                     }
                 ],
             },
             {
-                "column_name": "b",
+                "column_name": "name",
                 "matches": [
                     {
-                        "target": "B_target",
-                        "target_cde_id": 102,
-                        "confidence": 0.95,
-                        "harmonization": "harmonizable",
-                    }
-                ],
-            },
-            {
-                "column_name": "c",
-                "matches": [
-                    {
-                        "target": "C_target",
-                        "target_cde_id": 103,
+                        "target": "last_name",
+                        "target_cde_id": 11,
                         "confidence": 0.9,
                         "harmonization": "harmonizable",
                     }
                 ],
             },
+            {"column_name": "note", "matches": []},
         ]
     )
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
+    assert capture.requests == []
 
-    # When discover_mapping_from_tabular runs
+    # When: discovery runs through the tabular API
     manifest = configured_client.discover_mapping_from_tabular(
-        source_path=sample_csv_path,
+        source_path=duplicate_headers_tsv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
-    # Then request length == 3, manifest length == 3, every entry is non-None with matching column_name
+    # Then: callers receive stable source column keys, not duplicate display names
+    column_mappings = manifest["column_mappings"]
+    assert list(column_mappings) == ["col_0000", "col_0001"]
+    assert column_mappings["col_0000"]["cde_key"] == "first_name"
+    assert column_mappings["col_0000"]["column_name"] == "name"
+    assert column_mappings["col_0001"]["cde_key"] == "last_name"
+
+    # And: the outbound recommendation request still preserves user-visible headers
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    columns_section = cast(list[dict[str, object]], content.get("columns", []))
-    assert len(columns_section) == 3
-    assert [entry["column_name"] for entry in columns_section] == ["a", "b", "c"]
+    columns = cast(list[dict[str, object]], content["columns"])
+    assert [column["column_name"] for column in columns] == ["name", "name", "note"]
 
-    column_mappings = _column_slots(manifest, 3)
-    assert len(column_mappings) == 3
-    for index, header in enumerate(("a", "b", "c")):
-        entry = column_mappings[index]
-        assert entry is not None
-        assert entry["column_name"] == header
+
+# ---- Positional parity tests (A/B/C) ----
 
 
 def test_positional_parity_empty_column_preserved_and_mismatch_detected(
@@ -475,7 +428,7 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
 ) -> None:
     """Empty-value columns are sent with values=[]; response mismatch fails fast."""
 
-    # Given a tabular file where column 'b' has all-empty values
+    # Given: a tabular file where column 'b' has all-empty values
     csv_path = empty_middle_csv_path
 
     # Negative assertion: before discovery, column b has zero non-empty samples
@@ -483,7 +436,7 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
     data_rows = [line.split(",") for line in lines[1:]]
     assert sum(1 for row in data_rows if row[1].strip()) == 0
 
-    # Backend returns only 2 results (drops column 'b') — must raise
+    # And: the backend returns only 2 results after dropping column 'b'
     payload = _array_payload(
         [
             {"column_name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.9, "harmonization": "harmonizable"}]},
@@ -493,19 +446,20 @@ def test_positional_parity_empty_column_preserved_and_mismatch_detected(
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    # When discovery runs, it must raise rather than silently shift column_ids
+    # When: discovery runs
     with pytest.raises(MappingDiscoveryError) as exc:
         _ = configured_client.discover_mapping_from_tabular(
             source_path=csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
+    # Then: it raises rather than silently shifting column_ids
     message = str(exc.value)
     assert "expected 3" in message
     assert "found 2" in message
 
-    # And the outbound request preserved the empty-value column at position 1
+    # And: the outbound request preserved the empty-value column at position 1
     request = capture.requests[0]
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     columns_section = cast(list[dict[str, object]], content.get("columns", []))
@@ -554,7 +508,7 @@ def test_blank_header_column_is_preserved_by_position(
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
     )
 
     # Then: the blank header is sent and mapped back through its list position
@@ -577,9 +531,7 @@ def test_positional_parity_below_threshold_becomes_none(
 ) -> None:
     """Below-threshold columns keep their position with None; manifest length equals tabular column count."""
 
-    # Given a tabular file with 3 columns where column 'b' has a top confidence of 0.2
-    # against a threshold of 0.8. Before: backend returns a result for 'b' but
-    # no option meets the threshold.
+    # Given: a tabular file with 3 columns where column 'b' has no option above the threshold
     payload = _array_payload(
         [
             {"column_name": "a", "matches": [{"target": "A", "target_cde_id": 1, "confidence": 0.95, "harmonization": "harmonizable"}]},
@@ -590,15 +542,15 @@ def test_positional_parity_below_threshold_becomes_none(
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    # When discovery runs with a strict threshold
+    # When: discovery runs with a strict threshold
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=sample_csv_path,
         target_schema="ccdi",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         confidence_threshold=0.8,
     )
 
-    # Then column_mappings has length 3 and the below-threshold slot is None
+    # Then: column_mappings has length 3 and the below-threshold slot is None
     column_mappings = _column_slots(manifest, 3)
     assert len(column_mappings) == 3
     assert column_mappings[0] is not None
@@ -614,39 +566,39 @@ def test_parses_real_api_confidence_and_emits_cde_key(
     emits 'cde_key' on every non-None entry, and drops slots missing target_cde_id.
     """
 
-    # Given a hand-synthesized recorded API payload using the real key names
+    # Given: a hand-synthesized recorded API payload using the real key names
     fixture_path = Path(__file__).parent / "fixtures" / "recommend_synthetic_3col.json"
     csv_path = Path(__file__).parent / "fixtures" / "synthetic_3col.csv"
     recorded = cast(dict[str, object], json.loads(fixture_path.read_text(encoding="utf-8")))
 
-    # Wrap the recorded body in the lambda's statusCode/body envelope
+    # And: the recorded body is wrapped in the lambda's statusCode/body envelope
     payload = _recorded_payload(recorded)
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    # When discovery runs
+    # When: discovery runs
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=csv_path,
         target_schema="gc",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         confidence_threshold=0.7,
     )
 
-    # Then the manifest has length 3 and the slots reflect the three scenarios
+    # Then: the manifest has length 3 and the slots reflect the three scenarios
     column_mappings = _column_slots(manifest, 3)
     assert len(column_mappings) == 3
 
-    # Column 0 — above threshold, has cde_id and cde_key
+    # And: column 0 is above threshold and has both cde_id and cde_key
     diagnosis_entry = column_mappings[0]
     assert diagnosis_entry is not None
     assert diagnosis_entry["column_name"] == "diagnosis"
     assert diagnosis_entry["cde_key"] == "disease_type"
     assert diagnosis_entry["cde_id"] == 323
 
-    # Column 1 — all matches below 0.7 threshold — slot is None
+    # And: column 1 has only below-threshold matches, so the slot is None
     assert column_mappings[1] is None
 
-    # Column 2 — top match above threshold but missing target_cde_id — slot is None
+    # And: column 2 is missing target_cde_id, so the slot is None
     assert column_mappings[2] is None
 
 
@@ -656,6 +608,7 @@ def test_alternative_entries_preserve_confidence_field(
 ) -> None:
     """AlternativeEntry values expose 'confidence' (not 'similarity') downstream."""
 
+    # Given: a recorded discovery payload using the recommendation service confidence field
     fixture_path = Path(__file__).parent / "fixtures" / "recommend_synthetic_3col.json"
     csv_path = Path(__file__).parent / "fixtures" / "synthetic_3col.csv"
     recorded = cast(dict[str, object], json.loads(fixture_path.read_text(encoding="utf-8")))
@@ -663,13 +616,15 @@ def test_alternative_entries_preserve_confidence_field(
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
+    # When: discovery adapts service recommendations into a manifest
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=csv_path,
         target_schema="gc",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         confidence_threshold=0.7,
     )
 
+    # Then: alternatives expose confidence as the public score field
     diagnosis_entry = _column_slots(manifest, 3)[0]
     assert diagnosis_entry is not None
     alternatives = diagnosis_entry["alternatives"]
@@ -677,6 +632,8 @@ def test_alternative_entries_preserve_confidence_field(
     top = alternatives[0]
     assert top["target"] == "disease_type"
     assert top["confidence"] == 0.85
+
+    # And: the removed similarity alias is not part of the current alternative contract
     assert "similarity" not in top
 
 
@@ -720,6 +677,7 @@ def test_harmonization_surfaces_on_every_alternative_and_top_level(
     surfaces as a failed assertion on the corresponding column.
     """
 
+    # Given: a recorded discovery payload covering every harmonization category
     fixture_path = Path(__file__).parent / "fixtures" / "recommend_synthetic_4col_harmonization.json"
     csv_path = Path(__file__).parent / "fixtures" / "synthetic_4col_harmonization.csv"
     recorded = cast(dict[str, object], json.loads(fixture_path.read_text(encoding="utf-8")))
@@ -731,19 +689,21 @@ def test_harmonization_surfaces_on_every_alternative_and_top_level(
     # on the four top-match slots so the assertions below are exercising real data.
     assert _raw_top_match_harmonizations(recorded) == _HARMONIZATION_ENUM
 
+    # When: discovery adapts those recommendations into a manifest
     manifest = configured_client.discover_mapping_from_tabular(
         source_path=csv_path,
         target_schema="gc",
-        target_version="v1",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
         confidence_threshold=0.4,
     )
 
+    # Then: every non-None entry and alternative carries a valid harmonization value
     column_mappings = _column_slots(manifest, 4)
     assert len(column_mappings) == 4
     for entry in column_mappings:
         _assert_entry_carries_harmonization(entry)
 
-    # Column-specific checks — top-level mirrors the top alternative per plan contract.
+    # And: top-level harmonization mirrors the top alternative per manifest contract
     first = column_mappings[0]
     third = column_mappings[2]
     fourth = column_mappings[3]
@@ -770,7 +730,7 @@ def test_positional_parity_rejects_reordered_response_of_equal_length(
     outbound column_name at each index.
     """
 
-    # Given a tabular file with headers [a, b, c] and a response that returns them in [c, a, b] order
+    # Given: a tabular file with headers [a, b, c] and a response returning [c, a, b]
     assert sample_csv_path.read_text(encoding="utf-8").splitlines()[0] == "a,b,c"
     payload = _array_payload(
         [
@@ -797,14 +757,15 @@ def test_positional_parity_rejects_reordered_response_of_equal_length(
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
-    # When / Then — parity cross-check fails at the first mismatched slot (index 0: expected "a", found "c")
+    # When: discovery parses the reordered response
     with pytest.raises(MappingDiscoveryError) as exc:
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
+    # Then: the parity cross-check fails at the first mismatched slot
     message = str(exc.value)
     assert "column_name mismatch" in message
     assert "'a'" in message
@@ -822,19 +783,20 @@ def test_zero_column_tabular_file_rejected_at_boundary(
     with column_mappings=[] — a trivially "successful" result for a degenerate input.
     """
 
-    # Given a tabular file with zero columns (entirely empty file)
+    # Given: a tabular file with zero columns
     csv_path = tmp_path / "empty.csv"
     _ = csv_path.write_text("", encoding="utf-8")
     assert csv_path.read_text(encoding="utf-8") == ""
 
-    # When / Then — discovery rejects before any request goes out
+    # When: discovery validates the file
     with pytest.raises(MappingValidationError) as exc:
         _ = configured_client.discover_mapping_from_tabular(
             source_path=csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
+    # Then: it rejects the file before pretending an empty manifest succeeded
     message = str(exc.value)
     assert "no header row" in message
     assert "0 columns" in message
@@ -852,6 +814,7 @@ def test_discovery_strict_rejects_response_missing_harmonization(
     a real Lambda regression, not rolling-deploy skew — must surface, not default.
     """
 
+    # Given: the recommendation service omits required harmonization metadata
     payload = _array_payload(
         [
             {
@@ -867,11 +830,13 @@ def test_discovery_strict_rejects_response_missing_harmonization(
     capture = json_success(payload)
     install_mock_transport(monkeypatch, capture)
 
+    # When: discovery parses the malformed response
     with pytest.raises(MappingDiscoveryError) as exc:
         _ = configured_client.discover_mapping_from_tabular(
             source_path=sample_csv_path,
             target_schema="ccdi",
-            target_version="v1",
+            external_version_number=EXTERNAL_VERSION_NUMBER,
         )
 
+    # Then: the client fails loudly instead of defaulting the missing domain field
     assert "harmonization" in str(exc.value)

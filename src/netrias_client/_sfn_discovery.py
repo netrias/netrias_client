@@ -10,7 +10,7 @@ import json
 import logging
 import time
 from collections.abc import Mapping
-from typing import Final
+from typing import Final, Protocol, cast
 
 import boto3  # pyright: ignore[reportMissingTypeStubs]
 import httpx
@@ -22,10 +22,18 @@ from ._models import ColumnSamples
 TERMINAL_STATES: Final[frozenset[str]] = frozenset({"SUCCEEDED", "FAILED", "TIMED_OUT", "ABORTED"})
 
 
+class _StepFunctionsClient(Protocol):
+    def describe_execution(self, executionArn: str) -> Mapping[str, object]: ...
+
+
+class _BotoClientFactory(Protocol):
+    def __call__(self, service_name: str, *, region_name: str) -> object: ...
+
+
 def discover_via_step_functions(
     api_url: str,
     target_schema: str,
-    target_version: str,
+    external_version_number: str,
     columns: list[ColumnSamples],
     timeout: float,
     logger: logging.Logger,
@@ -39,14 +47,14 @@ def discover_via_step_functions(
     NOTE: This is a blocking/synchronous function.
     Uses time.sleep for polling and httpx sync client.
     """
-    execution_arn = _start_execution(api_url, target_schema, target_version, columns, top_k, logger, api_key)
+    execution_arn = _start_execution(api_url, target_schema, external_version_number, columns, top_k, logger, api_key)
     return _poll_execution(execution_arn, timeout, logger)
 
 
 def _start_execution(
     api_url: str,
     schema: str,
-    version: str,
+    external_version_number: str,
     columns: list[ColumnSamples],
     top_k: int,
     logger: logging.Logger,
@@ -55,7 +63,7 @@ def _start_execution(
     """POST request body to API Gateway, get executionArn back."""
     payload = {
         "target_schema": schema,
-        "target_version": version,
+        "external_version_number": external_version_number,
         "columns": columns,
         "top_k": top_k,
     }
@@ -72,11 +80,11 @@ def _start_execution(
         headers[API_KEY_HEADER] = api_key
     with httpx.Client(timeout=30.0) as client:
         response = client.post(url, json=wrapper, headers=headers)
-        response.raise_for_status()
-        result = response.json()
+        _ = response.raise_for_status()
+        result = cast(dict[str, object], response.json())
 
     execution_arn = result.get("executionArn")
-    if not execution_arn:
+    if not isinstance(execution_arn, str) or not execution_arn:
         raise AsyncDiscoveryError(f"API Gateway did not return executionArn: {result}")
 
     logger.info("async discovery: execution started arn=%s", execution_arn)
@@ -93,7 +101,8 @@ def _poll_execution(
     'why': Step Functions execution runs asynchronously; we poll until it completes
     """
     region = _extract_region_from_arn(execution_arn)
-    sfn = boto3.client("stepfunctions", region_name=region)
+    boto_client = cast(_BotoClientFactory, boto3.client)
+    sfn = cast(_StepFunctionsClient, boto_client("stepfunctions", region_name=region))
 
     started = time.monotonic()
     deadline = started + timeout
@@ -105,11 +114,11 @@ def _poll_execution(
 
         if status == "SUCCEEDED":
             logger.info("async discovery: succeeded elapsed=%.2fs", elapsed)
-            return _parse_output(response.get("output", "{}"))
+            return _parse_output(_string_value(response, "output", "{}"))
 
         if status in TERMINAL_STATES:
-            error = response.get("error", "unknown")
-            cause = response.get("cause", "")
+            error = _string_value(response, "error", "unknown")
+            cause = _string_value(response, "cause", "")
             logger.error("async discovery: %s error=%s cause=%s", status, error, cause)
             raise AsyncDiscoveryError(f"Execution {status}: {error} - {cause}")
 
@@ -147,13 +156,13 @@ def _parse_output(output_str: str) -> Mapping[str, object]:
     parsed = _safe_json_loads(output_str, "output")
     if not isinstance(parsed, dict):
         raise AsyncDiscoveryError("Output must be a JSON object")
-    return _extract_body(parsed)
+    return _extract_body(cast(dict[str, object], parsed))
 
 
 def _safe_json_loads(text: str, context: str) -> object:
     """Parse JSON or raise AsyncDiscoveryError with context."""
     try:
-        return json.loads(text)
+        return cast(object, json.loads(text))
     except json.JSONDecodeError as exc:
         raise AsyncDiscoveryError(f"Invalid JSON in {context}: {exc}") from exc
 
@@ -169,7 +178,12 @@ def _extract_body(parsed: dict[str, object]) -> Mapping[str, object]:
         decoded = _safe_json_loads(body, "body")
         if not isinstance(decoded, dict):
             raise AsyncDiscoveryError("body must be a JSON object")
-        return decoded
+        return cast(dict[str, object], decoded)
     if isinstance(body, dict):
-        return body
+        return cast(dict[str, object], body)
     return parsed
+
+
+def _string_value(payload: Mapping[str, object], key: str, default: str) -> str:
+    value = payload.get(key, default)
+    return value if isinstance(value, str) else default
