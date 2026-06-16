@@ -58,6 +58,7 @@ dev = [
     "ty",
     "python-dotenv>=1.2.2",
     "twine>=5.0",
+    "pandas-stubs",
 ]
 
 

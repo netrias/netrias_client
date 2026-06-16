@@ -307,3 +307,4 @@ async def test_status_column_uses_correct_pvs(
     assert status_entry["matched_distinct_raw_values"] == 2
     assert len(status_entry["top_raw_unmatched"]) == 0
     assert status_entry["matched_total_raw_values"] == 7
+    
