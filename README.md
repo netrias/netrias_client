@@ -6,6 +6,20 @@ Use it to map columns in tabular files to standard data models, then harmonize v
 
 ---
 
+## Architecture Diagram
+
+<p align="center">
+  <img src="docs/images/BDF_Architecture_Diagram.png" height="150">
+</p>
+
+---
+
+## Netrias Client & REST-API Access Guide
+
+We provide REST API access through Netrias Client, see the **[API key request documentation](docs/requesting-API-key.md)**.
+
+---
+
 ## Quickstart
 
 This section walks through a complete first run using `uv`, a `.env` file, discovery, and harmonization.
