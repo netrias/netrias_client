@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import random
 import time
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -25,6 +26,9 @@ from ._validators import next_available_path, validate_manifest_path, validate_o
 JSONPrimitive: TypeAlias = str | int | float | bool | None
 JSONValue: TypeAlias = JSONPrimitive | Mapping[str, "JSONValue"] | Sequence["JSONValue"]
 JOB_POLL_INTERVAL_SECONDS: Final[float] = 3.0
+JOB_STATUS_RETRY_MAX_BACKOFF_SECONDS: Final[float] = 30.0
+JOB_STATUS_RETRY_JITTER_SECONDS: Final[float] = 1.0
+_RETRYABLE_STATUS_CODES: Final[frozenset[int]] = frozenset({429})
 _MESSAGE_KEYS: Final[tuple[str, ...]] = (
     "message",
     "detail",
@@ -255,18 +259,25 @@ async def _resolve_final_payload(
     started = time.monotonic()
     deadline = started + timeout
     poll_interval = max(1.0, min(JOB_POLL_INTERVAL_SECONDS, timeout / 60 if timeout else JOB_POLL_INTERVAL_SECONDS))
+    transient_failures = 0
 
     while time.monotonic() < deadline:
         elapsed = time.monotonic() - started
-        response = await _job_status_http(
+        response = await _job_status_response_or_none(
             base_url=base_url,
             api_key=api_key,
             job_id=job_id,
             timeout=timeout,
             csv_path=csv_path,
             logger=logger,
+            elapsed=elapsed,
         )
+        if response is None:
+            transient_failures += 1
+            await _sleep_for_retryable_status_failure(poll_interval, transient_failures, deadline)
+            continue
 
+        transient_failures = 0
         payload = _interpret_job_status(response, csv_path, logger)
         if payload is None:
             logger.info(
@@ -287,31 +298,71 @@ async def _resolve_final_payload(
         return payload
 
     total_elapsed = time.monotonic() - started
-    logger.error("harmonize job polling timed out: file=%s elapsed=%.2fs", csv_path, total_elapsed)
-    raise HarmonizationJobError("harmonization job polling timed out")
+    logger.error("harmonize job polling timed out: file=%s job_id=%s elapsed=%.2fs", csv_path, job_id, total_elapsed)
+    raise HarmonizationJobError(f"harmonization job polling timed out for job_id={job_id}")
 
 
-async def _job_status_http(
+async def _job_status_response_or_none(
     base_url: str,
     api_key: str,
     job_id: str,
     timeout: float,
     csv_path: Path,
     logger: logging.Logger,
-) -> httpx.Response:
+    elapsed: float,
+) -> httpx.Response | None:
     try:
-        return await fetch_job_status(
-            base_url=base_url,
-            api_key=api_key,
-            job_id=job_id,
-            timeout=timeout,
+        response = await fetch_job_status(base_url=base_url, api_key=api_key, job_id=job_id, timeout=timeout)
+    except (httpx.TimeoutException, httpx.HTTPError) as exc:
+        logger.warning(
+            "harmonize job status retryable transport failure: file=%s job_id=%s elapsed=%.2fs err=%s",
+            csv_path,
+            job_id,
+            elapsed,
+            exc,
         )
-    except httpx.TimeoutException as exc:
-        logger.error("harmonize job status timeout: file=%s err=%s", csv_path, exc)
-        raise HarmonizationJobError("harmonization job status timed out") from exc
-    except httpx.HTTPError as exc:
-        logger.error("harmonize job status transport error: file=%s err=%s", csv_path, exc)
-        raise NetriasAPIUnavailable(f"transport error: {exc}") from exc
+        return None
+
+    if _is_retryable_status_response(response):
+        message, payload_for_log = _error_description(
+            status=response.status_code,
+            body_text=response.text,
+            default="harmonization job status temporarily unavailable",
+        )
+        logger.warning(
+            "harmonize job status retryable response: file=%s job_id=%s status=%s elapsed=%.2fs message=%s body=%s",
+            csv_path,
+            job_id,
+            response.status_code,
+            elapsed,
+            message,
+            _formatted_body(payload_for_log),
+        )
+        return None
+    return response
+
+
+def _is_retryable_status_response(response: httpx.Response) -> bool:
+    return response.status_code in _RETRYABLE_STATUS_CODES or 500 <= response.status_code < 600
+
+
+async def _sleep_for_retryable_status_failure(
+    poll_interval: float,
+    transient_failures: int,
+    deadline: float,
+) -> None:
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        return
+    delay = _status_retry_delay(poll_interval, transient_failures)
+    await asyncio.sleep(min(delay, remaining))
+
+
+def _status_retry_delay(poll_interval: float, transient_failures: int) -> float:
+    exponential_delay = poll_interval * (2.0 ** max(0, transient_failures - 1))
+    bounded_delay = min(exponential_delay, JOB_STATUS_RETRY_MAX_BACKOFF_SECONDS)
+    jitter = random.uniform(0, JOB_STATUS_RETRY_JITTER_SECONDS)
+    return min(bounded_delay + jitter, JOB_STATUS_RETRY_MAX_BACKOFF_SECONDS)
 
 
 def _interpret_job_status(response: httpx.Response, csv_path: Path, logger: logging.Logger) -> Mapping[str, JSONValue] | None:
