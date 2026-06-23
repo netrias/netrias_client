@@ -19,7 +19,7 @@ dependencies = [
     "jaraco-context>=6.1.0",  # CVE-2026-23949
     "pygments>=2.20.0",  # CVE-2026-4539
     "requests>=2.33.0",  # CVE-2026-25645
-    "cryptography>=46.0.7",  # CVE-2026-26007, CVE-2026-34073, CVE-2026-39892
+    "cryptography>=48.0.1",  # CVE-2026-26007, CVE-2026-34073, CVE-2026-39892
     "urllib3>=2.7.0",  # CVE-2025-66418, CVE-2025-66471, CVE-2026-21441, CVE-2026-44431, CVE-2026-44432
     "idna>=3.15",  # CVE-2026-45409
 ]
@@ -68,7 +68,6 @@ include = [
 exclude = [
     "src/netrias_client/tests/**",
     "src/netrias_client/live_test/**",
-    "src/netrias_client/associate_api_key.py",
     "architecture.md",
     "uv.lock",
     "*.env",
@@ -82,14 +81,12 @@ packages = ["src/netrias_client"]
 exclude = [
     "src/netrias_client/tests/**",
     "src/netrias_client/live_test/**",
-    "src/netrias_client/associate_api_key.py",
 ]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
     "src/netrias_client/tests/**",
     "src/netrias_client/live_test/**",
-    "src/netrias_client/associate_api_key.py",
     "architecture.md",
     "uv.lock",
     "*.env",
@@ -110,6 +107,7 @@ dev = [
     "twine>=5.0",
     "pip-audit>=2.7.0",
     "pip>=26.1.2",
+    "msgpack>=1.2.1",
 ]
 
 
