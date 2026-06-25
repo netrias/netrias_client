@@ -106,9 +106,8 @@ For General Commons v2, use:
 
 | Purpose | Value |
 |---|---|
-| Discovery schema | `target_schema="gc"` |
+| Target schema | `target_schema="gc"` |
 | Discovery external version number | `external_version_number="11.0.4"` |
-| Harmonization data commons key | `data_commons_key="gc"` |
 | Harmonization external version number | `external_version_number="11.0.4"` |
 
 Create `discover_gc_v2.py`:
@@ -213,7 +212,7 @@ client = NetriasClient(
 result = client.harmonize(
     source_path=Path("cds_submission_10col.csv"),
     manifest=Path("gc_v2_discovery_manifest.json"),
-    data_commons_key="gc",
+    target_schema="gc",
     external_version_number="11.0.4",
     output_path=Path("output/cds_submission_10col.harmonized.csv"),
     manifest_output_path=Path("output/cds_submission_10col.manifest.json"),
@@ -361,8 +360,7 @@ uv sync
 ### External version number
 
 Discovery and harmonization both use the external Data Model Store version number.
-For General Commons, use the same concrete value with the discovery schema and
-the harmonization data commons key:
+For General Commons, use the same concrete value with the target schema:
 
 | Field | Used by | Example | Meaning |
 |---|---|---|---|
@@ -374,15 +372,14 @@ For General Commons v2:
 ```python
 target_schema = "gc"
 external_version_number = "11.0.4"
-data_commons_key = "gc"
 ```
 
-### Data commons key casing
+### Target schema casing
 
-`data_commons_key` is case-sensitive and should match the key returned by the Data Model Store. For General Commons, use lowercase:
+`target_schema` is case-sensitive and should match the key returned by the Data Model Store. For General Commons, use lowercase:
 
 ```python
-data_commons_key="gc"
+target_schema="gc"
 ```
 
 Using uppercase `"GC"` may fail if the underlying service/database stores the key as `"gc"`.
@@ -554,7 +551,7 @@ from pathlib import Path
 result = client.harmonize(
     source_path=Path("cds_submission_10col.csv"),
     manifest=manifest,
-    data_commons_key="gc",
+    target_schema="gc",
     external_version_number="11.0.4",
     output_path=Path("output/cds_submission_10col.harmonized.csv"),
     manifest_output_path=Path("output/cds_submission_10col.manifest.json"),
@@ -571,7 +568,7 @@ print(result.job_id)
 |---|---|---|---|
 | `source_path` | `Path` | - | Required. Path to the source tabular file: CSV, TSV, or XLSX. |
 | `manifest` | `Path \| Mapping[str, object]` | - | Required. Mapping manifest from discovery or a path to a JSON manifest file. |
-| `data_commons_key` | `str` | - | Required. Target data commons key, such as `"gc"`. This is case-sensitive. |
+| `target_schema` | `str` | - | Required. Target schema key, such as `"gc"`. This is case-sensitive. |
 | `external_version_number` | `str` | - | Required. Concrete external data-model version number, such as `"11.0.4"`. |
 | `output_path` | `Path \| None` | `None` | Where to write the harmonized file. Auto-generated when omitted. |
 | `manifest_output_path` | `Path \| None` | `None` | Where to write the manifest JSON for debugging. |
@@ -723,7 +720,7 @@ async def process_file():
     result = await client.harmonize_async(
         source_path=Path("cds_submission_10col.csv"),
         manifest=manifest,
-        data_commons_key="gc",
+        target_schema="gc",
         external_version_number="11.0.4",
     )
 
@@ -753,7 +750,7 @@ try:
     result = client.harmonize(
         source_path=csv_path,
         manifest=manifest,
-        data_commons_key="gc",
+        target_schema="gc",
         external_version_number="11.0.4",
     )
 except NetriasAPIUnavailable as e:
@@ -782,7 +779,7 @@ except NetriasClientError as e:
 | `No pyproject.toml found` | `uv add` was run in a directory that is not a uv project. | Run `uv init` first, then `uv add netrias_client`. |
 | `KeyError: 'NETRIAS_API_KEY'` | Python cannot see the API key. | Put `NETRIAS_API_KEY=...` in `.env` and run scripts with `uv run --env-file .env ...`. |
 | `Missing Authentication Token` during discovery | Client is using the wrong API route/environment. | Create the client with `environment=Environment.PROD`. |
-| `unknown data-model version ... label=None, number=None` | Missing `external_version_number`, or `data_commons_key` does not match the stored key. | Use a concrete external version, e.g. `"11.0.4"`, and lowercase `data_commons_key="gc"` for General Commons. |
+| `unknown data-model version ... label=None, number=None` | Missing `external_version_number`, or `target_schema` does not match the stored key. | Use a concrete external version, e.g. `"11.0.4"`, and lowercase `target_schema="gc"` for General Commons. |
 | `ModuleNotFoundError` after switching package sources | Local `.venv` is inconsistent after switching between PyPI, TestPyPI, and GitHub installs. | Run `rm -rf .venv uv.lock && uv sync`. |
 | Harmonization succeeds but some mappings look surprising | The chosen PV may be valid but semantically questionable. | Inspect the output CSV and the downloaded manifest parquet; consider reviewing the discovery manifest before harmonization. |
 

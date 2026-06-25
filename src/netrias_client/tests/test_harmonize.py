@@ -55,7 +55,7 @@ def test_harmonize_streaming_success(
     result: HarmonizationResult = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
@@ -103,7 +103,7 @@ def test_harmonize_handles_api_failure(
     result: HarmonizationResult = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
@@ -138,7 +138,7 @@ def test_harmonize_raises_on_transport_error(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
-            data_commons_key="ccdi",
+            target_schema="ccdi",
             external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
@@ -168,7 +168,7 @@ def test_harmonize_accepts_manifest_mapping(
     result: HarmonizationResult = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_mapping,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
@@ -209,7 +209,7 @@ def test_harmonize_tsv_writes_tsv_output(
     result = configured_client.harmonize(
         source_path=sample_tsv_path,
         manifest=manifest,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
@@ -269,7 +269,7 @@ def test_harmonize_xlsx_writes_xlsx_output_for_selected_sheet(
     result = configured_client.harmonize(
         source_path=source,
         manifest=manifest,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
         sheet_name="Patients",
@@ -312,7 +312,7 @@ def test_harmonize_writes_manifest_when_requested(
     _ = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_mapping,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
         manifest_output_path=manifest_output,
@@ -351,7 +351,7 @@ def test_harmonize_downloads_manifest_from_status_payload(
     result = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
@@ -391,7 +391,7 @@ def test_harmonize_recovers_from_transient_status_polling_failures(
     result = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
@@ -430,7 +430,7 @@ def test_harmonize_keeps_terminal_job_failure_authoritative_after_status_retry(
     result = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
@@ -462,7 +462,7 @@ def test_harmonize_can_disable_cache(
     _ = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
         use_cache=False,
@@ -494,7 +494,7 @@ async def test_harmonize_async_success(
     result = await configured_client.harmonize_async(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
