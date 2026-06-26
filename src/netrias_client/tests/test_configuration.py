@@ -13,7 +13,7 @@ from netrias_client._config import (
     DATA_MODEL_STORE_BASE_URL,
     DISCOVERY_BASE_URL,
     HARMONIZATION_BASE_URL,
-    _ENVIRONMENT_URLS,
+    _ENVIRONMENT_URLS,  # pyright: ignore[reportPrivateUsage]
     build_settings,
 )
 from netrias_client._errors import ClientConfigurationError
