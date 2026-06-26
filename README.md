@@ -1,8 +1,22 @@
 # Netrias Client
 
+## Purpose
+
+**Problem:**
+
+Cancer researchers and labs produce tabular data with arbitrary column names, inconsistent value formats, and no standard vocabulary — one site might call a column Model, another Mouse_Strain, another PDX_ID, all referring to related but not identical concepts. Before that data can be submitted to a national repository like the CRDC Data Hub, it needs to be translated into that repository's Common Data Elements (CDEs), with values that match the repository's controlled vocabularies.
+
+Doing this translation by hand is slow and error-prone — someone has to inspect every column, determine which CDE it corresponds to, check whether values need transformation, and repeat across potentially hundreds of files.
+
+netrias_client automates this bridge between how a lab happens to format its data and what a national data repository requires, using AI-assisted suggestion instead of manual mapping.
+
+**Solution:**
+
 A Python client for the Netrias discovery and harmonization services.
 
 Use it to map columns in tabular files to standard data models, then harmonize values to the target model’s permissible values. The client supports CSV, TSV, and XLSX files.
+
+**Note:** A web application, DataChord, already provides this workflow; this Python package offers a programmatic interface implementing the same underlying discovery and harmonization logic for users who want to integrate it directly into their own pipelines.
 
 ---
 

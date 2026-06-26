@@ -59,8 +59,12 @@ dev = [
     "python-dotenv>=1.2.2",
     "twine>=5.0",
     "pandas-stubs",
+    "vulture>=2.16",
 ]
 
+[tool.vulture]
+paths = ["src", "vulture_whitelist.py"]
+min_confidence = 60
 
 [tool.hatch.build]
 include = [
