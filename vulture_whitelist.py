@@ -1,8 +1,1 @@
 release  # unused function (src/netrias_client/scripts.py:61)
-_.return_value  # unused attribute (src/netrias_client/tests/test_associate_api_key.py:16)
-_.return_value  # unused attribute (src/netrias_client/tests/test_associate_api_key.py:17)
-_.return_value  # unused attribute (src/netrias_client/tests/test_associate_api_key.py:18)
-_.return_value  # unused attribute (src/netrias_client/tests/test_associate_api_key.py:38)
-_.return_value  # unused attribute (src/netrias_client/tests/test_associate_api_key.py:56)
-_.return_value  # unused attribute (src/netrias_client/tests/test_associate_api_key.py:57)
-_.return_value  # unused attribute (src/netrias_client/tests/test_associate_api_key.py:58)
