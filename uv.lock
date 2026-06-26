@@ -712,6 +712,7 @@ dependencies = [
     { name = "httpx" },
     { name = "idna" },
     { name = "jaraco-context" },
+    { name = "msgpack" },
     { name = "openpyxl" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pandas", version = "3.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -737,6 +738,7 @@ dev = [
 [package.dev-dependencies]
 dev = [
     { name = "basedpyright" },
+    { name = "msgpack" },
     { name = "pip" },
     { name = "pip-audit" },
     { name = "pytest" },
@@ -752,10 +754,11 @@ dev = [
 requires-dist = [
     { name = "basedpyright", marker = "extra == 'dev'" },
     { name = "boto3" },
-    { name = "cryptography", specifier = ">=46.0.7" },
+    { name = "cryptography", specifier = ">=48.0.1" },
     { name = "httpx" },
     { name = "idna", specifier = ">=3.15" },
     { name = "jaraco-context", specifier = ">=6.1.0" },
+    { name = "msgpack", specifier = ">=1.2.1" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pandas-stubs", marker = "extra == 'dev'" },
@@ -775,6 +778,7 @@ provides-extras = ["dev"]
 [package.metadata.requires-dev]
 dev = [
     { name = "basedpyright" },
+    { name = "msgpack", specifier = ">=1.2.1" },
     { name = "pip", specifier = ">=26.1.2" },
     { name = "pip-audit", specifier = ">=2.7.0" },
     { name = "pytest", specifier = ">=9.0.3" },
