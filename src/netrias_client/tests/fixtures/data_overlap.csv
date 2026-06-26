@@ -1,0 +1,9 @@
+race,status,site_id
+White,Active,S001
+White,Active,S002
+Black or African American,Inactive,S003
+,Active,S004
+Unkown,Active,S005
+Asian,,S006
+Not Reported,Active,S007
+   ,Inactive,S008
