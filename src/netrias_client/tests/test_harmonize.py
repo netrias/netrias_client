@@ -363,6 +363,87 @@ def test_harmonize_downloads_manifest_from_status_payload(
     assert str(capture.requests[2].url) == manifest_url
 
 
+def test_harmonize_recovers_from_transient_status_polling_failures(
+    configured_client: NetriasClient,
+    sample_csv_path: Path,
+    sample_manifest_path: Path,
+    output_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Keep polling when the status endpoint briefly fails while the job is still running."""
+
+    # Given: a queued job whose status endpoint briefly returns retryable failures
+    capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
+    status_calls = _install_status_poll_sequence(
+        monkeypatch,
+        httpx.Response(500, json={"message": "temporary backend error"}),
+        httpx.Response(429, json={"message": "slow down"}),
+        httpx.ConnectError("connection reset"),
+        httpx.Response(200, json={"status": "SUCCEEDED", "final_url": "https://mock.netrias/result.csv"}),
+    )
+    install_mock_transport(monkeypatch, capture)
+    sleep_durations = _skip_polling_sleep(monkeypatch)
+    expected_output = output_directory / "sample.harmonized.csv"
+    assert not expected_output.exists()
+    assert capture.requests == []
+
+    # When: the user waits for harmonization to complete
+    result = configured_client.harmonize(
+        source_path=sample_csv_path,
+        manifest=sample_manifest_path,
+        data_commons_key="ccdi",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        output_path=output_directory,
+    )
+
+    # Then: transient polling failures do not fail the completed backend job
+    assert result.status == "succeeded"
+    assert result.job_id == "job-123"
+    assert expected_output.read_text(encoding="utf-8") == "col1,col2\n7,8\n"
+    assert status_calls == ["job-123", "job-123", "job-123", "job-123"]
+    assert len(sleep_durations) == 3
+
+
+def test_harmonize_keeps_terminal_job_failure_authoritative_after_status_retry(
+    configured_client: NetriasClient,
+    sample_csv_path: Path,
+    sample_manifest_path: Path,
+    output_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Return the terminal job failure even when an earlier status poll was transiently unavailable."""
+
+    # Given: a status endpoint that recovers and reports the backend job failed
+    capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
+    status_calls = _install_status_poll_sequence(
+        monkeypatch,
+        httpx.Response(500, json={"message": "temporary backend error"}),
+        httpx.Response(200, json={"status": "FAILED", "errorMessage": "backend validation failed"}),
+    )
+    install_mock_transport(monkeypatch, capture)
+    _ = _skip_polling_sleep(monkeypatch)
+    expected_output = output_directory / "sample.harmonized.csv"
+    assert not expected_output.exists()
+    assert capture.requests == []
+
+    # When: the user waits for harmonization to complete
+    result = configured_client.harmonize(
+        source_path=sample_csv_path,
+        manifest=sample_manifest_path,
+        data_commons_key="ccdi",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        output_path=output_directory,
+    )
+
+    # Then: the client reports the real terminal failure without downloading output
+    assert result.status == "failed"
+    assert result.description == "backend validation failed"
+    assert result.job_id == "job-123"
+    assert not expected_output.exists()
+    assert len(capture.requests) == 1
+    assert status_calls == ["job-123", "job-123"]
+
+
 def test_harmonize_can_disable_cache(
     configured_client: NetriasClient,
     sample_csv_path: Path,
@@ -428,3 +509,41 @@ async def test_harmonize_async_success(
 def _decode_submit_body(request: httpx.Request) -> dict[str, object]:
     raw = gzip.decompress(request.content)
     return cast(dict[str, object], json.loads(raw.decode("utf-8")))
+
+
+def _install_status_poll_sequence(
+    monkeypatch: pytest.MonkeyPatch,
+    *status_outcomes: httpx.Response | httpx.HTTPError,
+) -> list[str]:
+    """Patch only status polling so tests still use the normal submit/download mock flow."""
+
+    calls: list[str] = []
+    outcomes = list(status_outcomes)
+
+    async def fake_fetch_job_status(base_url: str, api_key: str, job_id: str, timeout: float) -> httpx.Response:
+        _ = (api_key, timeout)
+        calls.append(job_id)
+        if not outcomes:
+            raise AssertionError("status sequence exhausted")
+        outcome = outcomes.pop(0)
+        if isinstance(outcome, httpx.HTTPError):
+            raise outcome
+        return httpx.Response(
+            outcome.status_code,
+            headers=outcome.headers,
+            content=outcome.content,
+            request=httpx.Request("GET", f"{base_url}/v1/jobs/{job_id}"),
+        )
+
+    monkeypatch.setattr("netrias_client._core.fetch_job_status", fake_fetch_job_status)
+    return calls
+
+
+def _skip_polling_sleep(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    durations: list[float] = []
+
+    async def fake_sleep(delay: float) -> None:
+        durations.append(delay)
+
+    monkeypatch.setattr("netrias_client._core.asyncio.sleep", fake_sleep)
+    return durations
