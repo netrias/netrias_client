@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: Netrias Client
+message: >-
+  If you use this package, please cite it using the
+  metadata from this file.
+type: python package
+authors:
+  - given-names: Christopher
+    family-names: Harman
+  - given-names: Patrick
+    family-names: Boutet
+  - given-names: Rohith
+    family-names: Challa
+url: 'https://github.com/netrias/netrias_client'
+abstract: >-
+  A Python client for the Netrias discovery and harmonization services.
+
+  Use it to map columns in tabular files to standard data models, then harmonize values to the target model’s permissible values. The client supports CSV, TSV, and XLSX files.
+  keywords:
+  - data-harmonization
+  - bdf
+license: MIT

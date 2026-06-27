@@ -92,7 +92,7 @@ async def test_writes_json_and_csv(
             manifest=overlap_manifest,
             settings=mock_settings,
             target_schema="ccdi",
-            target_version="1",
+            external_version_number="1",
             output_dir=tmp_path,
             logger=__import__("logging").getLogger("test"),
         )
@@ -122,7 +122,7 @@ async def test_skips_non_harmonizable_columns(
             manifest=overlap_manifest,
             settings=mock_settings,
             target_schema="ccdi",
-            target_version="1",
+            external_version_number="1",
             output_dir=tmp_path,
             logger=__import__("logging").getLogger("test"),
         )
@@ -155,7 +155,7 @@ async def test_matched_and_unmatched_counts(
             manifest=overlap_manifest,
             settings=mock_settings,
             target_schema="ccdi",
-            target_version="1",
+            external_version_number="1",
             output_dir=tmp_path,
             logger=__import__("logging").getLogger("test"),
         )
@@ -193,7 +193,7 @@ async def test_blank_handling(
             manifest=overlap_manifest,
             settings=mock_settings,
             target_schema="ccdi",
-            target_version="1",
+            external_version_number="1",
             output_dir=tmp_path,
             logger=__import__("logging").getLogger("test"),
         )
@@ -227,7 +227,7 @@ async def test_match_rates(
             manifest=overlap_manifest,
             settings=mock_settings,
             target_schema="ccdi",
-            target_version="1",
+            external_version_number="1",
             output_dir=tmp_path,
             logger=__import__("logging").getLogger("test"),
         )
@@ -262,7 +262,7 @@ async def test_csv_includes_all_distinct_values(
             manifest=overlap_manifest,
             settings=mock_settings,
             target_schema="ccdi",
-            target_version="1",
+            external_version_number="1",
             output_dir=tmp_path,
             logger=__import__("logging").getLogger("test"),
         )
@@ -294,7 +294,7 @@ async def test_status_column_uses_correct_pvs(
             manifest=overlap_manifest,
             settings=mock_settings,
             target_schema="ccdi",
-            target_version="1",
+            external_version_number="1",
             output_dir=tmp_path,
             logger=__import__("logging").getLogger("test"),
         )

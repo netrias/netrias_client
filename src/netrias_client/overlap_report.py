@@ -117,7 +117,7 @@ async def run_overlap_analysis(
     manifest: ColumnKeyedManifestPayload,
     settings: Settings,
     target_schema: str,
-    target_version: str,
+    external_version_number: str,
     output_dir: Path,
     logger: logging.Logger,
 ) -> None:
@@ -173,7 +173,7 @@ async def run_overlap_analysis(
             pv_set = await get_pv_set_async(
                 settings=settings,
                 model_key=target_schema,
-                version=target_version,
+                version=external_version_number,
                 cde_key=cde_key,
                 include_inactive=False,
             )
