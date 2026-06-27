@@ -137,7 +137,7 @@ async def discover_mapping_from_tabular_async(
             manifest=keyed,
             settings=settings,
             target_schema=target_schema,
-            target_version=target_version,
+            external_version_number=external_version_number,
             output_dir=output_dir,
             logger=logger,
         )

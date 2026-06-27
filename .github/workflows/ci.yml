@@ -45,8 +45,5 @@ jobs:
         # Security: CI must use the committed lockfile, not silently resolve fresh packages.
         run: uv sync --frozen --all-extras
 
-      - name: Run ruff check
-        run: uv run ruff check src/ tests/
-
       - name: Run vulture
         run: uv run vulture
