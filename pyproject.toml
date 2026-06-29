@@ -125,6 +125,9 @@ line-length = 140
 [tool.ruff.lint.mccabe]
 max-complexity = 4
 
+[tool.ruff]
+extend-exclude = ["vulture_whitelist.py"]
+
 [tool.ruff.lint]
 select = [
     "E", # Pycodestyle & Pylint errors
