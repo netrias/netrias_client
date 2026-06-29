@@ -2,11 +2,10 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from netrias_client import NetriasClient
-from netrias_client._config import Environment
 
 
-load_dotenv()
-client = NetriasClient(api_key=os.environ["NETRIAS_API_KEY"], environment=Environment.STAGING)
+_ = load_dotenv()
+client = NetriasClient(api_key=os.environ["NETRIAS_API_KEY"])
 # Optional: tune timeout, logging
 client.configure(
    log_level="INFO",
@@ -19,7 +18,7 @@ source = Path("examples/data/demo_overlap.csv")
 manifest = client.discover_mapping_from_tabular(
       source_path=source,
       target_schema="ccdi",
-      target_version="1",
+      external_version_number="1",
       sample_limit=5000,
       top_k=3,
       confidence_threshold=0.6,

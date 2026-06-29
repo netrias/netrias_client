@@ -22,6 +22,7 @@ _COMMANDS: Final[tuple[tuple[str, ...], ...]] = (
     ("pytest",),
     ("ruff", "check", "."),
     ("basedpyright", "."),
+    ("vulture",),
 )
 _REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[2]
 _PYPROJECT_PATH: Final[Path] = _REPO_ROOT / "pyproject.toml"
@@ -56,15 +57,6 @@ def check() -> None:
     _ensure_logging()
     for command in _COMMANDS:
         _run_command_or_raise(command)
-
-
-def live_check() -> None:
-    """Execute the live service smoke test harness.
-
-    'why': exercise production endpoints without duplicating CLI plumbing
-    """
-
-    _run_command_or_raise(("python", "-m", "netrias_client.live_test.api_quicktest"))
 
 
 def release(argv: Sequence[str] | None = None) -> None:

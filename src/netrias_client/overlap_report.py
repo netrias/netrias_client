@@ -9,15 +9,14 @@ from __future__ import annotations
 
 import json
 import logging
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
 
 import pandas as pd
 
-from ._tabular import TabularDataset
 from ._data_model_store import get_pv_set_async
-from ._models import ColumnKeyedManifestPayload, Settings
-
+from ._models import ColumnKeyedManifestPayload, Settings, ColumnMappingRecord
+from ._tabular import TabularDataset
 
 
 def _normalize(v: object) -> str | None:
@@ -86,6 +85,23 @@ def _build_flat_rows(
     return rows
 
 
+def _make_entry(col_key: str, col_name: str, cde_key: object) -> dict[str, object]:
+    return {
+        "column_key": col_key,
+        "column_name": col_name,
+        "cde_key": cde_key,
+        "status": None,
+        "distinct_raw_values": None,
+        "matched_distinct_raw_values": None,
+        "matched_total_raw_values": None,
+        "missing_count": None,
+        "match_rate_including_nulls": None,
+        "match_rate_excluding_nulls": None,
+        "top_raw_matches": [],
+        "top_raw_unmatched": [],
+    }
+
+
 def _write_reports(
     report: list[dict[str, object]],
     flat_rows: list[dict[str, object]],
@@ -112,12 +128,76 @@ def _write_reports(
     logger.info("Wrote CSV report: %s successfully ✅", out_csv)
 
 
+async def _process_column(
+    col_key: str,
+    info: ColumnMappingRecord,
+    column_indexes: dict[str, int],
+    dataset: TabularDataset,
+    settings: Settings,
+    target_schema: str,
+    external_version_number: str,
+    logger: logging.Logger,
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    """Fetch PVs and compute overlap metrics for a single harmonizable column."""
+
+    col_name = str(info["column_name"])
+    cde_key = info.get("cde_key")
+    entry = _make_entry(col_key, col_name, cde_key)
+
+    if not cde_key:
+        entry["status"] = "no_cde_mapped"
+        return entry, []
+
+    index = column_indexes.get(col_key)
+    if index is None:
+        entry["status"] = "skipped_missing_column"
+        return entry, []
+
+    values = [row[index] for row in dataset.rows]
+    distinct_raw_counts = Counter(values)
+    missing_count = sum(1 for v in values if _normalize(v) is None)
+    total_rows = len(values)
+    non_null_rows = total_rows - missing_count
+    entry["distinct_raw_values"] = len(distinct_raw_counts)
+
+    try:
+        pv_set = await get_pv_set_async(
+            settings=settings,
+            model_key=target_schema,
+            version=external_version_number,
+            cde_key=str(cde_key),
+            include_inactive=False,
+        )
+    except Exception as e:
+        entry["status"] = f"error_fetching_pvs: {e}"
+        logger.warning("PV fetch failed for %s/%s: %s", target_schema, cde_key, e)
+        return entry, []
+
+    pv_normalized = {_normalize(pv) for pv in pv_set}
+    matched, unmatched, matched_total = _compute_match_stats(distinct_raw_counts, pv_normalized)
+
+    match_rate_including_nulls = (matched_total / total_rows) if total_rows else 0
+    match_rate_excluding_nulls = (matched_total / non_null_rows) if non_null_rows else 0
+
+    entry["status"] = "ok"
+    entry["matched_distinct_raw_values"] = len(matched)
+    entry["matched_total_raw_values"] = matched_total
+    entry["missing_count"] = missing_count
+    entry["match_rate_including_nulls"] = round(match_rate_including_nulls, 2)
+    entry["match_rate_excluding_nulls"] = round(match_rate_excluding_nulls, 2)
+    entry["top_raw_matches"] = _build_top_matches(matched, matched_total)
+    entry["top_raw_unmatched"] = _build_top_unmatched(unmatched)
+
+    flat_rows = _build_flat_rows(col_key, col_name, str(cde_key), distinct_raw_counts, pv_normalized)
+    return entry, flat_rows
+
+
 async def run_overlap_analysis(
     dataset: TabularDataset,
     manifest: ColumnKeyedManifestPayload,
     settings: Settings,
     target_schema: str,
-    target_version: str,
+    external_version_number: str,
     output_dir: Path,
     logger: logging.Logger,
 ) -> None:
@@ -128,78 +208,14 @@ async def run_overlap_analysis(
     flat_rows: list[dict[str, object]] = []
 
     for col_key, info in manifest["column_mappings"].items():
-        col_name = info["column_name"]
-        cde_key = info.get("cde_key")
-        harmonization = info.get("harmonization")
-
-        if harmonization != "harmonizable":
+        if info.get("harmonization") != "harmonizable":
             continue
 
-        entry: dict[str, object] = {            
-            "column_key": col_key,
-            "column_name": col_name,
-            "cde_key": cde_key,
-            "status": None,
-            "distinct_raw_values": None,
-            "matched_distinct_raw_values": None,
-            "matched_total_raw_values": None,
-            "missing_count": None,
-            "match_rate_including_nulls": None,
-            "match_rate_excluding_nulls": None,
-            "top_raw_matches": [],
-            "top_raw_unmatched": [],
-        }
-
-        if not cde_key:
-            entry["status"] = "no_cde_mapped"
-            report.append(entry)
-            continue
-
-        index = column_indexes.get(col_key)
-        if index is None:
-            entry["status"] = "skipped_missing_column"
-            report.append(entry)
-            continue
-
-        values = [row[index] for row in dataset.rows]
-        distinct_raw_counts = Counter(values)       
-        distinct_count = len(distinct_raw_counts)
-        missing_count = sum(1 for v in values if _normalize(v) is None)
-        total_rows = len(values)
-        non_null_rows = total_rows - missing_count
-        entry["distinct_raw_values"] = distinct_count
-
-        try:
-            pv_set = await get_pv_set_async(
-                settings=settings,
-                model_key=target_schema,
-                version=target_version,
-                cde_key=cde_key,
-                include_inactive=False,
-            )
-        except Exception as e:
-            entry["status"] = f"error_fetching_pvs: {e}"
-            report.append(entry)
-            logger.warning("PV fetch failed for %s/%s: %s", target_schema, cde_key, e)
-            continue
-
-        pv_normalized = {_normalize(pv) for pv in pv_set}
-        matched, unmatched, matched_total = _compute_match_stats(distinct_raw_counts, pv_normalized)
-
-        match_rate_including_nulls = (matched_total / total_rows) if total_rows else 0
-        match_rate_excluding_nulls = (matched_total / non_null_rows) if non_null_rows else 0
-
-        entry["status"] = "ok"
-        entry["matched_distinct_raw_values"] = len(matched)
-        entry["matched_total_raw_values"] = matched_total
-        entry["missing_count"] = missing_count
-        entry["match_rate_including_nulls"] = round(match_rate_including_nulls, 2)
-        entry["match_rate_excluding_nulls"] = round(match_rate_excluding_nulls, 2)
-        entry["top_raw_matches"] = _build_top_matches(matched, matched_total)
-        entry["top_raw_unmatched"] = _build_top_unmatched(unmatched)
-
-        flat_rows.extend(_build_flat_rows(col_key, col_name, cde_key, distinct_raw_counts, pv_normalized))
+        entry, column_flat_rows = await _process_column(
+            col_key, info, column_indexes, dataset,
+            settings, target_schema, external_version_number, logger,
+        )
         report.append(entry)
-    # Write outputs
+        flat_rows.extend(column_flat_rows)
+
     _write_reports(report, flat_rows, output_dir, logger)
-    
