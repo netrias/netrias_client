@@ -2,10 +2,9 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from netrias_client import NetriasClient
-from netrias_client._config import Environment
 
 
-load_dotenv()
+_ = load_dotenv()
 client = NetriasClient(api_key=os.environ["NETRIAS_API_KEY"])
 # Optional: tune timeout, logging
 client.configure(
