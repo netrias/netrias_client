@@ -219,4 +219,3 @@ async def run_overlap_analysis(
         flat_rows.extend(column_flat_rows)
 
     _write_reports(report, flat_rows, output_dir, logger)
-    
