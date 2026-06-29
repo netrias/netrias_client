@@ -15,7 +15,7 @@ from pathlib import Path
 import pandas as pd
 
 from ._data_model_store import get_pv_set_async
-from ._models import ColumnKeyedManifestPayload, Settings
+from ._models import ColumnKeyedManifestPayload, Settings, ColumnMappingRecord
 from ._tabular import TabularDataset
 
 
@@ -130,7 +130,7 @@ def _write_reports(
 
 async def _process_column(
     col_key: str,
-    info: dict[str, object],
+    info: ColumnMappingRecord,
     column_indexes: dict[str, int],
     dataset: TabularDataset,
     settings: Settings,

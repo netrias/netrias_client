@@ -6,7 +6,7 @@ from netrias_client._config import Environment
 
 
 load_dotenv()
-client = NetriasClient(api_key=os.environ["NETRIAS_API_KEY"], environment=Environment.STAGING)
+client = NetriasClient(api_key=os.environ["NETRIAS_API_KEY"])
 # Optional: tune timeout, logging
 client.configure(
    log_level="INFO",

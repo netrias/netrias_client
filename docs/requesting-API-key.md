@@ -1,19 +1,9 @@
 # API Key Provisioning Guide
 
-## Overview
-
-This guide explains how to request an API key for the Netrias Harmonization platform.
-
-API keys are required for:
-
-- Netrias Client access
-- Direct REST API access
-
 ## Who Can Request a Key?
 
 - BDF performers
 - NIH staff
-- Third-party integrators, provided a mutual NDA and data-use agreement are in place first
 
 ## Request Process
 
@@ -28,7 +18,7 @@ API keys are required for:
 
 2. **Submit your request** – Email the above details to **Netrias** at [bdf_strides@netrias.com](mailto:bdf_strides@netrias.com) with the subject line **“API Key Request – Netrias BDF”**.
 
-3. **Approval and issuance** – Netrias will confirm receipt within *1 business day* and issue:
+3. **Approval and issuance** – Netrias will confirm receipt within *1-3 business day* and issue:
 
    - Your **API key**
    - The **expiration / rotation schedule**
@@ -38,7 +28,7 @@ API keys are required for:
 4. **Store the key securely**
 
    - **Never** commit keys to source control.
-   - Rotate immediately if you suspect compromise.
+   - Contact us to rotate immediately if you suspect compromise.
 
 ## Netrias Client
 

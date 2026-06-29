@@ -118,6 +118,9 @@ dev = [
 ]
 
 
+[tool.basedpyright]
+exclude = ["vulture_whitelist.py"]
+
 [tool.ruff]
 unsafe-fixes = false
 line-length = 140
