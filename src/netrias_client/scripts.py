@@ -22,6 +22,7 @@ _COMMANDS: Final[tuple[tuple[str, ...], ...]] = (
     ("pytest",),
     ("ruff", "check", "."),
     ("basedpyright", "."),
+    ("vulture",),
 )
 _REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[2]
 _PYPROJECT_PATH: Final[Path] = _REPO_ROOT / "pyproject.toml"

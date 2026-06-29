@@ -16,7 +16,7 @@ abstract: >-
   A Python client for the Netrias discovery and harmonization services.
 
   Use it to map columns in tabular files to standard data models, then harmonize values to the target model’s permissible values. The client supports CSV, TSV, and XLSX files.
-  keywords:
+keywords:
   - data-harmonization
   - bdf
 license: MIT
