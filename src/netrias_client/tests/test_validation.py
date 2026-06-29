@@ -34,7 +34,7 @@ def test_missing_source_file_raises(
         _ = configured_client.harmonize(
             source_path=missing_path,
             manifest=sample_manifest_path,
-            data_commons_key="ccdi",
+            target_schema="ccdi",
             external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
@@ -61,7 +61,7 @@ def test_directory_source_path_rejected(
         _ = configured_client.harmonize(
             source_path=directory_path,
             manifest=sample_manifest_path,
-            data_commons_key="ccdi",
+            target_schema="ccdi",
             external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
@@ -90,7 +90,7 @@ def test_invalid_source_extension_rejected(
         _ = configured_client.harmonize(
             source_path=wrong_extension,
             manifest=sample_manifest_path,
-            data_commons_key="ccdi",
+            target_schema="ccdi",
             external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
@@ -124,7 +124,7 @@ def test_source_file_too_large(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
-            data_commons_key="ccdi",
+            target_schema="ccdi",
             external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
@@ -153,7 +153,7 @@ def test_manifest_must_be_json(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=bad_manifest,
-            data_commons_key="ccdi",
+            target_schema="ccdi",
             external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=output_directory,
         )
@@ -178,7 +178,7 @@ def test_external_version_number_must_not_be_empty(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
-            data_commons_key="ccdi",
+            target_schema="ccdi",
             external_version_number=external_version_number,
             output_path=output_directory,
         )
@@ -203,7 +203,7 @@ def test_harmonize_rejects_latest_external_version(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
-            data_commons_key="ccdi",
+            target_schema="ccdi",
             external_version_number=external_version_number,
             output_path=output_directory,
         )
@@ -235,7 +235,7 @@ def test_output_path_existing_file_versioned(
     result = configured_client.harmonize(
         source_path=sample_csv_path,
         manifest=sample_manifest_path,
-        data_commons_key="ccdi",
+        target_schema="ccdi",
         external_version_number=EXTERNAL_VERSION_NUMBER,
         output_path=output_directory,
     )
@@ -278,7 +278,7 @@ def test_output_directory_must_be_writable(
         _ = configured_client.harmonize(
             source_path=sample_csv_path,
             manifest=sample_manifest_path,
-            data_commons_key="ccdi",
+            target_schema="ccdi",
             external_version_number=EXTERNAL_VERSION_NUMBER,
             output_path=target,
         )

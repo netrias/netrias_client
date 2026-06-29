@@ -171,7 +171,7 @@ def _assert_harmonization_returns_expected_status_for_discovered_manifest(contex
     result = context.client.harmonize(
         source_path=CSV_PATH,
         manifest=context.manifest,
-        data_commons_key=MODEL_KEY,
+        target_schema=MODEL_KEY,
         external_version_number=EXTERNAL_VERSION_NUMBER,
     )
     print(f"  harmonization: {result.status}")
