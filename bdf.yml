@@ -25,7 +25,7 @@ input:
     format:
       - csv
       - xlsx
-      - various
+      - tsv
     dataStandard:
       - Standard agnostic
     proprietary: false
@@ -39,7 +39,7 @@ output:
     format:
       - csv
       - xlsx
-      - various
+      - tsv
     dataStandard:
       - Standard agnostic
     proprietary: false

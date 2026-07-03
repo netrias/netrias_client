@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
@@ -28,38 +29,63 @@ def _normalize(v: object) -> str | None:
     return s
 
 
+TOP_N_VALUES = 3
+
+
+@dataclass
+class ValueCount:
+    """A single raw value paired with its occurrence count."""
+    value: str
+    count: int
+
+
+@dataclass
+class MatchStats:
+    """Result of comparing raw column values against a CDE's permissible value set."""
+    matched: list[ValueCount]
+    unmatched: list[ValueCount]
+    matched_total: int
+
+
+@dataclass
+class ColumnResult:
+    """Result of processing a single harmonizable column."""
+    entry: dict[str, object]
+    flat_rows: list[dict[str, object]]
+
+
 def _compute_match_stats(
     raw_counts: Counter[str],
     pv_normalized: set[str | None],
-) -> tuple[list[tuple[str, int]], list[tuple[str, int]], int]:
-    matched: list[tuple[str, int]] = []
-    unmatched: list[tuple[str, int]] = []
+) -> MatchStats:
+    matched: list[ValueCount] = []
+    unmatched: list[ValueCount] = []
     matched_total = 0
     for value, count in raw_counts.items():
         norm = _normalize(value)
         if norm and norm in pv_normalized:
-            matched.append((value, count))
+            matched.append(ValueCount(value=value, count=count))
             matched_total += count
         elif norm:
-            unmatched.append((value, count))
-    matched.sort(key=lambda x: x[1], reverse=True)
-    unmatched.sort(key=lambda x: x[1], reverse=True)
-    return matched, unmatched, matched_total
+            unmatched.append(ValueCount(value=value, count=count))
+    matched.sort(key=lambda vc: vc.count, reverse=True)
+    unmatched.sort(key=lambda vc: vc.count, reverse=True)
+    return MatchStats(matched=matched, unmatched=unmatched, matched_total=matched_total)
 
 
-def _build_top_matches(matched: list[tuple[str, int]], matched_total: int) -> list[dict[str, object]]:
+def _build_top_three_matches(matched: list[ValueCount], matched_total: int) -> list[dict[str, object]]:
     if not matched_total:
         return []
     return [
-        {"value": str(v), "rate": round(c / matched_total, 2)}
-        for v, c in matched[:3]
+        {"value": vc.value, "rate": round(vc.count / matched_total, 2)}
+        for vc in matched[:TOP_N_VALUES]
     ]
 
 
-def _build_top_unmatched(unmatched: list[tuple[str, int]]) -> list[dict[str, object]]:
+def _build_top_three_unmatched(unmatched: list[ValueCount]) -> list[dict[str, object]]:
     return [
-        {"value": str(v), "count": c}
-        for v, c in unmatched[:3]
+        {"value": vc.value, "count": vc.count}
+        for vc in unmatched[:TOP_N_VALUES]
     ]
 
 
@@ -137,7 +163,7 @@ async def _process_column(
     target_schema: str,
     external_version_number: str,
     logger: logging.Logger,
-) -> tuple[dict[str, object], list[dict[str, object]]]:
+) -> ColumnResult:
     """Fetch PVs and compute overlap metrics for a single harmonizable column."""
 
     col_name = str(info["column_name"])
@@ -146,12 +172,12 @@ async def _process_column(
 
     if not cde_key:
         entry["status"] = "no_cde_mapped"
-        return entry, []
+        return ColumnResult(entry=entry, flat_rows=[])
 
     index = column_indexes.get(col_key)
     if index is None:
         entry["status"] = "skipped_missing_column"
-        return entry, []
+        return ColumnResult(entry=entry, flat_rows=[])
 
     values = [row[index] for row in dataset.rows]
     distinct_raw_counts = Counter(values)
@@ -171,25 +197,25 @@ async def _process_column(
     except Exception as e:
         entry["status"] = f"error_fetching_pvs: {e}"
         logger.warning("PV fetch failed for %s/%s: %s", target_schema, cde_key, e)
-        return entry, []
+        return ColumnResult(entry=entry, flat_rows=[])
 
     pv_normalized = {_normalize(pv) for pv in pv_set}
-    matched, unmatched, matched_total = _compute_match_stats(distinct_raw_counts, pv_normalized)
+    stats = _compute_match_stats(distinct_raw_counts, pv_normalized)
 
-    match_rate_including_nulls = (matched_total / total_rows) if total_rows else 0
-    match_rate_excluding_nulls = (matched_total / non_null_rows) if non_null_rows else 0
+    match_rate_including_nulls = (stats.matched_total / total_rows) if total_rows else 0
+    match_rate_excluding_nulls = (stats.matched_total / non_null_rows) if non_null_rows else 0
 
     entry["status"] = "ok"
-    entry["matched_distinct_raw_values"] = len(matched)
-    entry["matched_total_raw_values"] = matched_total
+    entry["matched_distinct_raw_values"] = len(stats.matched)
+    entry["matched_total_raw_values"] = stats.matched_total
     entry["missing_count"] = missing_count
     entry["match_rate_including_nulls"] = round(match_rate_including_nulls, 2)
     entry["match_rate_excluding_nulls"] = round(match_rate_excluding_nulls, 2)
-    entry["top_raw_matches"] = _build_top_matches(matched, matched_total)
-    entry["top_raw_unmatched"] = _build_top_unmatched(unmatched)
+    entry["top_raw_matches"] = _build_top_three_matches(stats.matched, stats.matched_total)
+    entry["top_raw_unmatched"] = _build_top_three_unmatched(stats.unmatched)
 
     flat_rows = _build_flat_rows(col_key, col_name, str(cde_key), distinct_raw_counts, pv_normalized)
-    return entry, flat_rows
+    return ColumnResult(entry=entry, flat_rows=flat_rows)
 
 
 async def run_overlap_analysis(
@@ -211,11 +237,11 @@ async def run_overlap_analysis(
         if info.get("harmonization") != "harmonizable":
             continue
 
-        entry, column_flat_rows = await _process_column(
+        column_result = await _process_column(
             col_key, info, column_indexes, dataset,
             settings, target_schema, external_version_number, logger,
         )
-        report.append(entry)
-        flat_rows.extend(column_flat_rows)
+        report.append(column_result.entry)
+        flat_rows.extend(column_result.flat_rows)
 
     _write_reports(report, flat_rows, output_dir, logger)
