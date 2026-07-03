@@ -1,6 +1,6 @@
 {
-  "column_mappings": [
-    {
+  "column_mappings": {
+    "col_0000": {
       "column_name": "a",
       "cde_key": "alpha",
       "cde_id": 1,
@@ -9,7 +9,7 @@
         {"target": "alpha", "confidence": 0.95, "harmonization": "harmonizable", "cde_id": 1}
       ]
     },
-    {
+    "col_0001": {
       "column_name": "b",
       "cde_key": "beta",
       "cde_id": 2,
@@ -18,14 +18,14 @@
         {"target": "beta", "confidence": 0.95, "harmonization": "harmonizable", "cde_id": 2}
       ]
     },
-    {
+    "col_0002": {
       "column_name": "c",
       "cde_key": "gamma",
       "cde_id": 3,
-      "harmonization": "harmonizable",
+      "harmonization": "no_permissible_values",
       "alternatives": [
         {"target": "gamma", "confidence": 0.95, "harmonization": "harmonizable", "cde_id": 3}
       ]
     }
-  ]
+  }
 }

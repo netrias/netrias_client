@@ -39,6 +39,7 @@ from ._models import (
     MappingSuggestion,
     Settings,
 )
+from .overlap_report import run_overlap_analysis
 from ._sfn_discovery import discover_via_step_functions
 from ._tabular import TabularDataset, read_tabular
 from ._validators import validate_external_version_number, validate_source_path, validate_target_schema, validate_top_k
@@ -129,7 +130,6 @@ async def discover_mapping_from_tabular_async(
     keyed = _column_keyed_manifest(positional_manifest, dataset)
 
     if generate_raw_overlap_report:
-        from .overlap_report import run_overlap_analysis
         output_dir = overlap_report_output_dir or Path("output")
         output_dir.mkdir(parents=True, exist_ok=True)
         await run_overlap_analysis(
