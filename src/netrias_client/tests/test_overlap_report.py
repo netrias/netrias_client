@@ -29,7 +29,7 @@ def overlap_dataset() -> TabularDataset:
 @pytest.fixture
 def overlap_manifest() -> ColumnKeyedManifestPayload:
     manifest_path = Path(__file__).parent / "fixtures" / "sample_manifest.json"
-    return json.loads(manifest_path.read_text())
+    return cast(ColumnKeyedManifestPayload, json.loads(manifest_path.read_text()))
 
 
 @pytest.fixture
@@ -82,10 +82,10 @@ def _find_report_entry(report: list[ReportEntry], column_name: str) -> ReportEnt
     return next(entry for entry in report if entry["column_name"] == column_name)
 
 
-def _list_field(entry: ReportEntry, field: str) -> list[object]:
+def _list_field(entry: ReportEntry, field: str) -> list[dict[str, object]]:
     value = entry[field]
     assert isinstance(value, list)
-    return cast(list[object], value)
+    return cast(list[dict[str, object]], value)
 
 
 def _int_field(entry: ReportEntry, field: str) -> int:

@@ -29,9 +29,6 @@ def _normalize(v: object) -> str | None:
     return s
 
 
-TOP_N_VALUES = 3
-
-
 @dataclass
 class ValueCount:
     """A single raw value paired with its occurrence count."""
@@ -73,19 +70,19 @@ def _compute_match_stats(
     return MatchStats(matched=matched, unmatched=unmatched, matched_total=matched_total)
 
 
-def _build_top_three_matches(matched: list[ValueCount], matched_total: int) -> list[dict[str, object]]:
+def _build_top_three_matched(matched: list[ValueCount], matched_total: int) -> list[dict[str, object]]:
     if not matched_total:
         return []
     return [
         {"value": vc.value, "rate": round(vc.count / matched_total, 2)}
-        for vc in matched[:TOP_N_VALUES]
+        for vc in matched[:3]
     ]
 
 
 def _build_top_three_unmatched(unmatched: list[ValueCount]) -> list[dict[str, object]]:
     return [
         {"value": vc.value, "count": vc.count}
-        for vc in unmatched[:TOP_N_VALUES]
+        for vc in unmatched[:3]
     ]
 
 
@@ -211,7 +208,7 @@ async def _process_column(
     entry["missing_count"] = missing_count
     entry["match_rate_including_nulls"] = round(match_rate_including_nulls, 2)
     entry["match_rate_excluding_nulls"] = round(match_rate_excluding_nulls, 2)
-    entry["top_raw_matches"] = _build_top_three_matches(stats.matched, stats.matched_total)
+    entry["top_raw_matches"] = _build_top_three_matched(stats.matched, stats.matched_total)
     entry["top_raw_unmatched"] = _build_top_three_unmatched(stats.unmatched)
 
     flat_rows = _build_flat_rows(col_key, col_name, str(cde_key), distinct_raw_counts, pv_normalized)
