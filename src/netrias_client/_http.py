@@ -30,26 +30,33 @@ def build_harmonize_payload(
     external_version_number: str,
     sheet_name: str | None = None,
     use_cache: bool = True,
+    source_bucket: str | None = None,
+    source_key: str | None = None,
 ) -> bytes:
     """Return gzip-compressed harmonization payload for the given tabular source and manifest."""
 
     validated_external_version_number = _validate_external_version_number(external_version_number)
-    dataset = read_tabular(source_path, sheet_name=sheet_name)
-
     envelope: dict[str, object] = {
         "schemaVersion": SCHEMA_VERSION,
         "data_commons_key": data_commons_key,
         "external_version_number": validated_external_version_number,
         "use_cache": use_cache,
-        "document": {
+    }
+
+    if source_bucket is not None or source_key is not None:
+        envelope.update(_source_reference_payload(source_bucket, source_key))
+        column_count = None
+    else:
+        dataset = read_tabular(source_path, sheet_name=sheet_name)
+        envelope["document"] = {
             "name": source_path.name,
             "sheetName": dataset.sheet_name,
             "header": dataset.headers,
             "rows": dataset.rows,
-        },
-    }
+        }
+        column_count = len(dataset.columns)
 
-    column_mappings = normalize_manifest_mapping(manifest, column_count=len(dataset.columns))
+    column_mappings = normalize_manifest_mapping(manifest, column_count=column_count)
     if column_mappings:
         envelope[MANIFEST_COLUMN_MAPPINGS_KEY] = column_mappings
 
@@ -58,6 +65,14 @@ def build_harmonize_payload(
     if len(compressed) > MAX_COMPRESSED_BYTES:
         raise ValueError("compressed harmonization payload exceeds 10 MiB")
     return compressed
+
+
+def _source_reference_payload(source_bucket: str | None, source_key: str | None) -> dict[str, str]:
+    if not isinstance(source_bucket, str) or not source_bucket.strip():
+        raise ValueError("source_bucket must be a non-empty string when source_key is provided")
+    if not isinstance(source_key, str) or not source_key.strip():
+        raise ValueError("source_key must be a non-empty string when source_bucket is provided")
+    return {"source_bucket": source_bucket.strip(), "source_key": source_key.strip()}
 
 
 def _validate_external_version_number(external_version_number: object) -> str:
@@ -77,6 +92,7 @@ async def submit_harmonize_job(
     payload_gz: bytes,
     timeout: float,
     idempotency_key: str | None = None,
+    client: httpx.AsyncClient | None = None,
 ) -> httpx.Response:
     """Submit a harmonization job request and return the raw response."""
 
@@ -88,21 +104,28 @@ async def submit_harmonize_job(
     if idempotency_key:
         headers["Idempotency-Key"] = idempotency_key
 
+    if client is not None:
+        return await client.post(url, content=payload_gz, headers=headers)
     async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
         return await client.post(url, content=payload_gz, headers=headers)
+
 
 async def fetch_job_status(
     base_url: str,
     api_key: str,
     job_id: str,
     timeout: float,
+    client: httpx.AsyncClient | None = None,
 ) -> httpx.Response:
     """Return the status response for a previously submitted harmonization job."""
 
     url = _build_job_status_url(base_url, job_id)
     headers = {API_KEY_HEADER: api_key}
+    if client is not None:
+        return await client.get(url, headers=headers)
     async with httpx.AsyncClient(timeout=httpx.Timeout(timeout)) as client:
         return await client.get(url, headers=headers)
+
 
 async def request_mapping_discovery(
     base_url: str,
@@ -233,9 +256,11 @@ def _build_job_submit_url(base_url: str) -> str:
     base = base_url.rstrip("/")
     return f"{base}/v1/jobs/harmonize"
 
+
 def _build_job_status_url(base_url: str, job_id: str) -> str:
     base = base_url.rstrip("/")
     return f"{base}/v1/jobs/{quote(job_id, safe='')}"
+
 
 def _build_discovery_url(base_url: str) -> str:
     base = base_url.rstrip("/")

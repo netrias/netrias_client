@@ -18,6 +18,8 @@ API_KEY_HEADER: Final[str] = "x-api-key"
 here keeps one authority so header renames cannot drift.
 """
 
+PIPELINE_V3_HARMONIZATION_BASE_URL: Final[str] = "https://pdyuq0vi4h.execute-api.us-east-2.amazonaws.com/prod"
+
 
 class Environment(str, Enum):
     """Target deployment environment for URL resolution."""
@@ -29,7 +31,7 @@ class Environment(str, Enum):
 _ENVIRONMENT_URLS: dict[Environment, dict[str, str]] = {
     Environment.PROD: {
         "discovery": "https://6lvkljeyod.execute-api.us-east-2.amazonaws.com/prod",
-        "harmonization": "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod",
+        "harmonization": PIPELINE_V3_HARMONIZATION_BASE_URL,
         "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
     },
     Environment.STAGING: {
@@ -41,7 +43,7 @@ _ENVIRONMENT_URLS: dict[Environment, dict[str, str]] = {
 
 # Legacy constants preserved for backward compatibility
 DISCOVERY_BASE_URL = "https://api.netriasbdf.cloud"
-HARMONIZATION_BASE_URL = "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod"
+HARMONIZATION_BASE_URL = PIPELINE_V3_HARMONIZATION_BASE_URL
 DATA_MODEL_STORE_BASE_URL = "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default"
 # TODO: remove once API Gateway latency constraints are resolved.
 BYPASS_FUNCTION = "cde-recommend-prod"

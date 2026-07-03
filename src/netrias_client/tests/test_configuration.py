@@ -13,7 +13,7 @@ from netrias_client._config import (
     DATA_MODEL_STORE_BASE_URL,
     DISCOVERY_BASE_URL,
     HARMONIZATION_BASE_URL,
-    _ENVIRONMENT_URLS,  # pyright: ignore[reportPrivateUsage]
+    PIPELINE_V3_HARMONIZATION_BASE_URL,
     build_settings,
 )
 from netrias_client._errors import ClientConfigurationError
@@ -143,20 +143,18 @@ def test_environment_prod_resolves_urls() -> None:
     settings = build_settings(api_key="key", environment=Environment.PROD)
 
     # Then
-    prod = _ENVIRONMENT_URLS[Environment.PROD]
-    assert settings.harmonization_url == prod["harmonization"]
-    assert settings.discovery_url == prod["discovery"]
+    assert settings.harmonization_url == PIPELINE_V3_HARMONIZATION_BASE_URL
+    assert settings.discovery_url == "https://6lvkljeyod.execute-api.us-east-2.amazonaws.com/prod"
     assert settings.data_model_store_endpoints is not None
-    assert settings.data_model_store_endpoints.base_url == prod["data_model_store"]
+    assert settings.data_model_store_endpoints.base_url == DATA_MODEL_STORE_BASE_URL
 
 
 def test_environment_staging_resolves_urls() -> None:
     """Environment.STAGING selects staging URL defaults."""
     settings = build_settings(api_key="key", environment=Environment.STAGING)
 
-    staging = _ENVIRONMENT_URLS[Environment.STAGING]
-    assert settings.harmonization_url == staging["harmonization"]
-    assert settings.discovery_url == staging["discovery"]
+    assert settings.harmonization_url == "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging"
+    assert settings.discovery_url == "https://reyu82i72e.execute-api.us-east-2.amazonaws.com/staging"
 
 
 def test_environment_url_overridden_by_explicit_param() -> None:
@@ -170,16 +168,14 @@ def test_environment_url_overridden_by_explicit_param() -> None:
 
     assert settings.harmonization_url == custom
     # Other URLs still come from staging
-    staging = _ENVIRONMENT_URLS[Environment.STAGING]
-    assert settings.discovery_url == staging["discovery"]
+    assert settings.discovery_url == "https://reyu82i72e.execute-api.us-east-2.amazonaws.com/staging"
 
 
 def test_client_init_with_environment() -> None:
     """NetriasClient accepts environment param and resolves URLs accordingly."""
     client = NetriasClient(api_key="key", environment=Environment.PROD)
 
-    prod = _ENVIRONMENT_URLS[Environment.PROD]
-    assert client.settings.harmonization_url == prod["harmonization"]
+    assert client.settings.harmonization_url == PIPELINE_V3_HARMONIZATION_BASE_URL
 
 
 # ---------------------------------------------------------------------------
@@ -187,16 +183,17 @@ def test_client_init_with_environment() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_no_environment_preserves_defaults() -> None:
-    """No environment parameter preserves current default URLs (backward compatible).
+def test_no_environment_uses_default_urls() -> None:
+    """No environment parameter uses the module-level default URLs.
 
     Given: No environment parameter passed
     When: build_settings() is called
-    Then: URLs match the legacy module-level constants (no behavior change)
+    Then: URLs match the module-level constants
     """
     settings = build_settings(api_key="key")
 
     assert settings.discovery_url == DISCOVERY_BASE_URL
     assert settings.harmonization_url == HARMONIZATION_BASE_URL
+    assert settings.harmonization_url == PIPELINE_V3_HARMONIZATION_BASE_URL
     assert settings.data_model_store_endpoints is not None
     assert settings.data_model_store_endpoints.base_url == DATA_MODEL_STORE_BASE_URL

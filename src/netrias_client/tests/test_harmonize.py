@@ -473,6 +473,82 @@ def test_harmonize_can_disable_cache(
     assert submit_body.get("use_cache") is False
 
 
+def test_harmonize_source_reference_submits_without_reading_local_source(
+    configured_client: NetriasClient,
+    sample_manifest_path: Path,
+    output_directory: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Submit source_bucket/source_key when the source is already staged in S3."""
+
+    # Given: an S3 source reference and only a local path for naming the output
+    capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
+    install_mock_transport(monkeypatch, capture)
+    source_name = tmp_path / "already_uploaded.csv"
+    expected_output = output_directory / "already_uploaded.harmonized.csv"
+    assert not source_name.exists()
+    assert not expected_output.exists()
+    assert capture.requests == []
+
+    # When: the user harmonizes an already-uploaded CSV object
+    result = configured_client.harmonize(
+        source_path=source_name,
+        manifest=sample_manifest_path,
+        data_commons_key="ccdi",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        output_path=output_directory,
+        source_bucket="allowed-bucket",
+        source_key="inputs/already_uploaded.csv",
+    )
+
+    # Then: the submit payload references S3 instead of forcing the CSV inline
+    assert result.status == "succeeded"
+    assert result.file_path == expected_output
+    submit_body = _decode_submit_body(capture.requests[0])
+    assert submit_body["source_bucket"] == "allowed-bucket"
+    assert submit_body["source_key"] == "inputs/already_uploaded.csv"
+    assert "document" not in submit_body
+
+
+def test_harmonize_rechecks_pending_jobs_quickly_early(
+    configured_client: NetriasClient,
+    sample_csv_path: Path,
+    sample_manifest_path: Path,
+    output_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Use short early poll sleeps so fast jobs are detected without a 3s tail."""
+
+    # Given: a job that is pending twice before it succeeds
+    capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"), pending_status_count=2)
+    install_mock_transport(monkeypatch, capture)
+    sleep_delays: list[float] = []
+
+    async def _record_sleep(delay: float) -> None:
+        sleep_delays.append(delay)
+
+    monkeypatch.setattr("netrias_client._core.asyncio.sleep", _record_sleep)
+    assert sleep_delays == []
+
+    # When: the user harmonizes the file
+    result = configured_client.harmonize(
+        source_path=sample_csv_path,
+        manifest=sample_manifest_path,
+        data_commons_key="ccdi",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        output_path=output_directory,
+    )
+
+    # Then: the client polls again quickly before downloading the completed result
+    assert result.status == "succeeded"
+    assert sleep_delays
+    assert max(sleep_delays) < 3.0
+    assert sleep_delays == sorted(sleep_delays)
+    status_requests = [request for request in capture.requests if request.method == "GET" and "/v1/jobs/" in request.url.path]
+    assert len(status_requests) == 3
+
+
 @pytest.mark.asyncio
 async def test_harmonize_async_success(
     configured_client: NetriasClient,
@@ -520,8 +596,14 @@ def _install_status_poll_sequence(
     calls: list[str] = []
     outcomes = list(status_outcomes)
 
-    async def fake_fetch_job_status(base_url: str, api_key: str, job_id: str, timeout: float) -> httpx.Response:
-        _ = (api_key, timeout)
+    async def fake_fetch_job_status(
+        base_url: str,
+        api_key: str,
+        job_id: str,
+        timeout: float,
+        client: httpx.AsyncClient | None = None,
+    ) -> httpx.Response:
+        _ = (api_key, timeout, client)
         calls.append(job_id)
         if not outcomes:
             raise AssertionError("status sequence exhausted")

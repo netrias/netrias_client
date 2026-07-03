@@ -187,6 +187,8 @@ class NetriasClient:
         manifest_output_path: Path | None = None,
         sheet_name: str | None = None,
         use_cache: bool = True,
+        source_bucket: str | None = None,
+        source_key: str | None = None,
     ) -> HarmonizationResult:
         """Execute the harmonization workflow asynchronously."""
 
@@ -202,6 +204,8 @@ class NetriasClient:
             logger=ctx.logger,
             sheet_name=sheet_name,
             use_cache=use_cache,
+            source_bucket=source_bucket,
+            source_key=source_key,
         )
 
     def harmonize(
@@ -215,6 +219,8 @@ class NetriasClient:
         manifest_output_path: Path | None = None,
         sheet_name: str | None = None,
         use_cache: bool = True,
+        source_bucket: str | None = None,
+        source_key: str | None = None,
     ) -> HarmonizationResult:
         """Sync delegate for :meth:`harmonize_async`."""
 
@@ -228,6 +234,8 @@ class NetriasClient:
                 manifest_output_path=manifest_output_path,
                 sheet_name=sheet_name,
                 use_cache=use_cache,
+                source_bucket=source_bucket,
+                source_key=source_key,
             )
         )
 

@@ -642,6 +642,22 @@ print(result.job_id)
 | `manifest_output_path` | `Path \| None` | `None` | Where to write the manifest JSON for debugging. |
 | `sheet_name` | `str \| None` | `None` | Worksheet to read and update for XLSX input. Defaults to the first sheet. |
 | `use_cache` | `bool` | `True` | When `False`, asks the service to bypass cached harmonization results. |
+| `source_bucket` | `str \| None` | `None` | S3 bucket for a source CSV/TSV that has already been uploaded to a service-allowed bucket. |
+| `source_key` | `str \| None` | `None` | S3 object key for an already-uploaded source CSV/TSV. Provide with `source_bucket`. |
+
+For already-uploaded CSV or TSV sources, pass `source_bucket` and `source_key` to submit the S3 reference instead of inlining the whole document. `source_path` is still used to infer the output filename and file format.
+
+```python
+result = client.harmonize(
+    source_path=Path("cds_submission_10col.csv"),
+    manifest=manifest,
+    data_commons_key="gc",
+    external_version_number="11.0.4",
+    output_path=Path("output/cds_submission_10col.harmonized.csv"),
+    source_bucket="my-allowed-source-bucket",
+    source_key="uploads/cds_submission_10col.csv",
+)
+```
 
 Returns a `HarmonizationResult`:
 

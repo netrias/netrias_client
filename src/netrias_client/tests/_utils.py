@@ -33,6 +33,7 @@ def job_success(
     final_url: str = "https://mock.netrias/result.csv",
     manifest_url: str | None = None,
     manifest_chunks: Sequence[bytes] = (b"manifest",),
+    pending_status_count: int = 0,
 ) -> MockTransportCapture:
     """Return a mock transport that simulates the multi-step harmonization workflow.
 
@@ -40,10 +41,11 @@ def job_success(
     """
 
     recorded: list[httpx.Request] = []
+    state = _JobState(pending_remaining=pending_status_count)
 
     async def handler(request: httpx.Request) -> httpx.Response:
         recorded.append(request)
-        response = _resolve_job_response(request, job_id, final_url, manifest_url, chunks, manifest_chunks)
+        response = _resolve_job_response(request, job_id, final_url, manifest_url, chunks, manifest_chunks, state)
         if response is None:
             raise AssertionError(f"unexpected request during job_success: {request.method} {request.url}")
         return response
@@ -140,6 +142,10 @@ class _ChunkStream(httpx.AsyncByteStream):
         return self.aiter_bytes()
 
 
+@dataclass(slots=True)
+class _JobState:
+    pending_remaining: int = 0
+
 
 def _job_submit_response(request: httpx.Request, job_id: str) -> httpx.Response | None:
     if request.method != "POST":
@@ -154,15 +160,25 @@ def _job_status_response(
     job_id: str,
     final_url: str,
     manifest_url: str | None,
+    state: _JobState,
 ) -> httpx.Response | None:
-    if request.method != "GET":
+    if not _is_job_status_request(request, job_id):
         return None
-    if not request.url.path.endswith(f"/v1/jobs/{job_id}"):
-        return None
+    if state.pending_remaining > 0:
+        state.pending_remaining -= 1
+        return _pending_job_status_response(request)
     payload = {"status": "SUCCEEDED", "final_url": final_url}
     if manifest_url:
         payload["manifest_url"] = manifest_url
     return httpx.Response(200, json=payload, request=request)
+
+
+def _is_job_status_request(request: httpx.Request, job_id: str) -> bool:
+    return request.method == "GET" and request.url.path.endswith(f"/v1/jobs/{job_id}")
+
+
+def _pending_job_status_response(request: httpx.Request) -> httpx.Response:
+    return httpx.Response(200, json={"status": "PENDING"}, request=request)
 
 
 def _job_download_response(
@@ -199,11 +215,12 @@ def _resolve_job_response(
     manifest_url: str | None,
     chunks: Sequence[bytes],
     manifest_chunks: Sequence[bytes],
+    state: _JobState,
 ) -> httpx.Response | None:
     response = _job_submit_response(request, job_id)
     if response is not None:
         return response
-    response = _job_status_response(request, job_id, final_url, manifest_url)
+    response = _job_status_response(request, job_id, final_url, manifest_url, state)
     if response is not None:
         return response
     return _job_download_response(request, final_url, manifest_url, chunks, manifest_chunks)
