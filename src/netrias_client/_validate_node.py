@@ -97,7 +97,7 @@ def _read_csv_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
     return list(harm_header), rows
  
  
-def _load_model_json(data_commons_key: str, dm_outputs_root: Path) -> ModelJson:
+def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
     """Load the target schema's enriched model JSON.
  
     'why': mirrors suggest_node's own _load_model_json exactly — kept as a
@@ -105,18 +105,18 @@ def _load_model_json(data_commons_key: str, dm_outputs_root: Path) -> ModelJson:
     module has no dependency on suggest_node's internals, only its output shape.
  
     Raises:
-        ValueError: data_commons_key isn't one of the 4 supported schemas,
+        ValueError: target_schema isn't one of the 4 supported schemas,
             or dm_outputs_root isn't a directory.
         FileNotFoundError: no model JSON exists at the resolved path.
     """
     valid_keys = frozenset({"ctdc", "gc", "icdc", "psdc"})
  
-    if not data_commons_key or data_commons_key.strip().lower() not in valid_keys:
-        raise ValueError(f"data_commons_key must be one of {sorted(valid_keys)}, got: {data_commons_key!r}")
+    if not target_schema or target_schema.strip().lower() not in valid_keys:
+        raise ValueError(f"target_schema must be one of {sorted(valid_keys)}, got: {target_schema!r}")
  
     _check_path(dm_outputs_root, "dir")
  
-    model = data_commons_key.upper()
+    model = target_schema.upper()
     json_path = dm_outputs_root / model / f"{model}.json"
  
     _check_path(json_path, expected="file")
@@ -353,7 +353,7 @@ def check_foreign_keys(
 def validate_node(
     node_csv_path: Path,
     node: str,
-    data_commons_key: str,
+    target_schema: str,
     dm_outputs_root: Path,
     output_path: Path,
     parent_sheets: dict[str, Path] | None = None,
@@ -365,7 +365,7 @@ def validate_node(
     Raises:
         FileNotFoundError: node_csv_path, a parent sheet path, or the resolved
             model JSON path don't exist.
-        ValueError: node_csv_path has no usable header row, data_commons_key
+        ValueError: node_csv_path has no usable header row, target_schema
             isn't one of the 4 supported schemas, dm_outputs_root isn't a
             valid directory, or node isn't a key in that model JSON.
         AssertionError: the model JSON is not a dict (currently checked via
@@ -373,10 +373,10 @@ def validate_node(
             ValueError with a descriptive message).
     """
     harm_header, rows = _read_csv_rows(node_csv_path)
-    model_json = _load_model_json(data_commons_key, dm_outputs_root)
+    model_json = _load_model_json(target_schema, dm_outputs_root)
  
     if node not in model_json:
-        raise ValueError(f"node '{node}' is not defined in the '{data_commons_key}' schema")
+        raise ValueError(f"node '{node}' is not defined in the '{target_schema}' schema")
  
     node_cdes = model_json[node]
 
@@ -416,7 +416,7 @@ def validate_node(
 def chunk_and_validate(
     harmonized_csv_path: Path,
     node_recommendations_path: Path,
-    data_commons_key: str,
+    target_schema: str,
     dm_outputs_root: Path,
     chunks_output_dir: Path,
     reports_output_dir: Path,
@@ -461,7 +461,7 @@ def chunk_and_validate(
         report = validate_node(
             node_csv_path=csv_path,
             node=node,
-            data_commons_key=data_commons_key,
+            target_schema=target_schema,
             dm_outputs_root=dm_outputs_root,
             output_path=reports_output_dir / f"{node}_validation.json",
             parent_sheets=parent_sheets,

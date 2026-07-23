@@ -17,9 +17,9 @@ from pathlib import Path
 # instead of a generic, uninformative `dict`.
 ModelJson = dict[str, dict[str, CDEProps]]
 
-# 'why': suggest_node should reject any data_commons_key that isn't one of
+# 'why': suggest_node should reject any target_schema that isn't one of
 # the four schemas this pipeline actually builds
-VALID_DATA_COMMONS_KEYS = frozenset({"ctdc", "gc", "icdc", "psdc"})
+VALID_TARGET_SCHEMAS = frozenset({"ctdc", "gc", "icdc", "psdc"})
 
 
 def _read_csv_header(csv_path: Path) -> list[str]:
@@ -52,17 +52,17 @@ def _read_csv_header(csv_path: Path) -> list[str]:
     return header
 
 
-def _validate_data_commons_key(data_commons_key: str) -> str:
-    """Validate data_commons_key and return its uppercased model folder name.
+def _validate_target_schema(target_schema: str) -> str:
+    """Validate target_schema and return its uppercased model folder name.
 
     Raises:
-        ValueError: data_commons_key isn't one of the 4 supported schemas.
+        ValueError: target_schema isn't one of the 4 supported schemas.
     """
-    if not data_commons_key or data_commons_key.strip().lower() not in VALID_DATA_COMMONS_KEYS:
+    if not target_schema or target_schema.strip().lower() not in VALID_TARGET_SCHEMAS:
         raise ValueError(
-            f"data_commons_key must be one of {sorted(VALID_DATA_COMMONS_KEYS)}, got: {data_commons_key!r}"
+            f"target_schema must be one of {sorted(VALID_TARGET_SCHEMAS)}, got: {target_schema!r}"
         )
-    return data_commons_key.upper()
+    return target_schema.upper()
 
 
 def _resolve_model_json_path(model: str, dm_outputs_root: Path) -> Path:
@@ -81,24 +81,24 @@ def _resolve_model_json_path(model: str, dm_outputs_root: Path) -> Path:
     return json_path
 
 
-def _load_model_json(data_commons_key: str, dm_outputs_root: Path) -> ModelJson:
+def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
     """Load only the target schema's enriched model JSON.
 
-    'why': data_commons_key restricts which model JSON gets read — this
+    'why': target_schema restricts which model JSON gets read — this
     function never scans dm_outputs_root or loads other schemas' JSONs
     even if several exist side by side under the same root. Key validation
     and path resolution are still split into their own helpers; parsing
     stays inline here since it's now just a single isinstance check.
 
     Raises:
-        ValueError: data_commons_key isn't one of the 4 supported schemas,
+        ValueError: target_schema isn't one of the 4 supported schemas,
             dm_outputs_root isn't a valid directory, or the model JSON isn't
             a dict at the top level. Note: an empty dict currently passes
             this check silently — the docstring previously implied that
             case was also rejected, but the code doesn't check for it.
         FileNotFoundError: no model JSON exists at the resolved path.
     """
-    model = _validate_data_commons_key(data_commons_key)
+    model = _validate_target_schema(target_schema)
     json_path = _resolve_model_json_path(model, dm_outputs_root)
 
     with open(json_path, "r", encoding="utf-8") as f:
@@ -154,7 +154,7 @@ def _classify_harmonized_columns(
 
 def suggest_node(
     harmonized_csv_path: Path,
-    data_commons_key: str,
+    target_schema: str,
     dm_outputs_root: Path,              # 'why': the root of the directory tree containing the model JSONs for all 4 schemas
     output_path: Path,
 
@@ -163,12 +163,12 @@ def suggest_node(
 
     Raises:
         FileNotFoundError: harmonized_csv_path or the resolved model JSON path don't exist.
-        ValueError: harmonized CSV has no usable header row, data_commons_key isn't one
+        ValueError: harmonized CSV has no usable header row, target_schema isn't one
             of the 4 supported schemas, dm_outputs_root isn't a valid directory, or the
             model JSON is empty/malformed.
     """
     harmonized_cdes = _read_csv_header(harmonized_csv_path)
-    model_json = _load_model_json(data_commons_key, dm_outputs_root)
+    model_json = _load_model_json(target_schema, dm_outputs_root)
     cde_to_nodes = _build_cde_to_nodes_index(model_json)
 
     result, unmapped = _classify_harmonized_columns(harmonized_cdes, cde_to_nodes)
@@ -180,7 +180,7 @@ def suggest_node(
     print(f"Node recommendations successfully created: {output_path}")
 
     if unmapped:
-        print(f"WARNING: harmonized column(s) {unmapped} do not match any CDE in the '{data_commons_key}' schema.")
+        print(f"WARNING: harmonized column(s) {unmapped} do not match any CDE in the '{target_schema}' schema.")
 
     mapped_count = len(harmonized_cdes) - len(unmapped)
 

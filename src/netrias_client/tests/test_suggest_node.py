@@ -72,7 +72,7 @@ def test_classifies_touched_nodes_exactly(workspace: Path) -> None:
     # When: suggest_node classifies the harmonized CSV
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
-        data_commons_key="ctdc",
+        target_schema="ctdc",
         dm_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",    )
 
@@ -92,7 +92,7 @@ def test_shared_cde_listed_under_every_matching_node(workspace: Path) -> None:
     # When: suggest_node classifies the harmonized CSV
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
-        data_commons_key="ctdc",
+        target_schema="ctdc",
         dm_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )
@@ -112,7 +112,7 @@ def test_excludes_cdes_absent_from_harmonized_csv(workspace: Path) -> None:
     # When: suggest_node classifies the harmonized CSV
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
-        data_commons_key="ctdc",
+        target_schema="ctdc",
         dm_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )
@@ -132,7 +132,7 @@ def test_unmatched_column_excluded_and_warned(workspace: Path, capsys: pytest.Ca
     # When: suggest_node classifies the harmonized CSV
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
-        data_commons_key="ctdc",
+        target_schema="ctdc",
         dm_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )
@@ -155,7 +155,7 @@ def test_node_with_zero_matches_is_absent(workspace: Path) -> None:
     # When: suggest_node classifies the harmonized CSV
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
-        data_commons_key="ctdc",
+        target_schema="ctdc",
         dm_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )
@@ -175,7 +175,7 @@ def test_missing_harmonized_csv_raises_file_not_found(workspace: Path) -> None:
     with pytest.raises(FileNotFoundError, match="does_not_exist.csv"):
         _ = suggest_node(
             harmonized_csv_path=missing_path,
-            data_commons_key="ctdc",
+            target_schema="ctdc",
             dm_outputs_root=workspace,
             output_path=workspace / "output" / "suggested_nodes.json",
         )
@@ -192,7 +192,7 @@ def test_empty_harmonized_csv_raises_value_error(workspace: Path) -> None:
     with pytest.raises(ValueError, match="no usable header row"):
         _ = suggest_node(
             harmonized_csv_path=empty_csv,
-            data_commons_key="ctdc",
+            target_schema="ctdc",
             dm_outputs_root=workspace,
             output_path=workspace / "output" / "suggested_nodes.json",
         )
@@ -209,24 +209,24 @@ def test_blank_first_row_raises_value_error(workspace: Path) -> None:
     with pytest.raises(ValueError, match="no usable header row"):
         _ = suggest_node(
             harmonized_csv_path=blank_header_csv,
-            data_commons_key="ctdc",
+            target_schema="ctdc",
             dm_outputs_root=workspace,
             output_path=workspace / "output" / "suggested_nodes.json",
         )
 
 
 @pytest.mark.parametrize("bad_key", ["", "   ", "not_a_real_schema", "ccdi"])
-def test_unsupported_data_commons_key_raises_value_error(workspace: Path, bad_key: str) -> None:
-    """A data_commons_key that is empty, whitespace, or not one of the 4 supported 
+def test_unsupported_target_schema_raises_value_error(workspace: Path, bad_key: str) -> None:
+    """A target_schema that is empty, whitespace, or not one of the 4 supported 
     schemas raises ValueError naming the valid options."""
     
-    # Given: a data_commons_key that is empty, whitespace, or not one of the 4 supported schemas
+    # Given: a target_schema that is empty, whitespace, or not one of the 4 supported schemas
 
     # When / Then: suggest_node rejects it before any file lookup, naming the valid options
     with pytest.raises(ValueError, match="must be one of"):
         _ = suggest_node(
             harmonized_csv_path=workspace / "output" / "harmonized.csv",
-            data_commons_key=bad_key,
+            target_schema=bad_key,
             dm_outputs_root=workspace,
             output_path=workspace / "output" / "suggested_nodes.json",
         )
@@ -241,7 +241,7 @@ def test_summary_counts_mapped_and_unmapped(workspace: Path, capsys: pytest.Capt
     # When: suggest_node classifies the harmonized CSV
     _ = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
-        data_commons_key="ctdc",
+        target_schema="ctdc",
         dm_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )

@@ -34,7 +34,7 @@ for col_key, mapping in manifest["column_mappings"].items():
 result = client.harmonize(
       source_path=source,
       manifest=manifest,
-      data_commons_key="gc",
+      target_schema="gc",
       external_version_number="11.0.4",
       output_path=Path("output/harmonized.csv"),
       manifest_output_path=Path("output/manifest.json"),
@@ -44,7 +44,7 @@ result = client.harmonize(
 # Step 3: Node Discovery: suggest node(s) for the harmonized CSV
 recommendations = client.suggest_node(
       harmonized_csv_path=Path("output/harmonized.csv"),
-      data_commons_key="gc",
+      target_schema="gc",
       dm_outputs_root=Path("data"),
       output_path=Path("output/suggested_nodes.json"),
 )
@@ -54,7 +54,7 @@ recommendations = client.suggest_node(
 result = client.chunk_and_validate(
     harmonized_csv_path=Path("output/harmonized.csv"),
     node_recommendations_path=Path("output/suggested_nodes.json"),
-    data_commons_key="gc",
+    target_schema="gc",
     dm_outputs_root=Path("data"),
     chunks_output_dir=Path("output/node_sheets"),
     reports_output_dir=Path("output/validation_reports"),
