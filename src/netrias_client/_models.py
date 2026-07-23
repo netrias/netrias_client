@@ -219,3 +219,12 @@ class CDE:
     cde_id: int
     cde_version_id: int
     description: str | None = None
+
+
+@dataclass(frozen=True)
+class CDEProps(TypedDict):
+    """Represent the properties of a CDE in the model JSON."""
+
+    Enum: list[str]
+    Req: bool | str | None
+    Type: str | None

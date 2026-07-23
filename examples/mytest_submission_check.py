@@ -1,0 +1,61 @@
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+from netrias_client import NetriasClient
+from netrias_client._config import Environment
+
+
+
+_ = load_dotenv()
+client = NetriasClient(api_key=os.environ["NETRIAS_API_KEY"], environment=Environment.STAGING)
+# remove 2nd argument to use production environment
+client.configure(
+   log_level="INFO",
+   log_directory=Path("./logs"),
+)
+
+source = Path("data/sampled_cds_single_sheet.csv")
+
+# Step 1: discover column → CDE mappings
+manifest = client.discover_mapping_from_tabular(
+      source_path=source,
+      target_schema="gc",
+      external_version_number="11.0.4",
+      sample_limit=5000,
+      top_k=3,
+      confidence_threshold=0.6,
+)
+print("Discovered manifest:")
+for col_key, mapping in manifest["column_mappings"].items():
+      print(f"  {col_key} ({mapping['column_name']}) → {mapping['cde_key']}")
+
+
+# Step 2: harmonize using that manifest
+result = client.harmonize(
+      source_path=source,
+      manifest=manifest,
+      data_commons_key="gc",
+      external_version_number="11.0.4",
+      output_path=Path("output/harmonized.csv"),
+      manifest_output_path=Path("output/manifest.json"),
+)
+
+
+# Step 3: Node Discovery: suggest node(s) for the harmonized CSV
+recommendations = client.suggest_node(
+      harmonized_csv_path=Path("output/harmonized.csv"),
+      data_commons_key="gc",
+      dm_outputs_root=Path("data"),
+      output_path=Path("output/suggested_nodes.json"),
+)
+
+
+# Step 4: Chunk and Validate the harmonized CSV
+result = client.chunk_and_validate(
+    harmonized_csv_path=Path("output/harmonized.csv"),
+    node_recommendations_path=Path("output/suggested_nodes.json"),
+    data_commons_key="gc",
+    dm_outputs_root=Path("data"),
+    chunks_output_dir=Path("output/node_sheets"),
+    reports_output_dir=Path("output/validation_reports"),
+)

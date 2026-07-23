@@ -30,6 +30,8 @@ from ._models import (
     OperationContext,
     Settings,
 )
+from ._suggest_node import suggest_node as _suggest_node
+from ._validate_node import chunk_and_validate as _chunk_and_validate
 
 
 class NetriasClient:
@@ -350,6 +352,12 @@ class NetriasClient:
                 include_inactive=include_inactive,
             )
         )
+    
+    # suggest_node:  Callable[[Path, str, Path, Path], dict[str, list[str]]] = staticmethod(_suggest_node)
+    suggest_node = staticmethod(_suggest_node)
+    # chunk_and_validate: Callable[[Path, Path, str, Path, Path, Path], 
+    #                              dict[str, dict[str, ValidationReport | Path]],] = staticmethod(_chunk_and_validate)
+    chunk_and_validate = staticmethod(_chunk_and_validate)
 
     def _snapshot_settings(self) -> Settings:
         with self._lock:
