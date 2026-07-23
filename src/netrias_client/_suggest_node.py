@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import json
+from typing import cast
 from ._models import CDEProps
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from pathlib import Path
 # model JSON reflects its actual structure (node -> cde -> {Enum, Req, Type})
 # instead of a generic, uninformative `dict`.
 ModelJson = dict[str, dict[str, CDEProps]]
+NodeRecommendations = dict[str, list[str]]
 
 # 'why': suggest_node should reject any target_schema that isn't one of
 # the four schemas this pipeline actually builds
@@ -92,20 +94,17 @@ def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
 
     Raises:
         ValueError: target_schema isn't one of the 4 supported schemas,
-            dm_outputs_root isn't a valid directory, or the model JSON isn't
-            a dict at the top level. Note: an empty dict currently passes
-            this check silently — the docstring previously implied that
-            case was also rejected, but the code doesn't check for it.
+        dm_outputs_root isn't a valid directory, or the model JSON is an empty dict.
         FileNotFoundError: no model JSON exists at the resolved path.
     """
     model = _validate_target_schema(target_schema)
     json_path = _resolve_model_json_path(model, dm_outputs_root)
 
     with open(json_path, "r", encoding="utf-8") as f:
-        model_json = json.load(f)
+        model_json = cast(ModelJson, json.load(f))
 
-    if not isinstance(model_json, dict):
-        raise ValueError(f"Model JSON at {json_path} is empty or not a valid node->cde mapping")
+    if not model_json:
+        raise ValueError(f"Model JSON at {json_path} is empty")
 
     return model_json
 
@@ -158,7 +157,7 @@ def suggest_node(
     dm_outputs_root: Path,              # 'why': the root of the directory tree containing the model JSONs for all 4 schemas
     output_path: Path,
 
-) -> dict[str, list[str]]:
+) -> NodeRecommendations:
     """Classify a harmonized CSV's columns by which model node they belong to.
 
     Raises:

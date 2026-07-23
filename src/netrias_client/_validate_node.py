@@ -17,10 +17,13 @@ Checks performed, all against the node's enriched model JSON entry
 
 from __future__ import annotations
 from dataclasses import dataclass, field
+
 from ._models import CDEProps
+from ._models import ValidationReport
  
 import csv
 import json
+from typing import cast
 import re
 from pathlib import Path
  
@@ -34,10 +37,6 @@ from pathlib import Path
 _PERMISSIVE_TYPES = frozenset({"string", "list"})
 _NUMERIC_TYPES = frozenset({"number", "integer"})
 
-ValidationReport = dict[
-    str, str | int | list[str] | dict[str, dict[str, list[int] | int]] | dict[str, list[dict[str, int | str]]]
-]
-
  
 @dataclass
 class _FkColumnResult:
@@ -50,11 +49,12 @@ class _FkColumnResult:
 
 
 ModelJson = dict[str, dict[str, CDEProps]]
+NodeRecommendations = dict[str, list[str]]
 
 
 
 def _check_path(path: Path, expected: str) -> None:
-    """Validate a path exists and is the expected type ('file' or 'dir').
+    """Validate a path exists and is the expected type ('file' or 'dir')
 
     'why' a dedicated helper: this module handles many different paths
     (node CSVs, parent sheet CSVs, dm_outputs_root, model JSON files)
@@ -106,7 +106,7 @@ def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
  
     Raises:
         ValueError: target_schema isn't one of the 4 supported schemas,
-            or dm_outputs_root isn't a directory.
+        dm_outputs_root isn't a valid directory, or the model JSON is an empty dict.
         FileNotFoundError: no model JSON exists at the resolved path.
     """
     valid_keys = frozenset({"ctdc", "gc", "icdc", "psdc"})
@@ -122,16 +122,17 @@ def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
     _check_path(json_path, expected="file")
  
     with open(json_path, "r", encoding="utf-8") as f:
-        model_json = json.load(f)
+        model_json = cast(ModelJson, json.load(f))
+        
+    if not model_json:
+        raise ValueError(f"Model JSON at {json_path} is empty")
 
-        assert isinstance(model_json, dict)
- 
     return model_json
  
  
 def chunk_by_node(
     harmonized_csv_path: Path,
-    node_recommendations: dict[str, list[str]],
+    node_recommendations: NodeRecommendations,
     output_dir: Path,
 ) -> dict[str, Path]:
     """Slice a harmonized CSV into one CSV per node, using suggest_node's
@@ -442,9 +443,7 @@ def chunk_and_validate(
         raise FileNotFoundError(f"File not found: {node_recommendations_path}")
 
     with open(node_recommendations_path, "r", encoding="utf-8") as f:
-        node_recommendations = json.load(f)
-
-        assert isinstance(node_recommendations, dict)
+        node_recommendations = cast(NodeRecommendations, json.load(f))
 
     chunks = chunk_by_node(
         harmonized_csv_path=harmonized_csv_path,

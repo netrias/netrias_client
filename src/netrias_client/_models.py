@@ -9,7 +9,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Final, Literal, NotRequired, TypedDict, get_args, override
+from typing import Final, Literal, NotRequired, Protocol, TypedDict, get_args, override
+
 
 
 COLUMN_NAME_KEY: Final[str] = "column_name"
@@ -19,6 +20,15 @@ COLUMN_NAME_KEY: Final[str] = "column_name"
 drift from the TypedDict field name — boundary parsers and manifest writers both
 reference this constant instead of repeating the raw literal.
 """
+
+"""why': named once here, in _models.py, rather than in _validate_node.py where
+it's actually produced — this lets ChunkAndValidateSignature (also defined
+here) reference it without _models.py needing to import from
+_validate_node.py, which would create an import cycle (_validate_node.py
+already imports CDEProps from _models.py)."""
+ValidationReport = dict[
+    str, str | int | list[str] | dict[str, dict[str, list[int] | int]] | dict[str, list[dict[str, int | str]]]
+]
 
 
 class ColumnSamples(TypedDict):
@@ -100,6 +110,30 @@ class LogLevel(str, Enum):
     INFO = "INFO"
     DEBUG = "DEBUG"
 
+
+class SuggestNodeSignature(Protocol):
+    """Callable signature for suggest_node, used to type NetriasClient.suggest_node."""
+    def __call__(
+        self,
+        harmonized_csv_path: Path,
+        target_schema: str,
+        dm_outputs_root: Path,
+        output_path: Path,
+    ) -> dict[str, list[str]]: ...
+
+
+class ChunkAndValidateSignature(Protocol):
+    """Callable signature for chunk_and_validate, used to type NetriasClient.chunk_and_validate."""
+    def __call__(
+        self,
+        harmonized_csv_path: Path,
+        node_recommendations_path: Path,
+        target_schema: str,
+        dm_outputs_root: Path,
+        chunks_output_dir: Path,
+        reports_output_dir: Path,
+    ) -> dict[str, dict[str, "ValidationReport | Path"]]: ...
+    
 
 @dataclass(frozen=True)
 class Settings:
