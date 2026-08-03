@@ -60,7 +60,7 @@ def invoke_cde_recommendation_alias(
         timeout_seconds=timeout_seconds,
     )
     body_dict: dict[str, object] = {
-        "target_schema": target_schema,
+        "data_model_key": target_schema,
         "external_version_number": external_version_number,
         "columns": columns,
     }

@@ -34,7 +34,7 @@ for col_key, mapping in manifest["column_mappings"].items():
 result = client.harmonize(
       source_path=source,
       manifest=manifest,
-      data_commons_key="ccdi",
+      target_schema="ccdi",
       external_version_number="1",
       output_path=Path("output/harmonized.csv"),
       manifest_output_path=Path("output/manifest.json"),

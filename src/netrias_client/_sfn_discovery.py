@@ -62,7 +62,7 @@ def _start_execution(
 ) -> str:
     """POST request body to API Gateway, get executionArn back."""
     payload = {
-        "target_schema": schema,
+        "data_model_key": schema,
         "external_version_number": external_version_number,
         "columns": columns,
         "top_k": top_k,
