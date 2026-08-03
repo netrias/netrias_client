@@ -124,8 +124,16 @@ def test_discover_mapping_from_tabular_success(
     request = capture.requests[0]
     assert request.headers.get("x-api-key") == "test-api-key"
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
-    assert content.get("target_schema") == "ccdi"
-    assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
+    assert content == {
+        "data_model_key": "ccdi",
+        "external_version_number": EXTERNAL_VERSION_NUMBER,
+        "columns": [
+            {"column_name": "a", "values": ["1", "4"]},
+            {"column_name": "b", "values": ["2", "5"]},
+            {"column_name": "c", "values": ["3", "6"]},
+        ],
+        "top_k": 3,
+    }
 
 
 def test_gateway_bypass_lambda_proxy_body_preserves_discovery_request(
@@ -161,10 +169,12 @@ def test_gateway_bypass_lambda_proxy_body_preserves_discovery_request(
     body = event.get("body")
     assert isinstance(body, str)
     content = cast(dict[str, object], json.loads(body))
-    assert content.get("target_schema") == "gc"
-    assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
-    assert content.get("columns") == columns
-    assert content.get("top_k") == 5
+    assert content == {
+        "data_model_key": "gc",
+        "external_version_number": EXTERNAL_VERSION_NUMBER,
+        "columns": columns,
+        "top_k": 5,
+    }
 
 
 def test_step_functions_encoded_payload_preserves_discovery_request(
@@ -219,10 +229,12 @@ def test_step_functions_encoded_payload_preserves_discovery_request(
     encoded_payload = wrapper.get("encoded_payload")
     assert isinstance(encoded_payload, str)
     content = cast(dict[str, object], json.loads(base64.b64decode(encoded_payload).decode("utf-8")))
-    assert content.get("target_schema") == "gc"
-    assert content.get("external_version_number") == EXTERNAL_VERSION_NUMBER
-    assert content.get("columns") == columns
-    assert content.get("top_k") == 5
+    assert content == {
+        "data_model_key": "gc",
+        "external_version_number": EXTERNAL_VERSION_NUMBER,
+        "columns": columns,
+        "top_k": 5,
+    }
 
 
 def test_discover_mapping_from_tabular_handles_api_error(

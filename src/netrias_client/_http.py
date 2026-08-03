@@ -121,7 +121,7 @@ async def request_mapping_discovery(
         API_KEY_HEADER: api_key,
     }
     body: dict[str, object] = {
-        "target_schema": schema,
+        "data_model_key": schema,
         "external_version_number": external_version_number,
         "columns": columns,
     }
