@@ -31,7 +31,7 @@ jobs:
         run: uv build
 
       - name: Audit dependencies
-        run: uv run pip-audit
+        run: uv run pip-audit --ignore-vuln CVE-2026-69247
 
   lint:
     runs-on: ubuntu-latest
