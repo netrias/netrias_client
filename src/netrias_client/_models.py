@@ -117,7 +117,7 @@ class SuggestNodeSignature(Protocol):
         self,
         harmonized_csv_path: Path,
         target_schema: str,
-        dm_outputs_root: Path,
+        data_model_outputs_root: Path,
         output_path: Path,
     ) -> dict[str, list[str]]: ...
 

@@ -73,7 +73,7 @@ def test_classifies_touched_nodes_exactly(workspace: Path) -> None:
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
         target_schema="ctdc",
-        dm_outputs_root=workspace,
+        data_model_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",    )
 
     # Then: exactly demographic and diagnosis are present, each with its
@@ -93,7 +93,7 @@ def test_shared_cde_listed_under_every_matching_node(workspace: Path) -> None:
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
         target_schema="ctdc",
-        dm_outputs_root=workspace,
+        data_model_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )
 
@@ -113,7 +113,7 @@ def test_excludes_cdes_absent_from_harmonized_csv(workspace: Path) -> None:
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
         target_schema="ctdc",
-        dm_outputs_root=workspace,
+        data_model_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )
 
@@ -133,7 +133,7 @@ def test_unmatched_column_excluded_and_warned(workspace: Path, capsys: pytest.Ca
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
         target_schema="ctdc",
-        dm_outputs_root=workspace,
+        data_model_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )
 
@@ -156,7 +156,7 @@ def test_node_with_zero_matches_is_absent(workspace: Path) -> None:
     result = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
         target_schema="ctdc",
-        dm_outputs_root=workspace,
+        data_model_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )
 
@@ -176,7 +176,7 @@ def test_missing_harmonized_csv_raises_file_not_found(workspace: Path) -> None:
         _ = suggest_node(
             harmonized_csv_path=missing_path,
             target_schema="ctdc",
-            dm_outputs_root=workspace,
+            data_model_outputs_root=workspace,
             output_path=workspace / "output" / "suggested_nodes.json",
         )
 
@@ -193,7 +193,7 @@ def test_empty_harmonized_csv_raises_value_error(workspace: Path) -> None:
         _ = suggest_node(
             harmonized_csv_path=empty_csv,
             target_schema="ctdc",
-            dm_outputs_root=workspace,
+            data_model_outputs_root=workspace,
             output_path=workspace / "output" / "suggested_nodes.json",
         )
 
@@ -210,7 +210,7 @@ def test_blank_first_row_raises_value_error(workspace: Path) -> None:
         _ = suggest_node(
             harmonized_csv_path=blank_header_csv,
             target_schema="ctdc",
-            dm_outputs_root=workspace,
+            data_model_outputs_root=workspace,
             output_path=workspace / "output" / "suggested_nodes.json",
         )
 
@@ -227,7 +227,7 @@ def test_unsupported_target_schema_raises_value_error(workspace: Path, bad_key: 
         _ = suggest_node(
             harmonized_csv_path=workspace / "output" / "harmonized.csv",
             target_schema=bad_key,
-            dm_outputs_root=workspace,
+            data_model_outputs_root=workspace,
             output_path=workspace / "output" / "suggested_nodes.json",
         )
 
@@ -242,7 +242,7 @@ def test_summary_counts_mapped_and_unmapped(workspace: Path, capsys: pytest.Capt
     _ = suggest_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
         target_schema="ctdc",
-        dm_outputs_root=workspace,
+        data_model_outputs_root=workspace,
         output_path=workspace / "output" / "suggested_nodes.json",
     )
 
