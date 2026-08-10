@@ -129,10 +129,10 @@ class ChunkAndValidateSignature(Protocol):
         harmonized_csv_path: Path,
         node_recommendations_path: Path,
         target_schema: str,
-        dm_outputs_root: Path,
+        data_model_outputs_root: Path,
         chunks_output_dir: Path,
         reports_output_dir: Path,
-    ) -> dict[str, dict[str, "ValidationReport | Path"]]: ...
+    ) -> dict[str, dict[str, ValidationReport | Path]]: ...
     
 
 @dataclass(frozen=True)

@@ -14,7 +14,9 @@ client.configure(
    log_directory=Path("./logs"),
 )
 
-source = Path("data/sampled_cds_single_sheet.csv")
+EXAMPLE_DIR = Path(__file__).resolve().parent
+
+source = EXAMPLE_DIR / "data" / "sampled_2019-07-25-clin.csv"
 
 # Step 1: discover column → CDE mappings
 manifest = client.discover_mapping_from_tabular(
@@ -45,7 +47,7 @@ result = client.harmonize(
 recommendations = client.suggest_node(
       harmonized_csv_path=Path("output/harmonized.csv"),
       target_schema="gc",
-      dm_outputs_root=Path("data"),
+      data_model_outputs_root=EXAMPLE_DIR / "data",
       output_path=Path("output/suggested_nodes.json"),
 )
 
@@ -55,7 +57,7 @@ result = client.chunk_and_validate(
     harmonized_csv_path=Path("output/harmonized.csv"),
     node_recommendations_path=Path("output/suggested_nodes.json"),
     target_schema="gc",
-    dm_outputs_root=Path("data"),
+    data_model_outputs_root=EXAMPLE_DIR / "data",
     chunks_output_dir=Path("output/node_sheets"),
     reports_output_dir=Path("output/validation_reports"),
 )

@@ -147,3 +147,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**.py" = ["E501"]
+
+[tool.basedpyright]
+
+[[tool.basedpyright.executionEnvironments]]
+root = "src/netrias_client/tests"
+reportPrivateUsage = "none"

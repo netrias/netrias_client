@@ -6,7 +6,8 @@ to actually slice the CSV into one file per node; validate_node then runs
 schema checks against a single node's chunk.
 
 Checks performed, all against the node's enriched model JSON entry
-({cde: {Enum, Req, Type}}):
+({cde: {Enum, Req, Type}}). Every finding reports a physical CSV line
+number (1-based, header counted as line 1), not a 0-based row index:
     1. missing_required_cdes    — a Req=True CDE has no column in the sheet at all
     2. missing_required_values  — a present Req=True column has an empty cell
     3. invalid_type_values      — a value doesn't match its CDE's declared Type
@@ -17,6 +18,8 @@ Checks performed, all against the node's enriched model JSON entry
 
 from __future__ import annotations
 from dataclasses import dataclass, field
+from datetime import datetime
+
 
 from ._models import CDEProps
 from ._models import ValidationReport
@@ -25,6 +28,7 @@ import csv
 import json
 from typing import cast
 import re
+import shutil
 from pathlib import Path
  
  
@@ -37,7 +41,20 @@ from pathlib import Path
 _PERMISSIVE_TYPES = frozenset({"string", "list"})
 _NUMERIC_TYPES = frozenset({"number", "integer"})
 
- 
+# 'why': the set of string representations accepted for a boolean-typed
+# CDE. The harmonized data is always plain CSV text, so there's no native
+# bool to check against — this list covers the common conventions actually
+# seen across the schema files; may need widening if real data uses a
+# format not covered here.
+_BOOLEAN_VALUES = frozenset({"true", "false", "1", "0", "yes", "no"})
+
+# 'why': a placeholder Type the schema itself hasn't finalized yet — not a
+# real format to validate against, but worth flagging (once per CDE, not
+# per row) since it signals incomplete schema coverage rather than a
+# deliberate "no check needed" like _PERMISSIVE_TYPES.
+_UNDEFINED_TYPE = "TBD"
+
+
 @dataclass
 class _FkColumnResult:
     """One FK column's evaluation outcome — presence, parent-sheet
@@ -57,7 +74,7 @@ def _check_path(path: Path, expected: str) -> None:
     """Validate a path exists and is the expected type ('file' or 'dir')
 
     'why' a dedicated helper: this module handles many different paths
-    (node CSVs, parent sheet CSVs, dm_outputs_root, model JSON files)
+    (node CSVs, parent sheet CSVs, data_model_outputs_root, model JSON files)
     Distinguishing them makes the actual mistake obvious from the error
     alone, rather than requiring the caller to go inspect the path by hand.
 
@@ -75,7 +92,7 @@ def _check_path(path: Path, expected: str) -> None:
     if expected == "dir" and not path.is_dir():
         raise NotADirectoryError(f"Expected a directory but found a file: {path}")
 
- 
+
 def _read_csv_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
     """Read the harmonized CSV's header and all data rows as dicts.
  
@@ -90,14 +107,14 @@ def _read_csv_rows(csv_path: Path) -> tuple[list[str], list[dict[str, str]]]:
         reader = csv.DictReader(f)
         harm_header = reader.fieldnames
         rows = list(reader)
- 
+
     if not harm_header:
         raise ValueError(f"CSV has no usable header row: {csv_path}")
  
     return list(harm_header), rows
  
  
-def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
+def _load_model_json(target_schema: str, data_model_outputs_root: Path) -> ModelJson:
     """Load the target schema's enriched model JSON.
  
     'why': mirrors suggest_node's own _load_model_json exactly — kept as a
@@ -106,7 +123,7 @@ def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
  
     Raises:
         ValueError: target_schema isn't one of the 4 supported schemas,
-        dm_outputs_root isn't a valid directory, or the model JSON is an empty dict.
+        data_model_outputs_root isn't a valid directory, or the model JSON is an empty dict.
         FileNotFoundError: no model JSON exists at the resolved path.
     """
     valid_keys = frozenset({"ctdc", "gc", "icdc", "psdc"})
@@ -114,10 +131,10 @@ def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
     if not target_schema or target_schema.strip().lower() not in valid_keys:
         raise ValueError(f"target_schema must be one of {sorted(valid_keys)}, got: {target_schema!r}")
  
-    _check_path(dm_outputs_root, "dir")
+    _check_path(data_model_outputs_root, "dir")
  
     model = target_schema.upper()
-    json_path = dm_outputs_root / model / f"{model}.json"
+    json_path = data_model_outputs_root / model / f"{model}.json"
  
     _check_path(json_path, expected="file")
  
@@ -128,8 +145,8 @@ def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
         raise ValueError(f"Model JSON at {json_path} is empty")
 
     return model_json
- 
- 
+
+
 def chunk_by_node(
     harmonized_csv_path: Path,
     node_recommendations: NodeRecommendations,
@@ -146,15 +163,15 @@ def chunk_by_node(
     """
     harm_header, rows = _read_csv_rows(harmonized_csv_path)
     harm_header_set = set(harm_header)
- 
+
     output_dir.mkdir(parents=True, exist_ok=True)
- 
+
     result: dict[str, Path] = {}
     for node, cdes in node_recommendations.items():
         node_columns = [cde for cde in cdes if cde in harm_header_set]
         if not node_columns:
             continue
- 
+
         node_path = output_dir / f"{node}.csv"
         with open(node_path, "w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=node_columns)
@@ -167,7 +184,7 @@ def chunk_by_node(
     return result
  
  
-def check_required_presence(harm_header_set: set[str], node_cdes: dict[str, CDEProps]) -> list[str]:
+def check_required_cdes(harm_header_set: set[str], node_cdes: dict[str, CDEProps]) -> list[str]:
     """Return the names of Req=True CDEs that have no column in harm_header at all."""
     return [cde for cde, props in node_cdes.items() if props.get("Req") is True and cde not in harm_header_set]
  
@@ -175,9 +192,9 @@ def check_required_presence(harm_header_set: set[str], node_cdes: dict[str, CDEP
 def check_required_values(
     harm_header_set: set[str], rows: list[dict[str, str]], node_cdes: dict[str, CDEProps]
 ) -> dict[str, dict[str, list[int] | int]]:
-    """Return {cde: {"empty_rows": [row numbers], "count": N}} for present Req=True
+    """Return {cde: {"empty_lines": [line numbers], "count": N}} for present Req=True
     columns with an empty cell.
- 
+
     'why' rows/count: knowing exactly which rows are missing a value lets
     someone go straight to those rows in the source file to fix them, and
     the count gives an at-a-glance sense of how widespread the gap is.
@@ -187,16 +204,24 @@ def check_required_values(
     for cde, props in node_cdes.items():
         if props.get("Req") is not True or cde not in harm_header_set:
             continue
-        empty_row_numbers = [i for i, row in enumerate(rows) if not row.get(cde, "").strip()]
-        if empty_row_numbers:
-            findings[cde] = {"empty_rows": empty_row_numbers, "count": len(empty_row_numbers)}
+        empty_line_numbers = [i + 2 for i, row in enumerate(rows) if not row.get(cde, "").strip()]
+        if empty_line_numbers:
+            findings[cde] = {"empty_lines": empty_line_numbers, "count": len(empty_line_numbers)}
  
     return findings
- 
+
 
 def _should_check_type(cde: str, type_value: str | None, harm_header_set: set[str]) -> bool:
-    """Whether a CDE's Type is worth checking at all for this sheet."""
-    return type_value is not None and type_value not in _PERMISSIVE_TYPES and cde in harm_header_set
+    """Whether a CDE's type is worth checking at all."""
+    if type_value == _UNDEFINED_TYPE and cde in harm_header_set:
+        print(f"WARNING: CDE '{cde}' has an undefined Type ('{_UNDEFINED_TYPE}') in the schema — type validation skipped for this column.")
+
+    return (
+        type_value is not None
+        and type_value not in _PERMISSIVE_TYPES
+        and type_value != _UNDEFINED_TYPE
+        and cde in harm_header_set
+    )
 
 
 def _matches_numeric_type(value: str, type_value: str) -> bool:
@@ -220,6 +245,41 @@ def _matches_pattern_type(value: str, type_value: str) -> bool:
         return False
 
 
+def _matches_boolean_type(value: str) -> bool:
+    """Whether value is a recognized string representation of a boolean."""
+    return value.strip().lower() in _BOOLEAN_VALUES
+
+
+def _matches_datetime_type(value: str) -> bool:
+    """Whether value parses as an ISO 8601 date or datetime.
+
+    'why' only ISO format is attempted: this covers the formats produced by
+    fromisoformat() (YYYY-MM-DD, full timestamps); a non-ISO format in real
+    data would need a fallback added here once actually observed.
+    """
+    try:
+        _ = datetime.fromisoformat(value.strip())
+        return True
+    except ValueError:
+        return False
+
+
+def _matches_semantic_type(value: str, type_value: str) -> bool | None:
+    """Dispatch for named semantic types (boolean, datetime).
+
+    'why' returns None (not False) when type_value isn't one of these:
+    lets the caller distinguish "checked and failed" from "not one of my
+    types, try something else" — collapsing both into False would make a
+    real boolean/datetime mismatch indistinguishable from "this is
+    actually a regex pattern."
+    """
+    if type_value == "boolean":
+        return _matches_boolean_type(value)
+    if type_value == "datetime":
+        return _matches_datetime_type(value)
+    return None
+
+
 def _value_matches_type(value: str, type_value: str | None) -> bool:
     """Whether a single value conforms to its CDE's declared Type.
 
@@ -234,13 +294,17 @@ def _value_matches_type(value: str, type_value: str | None) -> bool:
     if type_value in _NUMERIC_TYPES:
         return _matches_numeric_type(value, type_value)
 
+    semantic_result = _matches_semantic_type(value, type_value)
+    if semantic_result is not None:
+        return semantic_result
+
     return _matches_pattern_type(value, type_value)
 
 
 def check_type_values(
     harm_header_set: set[str], rows: list[dict[str, str]], node_cdes: dict[str, CDEProps]
 ) -> dict[str, list[dict[str, int | str]]]:
-    """Return {cde: [{row, cde, value}]} for values that don't match their CDE's Type.
+    """Return {cde: [{line, cde, value}]} for values that don't match their CDE's Type.
 
     - Type in _PERMISSIVE_TYPES ("string", "list"), or the CDE has no
       declared Type at all: not checked — this is the guard that keeps
@@ -259,7 +323,7 @@ def check_type_values(
             continue
 
         bad_rows = [
-            {"row": i, "cde": cde, "value": row.get(cde, "").strip()}
+            {"line": i + 2, "cde": cde, "value": row.get(cde, "").strip()}
             for i, row in enumerate(rows)
             if row.get(cde, "").strip() and not _value_matches_type(row.get(cde, "").strip(), type_value)
         ]
@@ -267,17 +331,17 @@ def check_type_values(
             findings[cde] = bad_rows
 
     return findings
- 
+
 
 def _check_fk_column_values(
     column: str, property_name: str, rows: list[dict[str, str]], parent_path: Path
 ) -> list[dict[str, int | str]]:
-    """Bad rows for one FK column whose value doesn't exist in the parent's own property column."""
+    """Bad lines for one FK column whose value doesn't exist in the parent's own property column."""
     _, parent_rows = _read_csv_rows(parent_path)
     parent_values = {row.get(property_name, "").strip() for row in parent_rows}
 
     return [
-        {"row": i, "cde": column, "value": row.get(column, "")}
+        {"line": i + 2, "cde": column, "value": row.get(column, "")}
         for i, row in enumerate(rows)
         if row.get(column, "").strip() and row.get(column, "").strip() not in parent_values
     ]
@@ -355,7 +419,7 @@ def validate_node(
     node_csv_path: Path,
     node: str,
     target_schema: str,
-    dm_outputs_root: Path,
+    data_model_outputs_root: Path,
     output_path: Path,
     parent_sheets: dict[str, Path] | None = None,
 ) -> ValidationReport:
@@ -367,14 +431,14 @@ def validate_node(
         FileNotFoundError: node_csv_path, a parent sheet path, or the resolved
             model JSON path don't exist.
         ValueError: node_csv_path has no usable header row, target_schema
-            isn't one of the 4 supported schemas, dm_outputs_root isn't a
+            isn't one of the 4 supported schemas, data_model_outputs_root isn't a
             valid directory, or node isn't a key in that model JSON.
         AssertionError: the model JSON is not a dict (currently checked via
             an unguarded assert in _load_model_json rather than a raised
             ValueError with a descriptive message).
     """
     harm_header, rows = _read_csv_rows(node_csv_path)
-    model_json = _load_model_json(target_schema, dm_outputs_root)
+    model_json = _load_model_json(target_schema, data_model_outputs_root)
  
     if node not in model_json:
         raise ValueError(f"node '{node}' is not defined in the '{target_schema}' schema")
@@ -382,7 +446,7 @@ def validate_node(
     node_cdes = model_json[node]
 
     harm_header_set = set(harm_header)
-    missing_required_cdes = check_required_presence(harm_header_set, node_cdes)
+    missing_required_cdes = check_required_cdes(harm_header_set, node_cdes)
     missing_required_values = check_required_values(harm_header_set, rows, node_cdes)
     invalid_type_values = check_type_values(harm_header_set, rows, node_cdes)
     invalid_fk_values, missing_fk_columns, missing_parent_sheets = check_foreign_keys(harm_header_set, rows, node_cdes, parent_sheets)
@@ -418,7 +482,7 @@ def chunk_and_validate(
     harmonized_csv_path: Path,
     node_recommendations_path: Path,
     target_schema: str,
-    dm_outputs_root: Path,
+    data_model_outputs_root: Path,
     chunks_output_dir: Path,
     reports_output_dir: Path,
 ) -> dict[str, dict[str, ValidationReport | Path]]:
@@ -429,14 +493,14 @@ def chunk_and_validate(
     itself, it just reads that JSON back in, keeping suggest_node's
     classification step and this chunk+validate step as two explicit,
     separately-run stages.
- 
+
     'why' every other chunk is passed as parent_sheets for each node: this
     module doesn't yet cross-reference relationships.json to know which
     nodes are actually a given node's real parents, so the safe default is
     to make every other chunk available — check_foreign_keys only looks up
     the parent names a node's own dot-notation columns actually reference,
     so unused entries here are harmless, just possibly more than needed.
- 
+
     Returns {node: {"csv_path": Path, "report": dict}}.
     """
     if not Path(node_recommendations_path).exists():
@@ -444,6 +508,16 @@ def chunk_and_validate(
 
     with open(node_recommendations_path, "r", encoding="utf-8") as f:
         node_recommendations = cast(NodeRecommendations, json.load(f))
+
+    # 'why': a prior run may have written a node's CSV/report here that the
+    # current run no longer recommends (e.g. the harmonized data changed and
+    # that node is no longer touched) — without clearing first, that stale
+    # file would sit alongside this run's real output and could be mistaken
+    # for current data by anything consuming this directory afterward.
+    shutil.rmtree(chunks_output_dir, ignore_errors=True)
+    shutil.rmtree(reports_output_dir, ignore_errors=True)
+
+    print("Cleared previous node chunks and validation reports (if any) from output directory.")
 
     chunks = chunk_by_node(
         harmonized_csv_path=harmonized_csv_path,
@@ -461,7 +535,7 @@ def chunk_and_validate(
             node_csv_path=csv_path,
             node=node,
             target_schema=target_schema,
-            dm_outputs_root=dm_outputs_root,
+            data_model_outputs_root=data_model_outputs_root,
             output_path=reports_output_dir / f"{node}_validation.json",
             parent_sheets=parent_sheets,
         )
