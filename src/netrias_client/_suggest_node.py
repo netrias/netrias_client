@@ -67,38 +67,38 @@ def _validate_target_schema(target_schema: str) -> str:
     return target_schema.upper()
 
 
-def _resolve_model_json_path(model: str, dm_outputs_root: Path) -> Path:
-    """Resolve and confirm the model JSON path exists under dm_outputs_root.
+def _resolve_model_json_path(model: str, data_model_outputs_root: Path) -> Path:
+    """Resolve and confirm the model JSON path exists under data_model_outputs_root.
 
     Raises:
-        ValueError: dm_outputs_root isn't a directory.
+        ValueError: data_model_outputs_root isn't a directory.
         FileNotFoundError: no model JSON exists at the resolved path.
     """
-    if not dm_outputs_root.exists() or not dm_outputs_root.is_dir():
-        raise ValueError(f"dm_outputs_root is not a valid directory: {dm_outputs_root}")
+    if not data_model_outputs_root.exists() or not data_model_outputs_root.is_dir():
+        raise ValueError(f"data_model_outputs_root is not a valid directory: {data_model_outputs_root}")
 
-    json_path = dm_outputs_root / model / f"{model}.json"
+    json_path = data_model_outputs_root / model / f"{model}.json"
     if not json_path.exists():
         raise FileNotFoundError(f"No model JSON found at {json_path}")
     return json_path
 
 
-def _load_model_json(target_schema: str, dm_outputs_root: Path) -> ModelJson:
+def _load_model_json(target_schema: str, data_model_outputs_root: Path) -> ModelJson:
     """Load only the target schema's enriched model JSON.
 
     'why': target_schema restricts which model JSON gets read — this
-    function never scans dm_outputs_root or loads other schemas' JSONs
+    function never scans data_model_outputs_root or loads other schemas' JSONs
     even if several exist side by side under the same root. Key validation
     and path resolution are still split into their own helpers; parsing
     stays inline here since it's now just a single isinstance check.
 
     Raises:
         ValueError: target_schema isn't one of the 4 supported schemas,
-        dm_outputs_root isn't a valid directory, or the model JSON is an empty dict.
+        data_model_outputs_root isn't a valid directory, or the model JSON is an empty dict.
         FileNotFoundError: no model JSON exists at the resolved path.
     """
     model = _validate_target_schema(target_schema)
-    json_path = _resolve_model_json_path(model, dm_outputs_root)
+    json_path = _resolve_model_json_path(model, data_model_outputs_root)
 
     with open(json_path, "r", encoding="utf-8") as f:
         model_json = cast(ModelJson, json.load(f))
@@ -154,7 +154,7 @@ def _classify_harmonized_columns(
 def suggest_node(
     harmonized_csv_path: Path,
     target_schema: str,
-    dm_outputs_root: Path,              # 'why': the root of the directory tree containing the model JSONs for all 4 schemas
+    data_model_outputs_root: Path,              # 'why': the root of the directory tree containing the model JSONs for all 4 schemas
     output_path: Path,
 
 ) -> NodeRecommendations:
@@ -163,11 +163,11 @@ def suggest_node(
     Raises:
         FileNotFoundError: harmonized_csv_path or the resolved model JSON path don't exist.
         ValueError: harmonized CSV has no usable header row, target_schema isn't one
-            of the 4 supported schemas, dm_outputs_root isn't a valid directory, or the
+            of the 4 supported schemas, data_model_outputs_root isn't a valid directory, or the
             model JSON is empty/malformed.
     """
     harmonized_cdes = _read_csv_header(harmonized_csv_path)
-    model_json = _load_model_json(target_schema, dm_outputs_root)
+    model_json = _load_model_json(target_schema, data_model_outputs_root)
     cde_to_nodes = _build_cde_to_nodes_index(model_json)
 
     result, unmapped = _classify_harmonized_columns(harmonized_cdes, cde_to_nodes)
