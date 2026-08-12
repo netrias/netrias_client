@@ -304,14 +304,19 @@ def _value_matches_type(value: str, type_value: str | None) -> bool:
 def check_type_values(
     harm_header_set: set[str], rows: list[dict[str, str]], node_cdes: dict[str, CDEProps]
 ) -> dict[str, list[dict[str, int | str]]]:
-    """Return {cde: [{line, cde, value}]} for values that don't match their CDE's Type.
+    """Return {cde: [{row, value}]} for values that don't match their CDE's Type.
 
     - Type in _PERMISSIVE_TYPES ("string", "list"), or the CDE has no
       declared Type at all: not checked — this is the guard that keeps
       "string"/"list" from being misinterpreted as patterns in the regex
       branch below, and a CDE with no Type has nothing to validate against.
+    - Type == "TBD": not checked, but prints a one-time warning naming the
+      CDE — the schema itself hasn't finalized a real type here yet.
     - Type in _NUMERIC_TYPES ("number", "integer"): value must parse as a
       float or int, respectively.
+    - Type == "boolean": value must be a recognized boolean string
+      representation (true/false/1/0/yes/no, case-insensitive).
+    - Type == "datetime": value must parse as an ISO 8601 date/datetime.
     - Anything else: treated as a regex pattern, value must re.fullmatch it.
     Empty cell values are skipped — required-ness is checked separately.
     """
@@ -323,7 +328,7 @@ def check_type_values(
             continue
 
         bad_rows = [
-            {"line": i + 2, "cde": cde, "value": row.get(cde, "").strip()}
+            {"line": i + 2, "value": row.get(cde, "").strip()}
             for i, row in enumerate(rows)
             if row.get(cde, "").strip() and not _value_matches_type(row.get(cde, "").strip(), type_value)
         ]
@@ -341,7 +346,7 @@ def _check_fk_column_values(
     parent_values = {row.get(property_name, "").strip() for row in parent_rows}
 
     return [
-        {"line": i + 2, "cde": column, "value": row.get(column, "")}
+        {"line": i + 2, "value": row.get(column, "").strip()}
         for i, row in enumerate(rows)
         if row.get(column, "").strip() and row.get(column, "").strip() not in parent_values
     ]
