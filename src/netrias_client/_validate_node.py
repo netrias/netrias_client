@@ -28,7 +28,6 @@ import csv
 import json
 from typing import cast
 import re
-import shutil
 from pathlib import Path
  
  
@@ -53,6 +52,8 @@ _BOOLEAN_VALUES = frozenset({"true", "false", "1", "0", "yes", "no"})
 # per row) since it signals incomplete schema coverage rather than a
 # deliberate "no check needed" like _PERMISSIVE_TYPES.
 _UNDEFINED_TYPE = "TBD"
+
+_MANAGED_FILES_MANIFEST = ".validation_managed_files.json"
 
 
 @dataclass
@@ -304,7 +305,7 @@ def _value_matches_type(value: str, type_value: str | None) -> bool:
 def check_type_values(
     harm_header_set: set[str], rows: list[dict[str, str]], node_cdes: dict[str, CDEProps]
 ) -> dict[str, list[dict[str, int | str]]]:
-    """Return {cde: [{row, value}]} for values that don't match their CDE's Type.
+    """Return {cde: [{line, value}]} for values that don't match their CDE's Type.
 
     - Type in _PERMISSIVE_TYPES ("string", "list"), or the CDE has no
       declared Type at all: not checked — this is the guard that keeps
@@ -405,7 +406,7 @@ def check_foreign_keys(
     (e.g. participant.study_participant_id).
 
     Returns:
-        invalid_values: {column: [{row, cde, value}]} for values that don't
+        invalid_values: {column: [{line, cde, value}]} for values that don't
             exist in the parent's own property column.
         missing_fk_columns: FK CDEs defined in the schema but absent from
             this node's CSV header entirely.
@@ -418,6 +419,63 @@ def check_foreign_keys(
     fk_cdes = [cde for cde in node_cdes.keys() if "." in cde]
     results = [_evaluate_fk_column(c, harm_header_set, rows, parent_sheets) for c in fk_cdes]
     return _summarize_fk_results(results)
+
+
+def _read_managed_filenames(output_dir: Path) -> set[str]:
+    """Read the set of filenames this workflow wrote into output_dir on its
+    last run, from a small manifest file it maintains for exactly this purpose.
+
+    'why' a manifest instead of just listing output_dir's current contents:
+    output_dir is caller-provided and may already contain files this
+    workflow never created (e.g. the caller's own notes) — the manifest is
+    the only reliable way to know which files are actually ours, so cleanup
+    never has to guess based on naming or timing.
+    """
+    manifest_path = output_dir / _MANAGED_FILES_MANIFEST
+    if not manifest_path.exists():
+        return set()
+
+    try:
+        raw = cast(object, json.loads(manifest_path.read_text(encoding="utf-8")))
+    except (json.JSONDecodeError, OSError):
+        return set()
+
+    if not isinstance(raw, list):
+        return set()
+
+    raw_list = cast(list[object], raw)
+    return {item for item in raw_list if isinstance(item, str)}
+
+
+def _write_managed_filenames(output_dir: Path, filenames: set[str]) -> None:
+    """Persist the filenames this workflow just wrote into output_dir, so
+    the next run knows what's safe to remove if it's no longer produced.
+
+    'why' the mkdir here: output_dir may not exist yet if zero nodes were
+    processed this run (e.g. an empty node_recommendations) — chunk_by_node
+    creates its own output dir unconditionally, but reports_output_dir has
+    no equivalent guarantee once the validate_node loop never runs.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = output_dir / _MANAGED_FILES_MANIFEST
+    _ = manifest_path.write_text(json.dumps(sorted(filenames)), encoding="utf-8")
+
+
+def _cleanup_stale_managed_files(output_dir: Path, current_filenames: set[str]) -> None:
+    """Remove only files this workflow wrote on a prior run that this run
+    didn't recreate — never touches anything outside its own manifest.
+
+    'why' this runs after generation succeeds, not before: a failed run
+    (bad source CSV, missing model JSON, etc.) should never delete
+    previously-generated, still-valid output belonging to the caller.
+    """
+    stale = _read_managed_filenames(output_dir) - current_filenames
+    for filename in stale:
+        stale_path = output_dir / filename
+        if stale_path.exists():
+            stale_path.unlink()
+
+    _write_managed_filenames(output_dir, current_filenames)
 
 
 def validate_node(
@@ -514,16 +572,6 @@ def chunk_and_validate(
     with open(node_recommendations_path, "r", encoding="utf-8") as f:
         node_recommendations = cast(NodeRecommendations, json.load(f))
 
-    # 'why': a prior run may have written a node's CSV/report here that the
-    # current run no longer recommends (e.g. the harmonized data changed and
-    # that node is no longer touched) — without clearing first, that stale
-    # file would sit alongside this run's real output and could be mistaken
-    # for current data by anything consuming this directory afterward.
-    shutil.rmtree(chunks_output_dir, ignore_errors=True)
-    shutil.rmtree(reports_output_dir, ignore_errors=True)
-
-    print("Cleared previous node chunks and validation reports (if any) from output directory.")
-
     chunks = chunk_by_node(
         harmonized_csv_path=harmonized_csv_path,
         node_recommendations=node_recommendations,
@@ -531,22 +579,34 @@ def chunk_and_validate(
     )
 
     print(f"Node chunks successfully created: {chunks_output_dir}")
- 
+
     results: dict[str, dict[str, ValidationReport | Path]] = {}
+    report_filenames: set[str] = set()
     for node, csv_path in chunks.items():
         parent_sheets = {p: path for p, path in chunks.items() if p != node}
- 
+        report_filename = f"{node}_validation.json"
+
         report = validate_node(
             node_csv_path=csv_path,
             node=node,
             target_schema=target_schema,
             data_model_outputs_root=data_model_outputs_root,
-            output_path=reports_output_dir / f"{node}_validation.json",
+            output_path=reports_output_dir / report_filename,
             parent_sheets=parent_sheets,
         )
- 
+
         results[node] = {"csv_path": csv_path, "report": report}
-    
+        report_filenames.add(report_filename)
+
+    # 'why': cleanup runs only after every chunk and report above was
+    # generated successfully — a prior run's node CSV/report that this run
+    # no longer produces gets removed, but only if it's a file this workflow
+    # itself wrote (tracked via the manifest), never a caller-owned file
+    # sitting in the same directory, and never before a partial/failed run
+    # could have destroyed anything.
+    _cleanup_stale_managed_files(chunks_output_dir, {path.name for path in chunks.values()})
+    _cleanup_stale_managed_files(reports_output_dir, report_filenames)
+
     print(f"Node validation reports ready: {reports_output_dir}")
 
     print("Node Validation Summary:")

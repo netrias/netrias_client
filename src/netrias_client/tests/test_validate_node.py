@@ -20,6 +20,7 @@ from netrias_client._validate_node import (
     _FkColumnResult,
     _check_fk_column_values,
     _check_path,
+    _cleanup_stale_managed_files,
     _evaluate_fk_column,
     _load_model_json,
     _matches_boolean_type,
@@ -28,9 +29,11 @@ from netrias_client._validate_node import (
     _matches_pattern_type,
     _matches_semantic_type,
     _read_csv_rows,
+    _read_managed_filenames,
     _should_check_type,
     _summarize_fk_results,
     _value_matches_type,
+    _write_managed_filenames,
     check_foreign_keys,
     check_required_cdes,
     check_required_values,
@@ -832,18 +835,116 @@ def test_chunk_and_validate_end_to_end(workspace: Path) -> None:
     assert report["node"] == "diagnosis"
 
 
-def test_chunk_and_validate_clears_stale_files_from_prior_run(workspace: Path) -> None:
+# ---------------------------------------------------------------------------
+# _read_managed_filenames / _write_managed_filenames / _cleanup_stale_managed_files
+# ---------------------------------------------------------------------------
+
+def test_read_managed_filenames_no_manifest_returns_empty_set(tmp_path: Path) -> None:
+    assert _read_managed_filenames(tmp_path) == set()
+
+
+def test_write_then_read_managed_filenames_round_trips(tmp_path: Path) -> None:
+    _write_managed_filenames(tmp_path, {"a.csv", "b.csv"})
+    assert _read_managed_filenames(tmp_path) == {"a.csv", "b.csv"}
+
+
+def test_read_managed_filenames_malformed_manifest_returns_empty_set(tmp_path: Path) -> None:
+    _ = (tmp_path / ".netrias_managed_files.json").write_text("not valid json{", encoding="utf-8")
+    assert _read_managed_filenames(tmp_path) == set()
+
+
+def test_cleanup_removes_only_previously_managed_files_no_longer_produced(tmp_path: Path) -> None:
+    # Given: a prior run managed both old.csv and current.csv
+    _ = (tmp_path / "old.csv").write_text("x", encoding="utf-8")
+    _ = (tmp_path / "current.csv").write_text("x", encoding="utf-8")
+    _write_managed_filenames(tmp_path, {"old.csv", "current.csv"})
+
+    # When: this run only produced current.csv
+    _cleanup_stale_managed_files(tmp_path, {"current.csv"})
+
+    # Then: old.csv (no longer produced) is removed, current.csv stays
+    assert not (tmp_path / "old.csv").exists()
+    assert (tmp_path / "current.csv").exists()
+
+
+def test_cleanup_never_touches_files_outside_the_manifest(tmp_path: Path) -> None:
+    """A file the caller placed in the directory themselves — never tracked
+    in any manifest — must survive cleanup regardless of its name."""
+    caller_file = tmp_path / "keep-me.txt"
+    _ = caller_file.write_text("do not delete", encoding="utf-8")
+    # No manifest written at all — this directory was never managed before
+
+    _cleanup_stale_managed_files(tmp_path, set())
+
+    assert caller_file.exists()
+
+
+def test_cleanup_updates_manifest_for_next_run(tmp_path: Path) -> None:
+    _write_managed_filenames(tmp_path, {"old.csv"})
+    _cleanup_stale_managed_files(tmp_path, {"new.csv"})
+
+    assert _read_managed_filenames(tmp_path) == {"new.csv"}
+
+
+# ---------------------------------------------------------------------------
+# chunk_and_validate
+# ---------------------------------------------------------------------------
+
+def test_chunk_and_validate_removes_stale_managed_files_from_prior_run(workspace: Path) -> None:
+    """A file this workflow itself wrote on an earlier run, but no longer
+    produces, is removed — using manifest state left by a genuine prior run,
+    not a blanket wipe of the whole output directory."""
     chunks_dir = workspace / "output" / "chunks_stale_test"
     reports_dir = workspace / "output" / "reports_stale_test"
     chunks_dir.mkdir(parents=True)
     reports_dir.mkdir(parents=True)
 
+    # Given: simulate a prior run of this same workflow that produced
+    # old_node.csv / old_node_validation.json and recorded them as managed
     stale_chunk = chunks_dir / "old_node.csv"
     stale_report = reports_dir / "old_node_validation.json"
     _ = stale_chunk.write_text("a\n1\n", encoding="utf-8")
     _ = stale_report.write_text("{}", encoding="utf-8")
+    _write_managed_filenames(chunks_dir, {"old_node.csv"})
+    _write_managed_filenames(reports_dir, {"old_node_validation.json"})
 
     node_recommendations_path = workspace / "output" / "suggested_nodes2.json"
+    _ = node_recommendations_path.write_text(
+        json.dumps({"diagnosis": list(_read_csv_rows(workspace / "output" / "harmonized.csv")[0])}),
+        encoding="utf-8",
+    )
+
+    # When: the current run only produces diagnosis.csv / diagnosis_validation.json
+    _ = chunk_and_validate(
+        harmonized_csv_path=workspace / "output" / "harmonized.csv",
+        node_recommendations_path=node_recommendations_path,
+        target_schema="ctdc",
+        data_model_outputs_root=workspace,
+        chunks_output_dir=chunks_dir,
+        reports_output_dir=reports_dir,
+    )
+
+    # Then: the stale, previously-managed files are gone
+    assert not stale_chunk.exists()
+    assert not stale_report.exists()
+    assert (chunks_dir / "diagnosis.csv").exists()
+    assert (reports_dir / "diagnosis_validation.json").exists()
+
+
+def test_chunk_and_validate_never_deletes_caller_owned_files(workspace: Path) -> None:
+    """A file the caller placed directly in the output directories — never
+    written by this workflow, never tracked in any manifest — must survive."""
+    chunks_dir = workspace / "output" / "chunks_caller_test"
+    reports_dir = workspace / "output" / "reports_caller_test"
+    chunks_dir.mkdir(parents=True)
+    reports_dir.mkdir(parents=True)
+
+    caller_chunk_file = chunks_dir / "keep-me.txt"
+    caller_report_file = reports_dir / "keep-me.txt"
+    _ = caller_chunk_file.write_text("do not delete", encoding="utf-8")
+    _ = caller_report_file.write_text("do not delete", encoding="utf-8")
+
+    node_recommendations_path = workspace / "output" / "suggested_nodes3.json"
     _ = node_recommendations_path.write_text(
         json.dumps({"diagnosis": list(_read_csv_rows(workspace / "output" / "harmonized.csv")[0])}),
         encoding="utf-8",
@@ -858,8 +959,48 @@ def test_chunk_and_validate_clears_stale_files_from_prior_run(workspace: Path) -
         reports_output_dir=reports_dir,
     )
 
-    assert not stale_chunk.exists()
-    assert not stale_report.exists()
+    assert caller_chunk_file.exists()
+    assert caller_report_file.exists()
+
+
+def test_chunk_and_validate_failed_run_does_not_delete_existing_output(workspace: Path) -> None:
+    """'why': cleanup only runs after every node in the loop succeeds — if
+    validate_node raises partway through (here, because the recommendations
+    reference a node that doesn't exist in the schema), any previously
+    generated output must be left exactly as it was."""
+    chunks_dir = workspace / "output" / "chunks_fail_test"
+    reports_dir = workspace / "output" / "reports_fail_test"
+    chunks_dir.mkdir(parents=True)
+    reports_dir.mkdir(parents=True)
+
+    preexisting_chunk = chunks_dir / "diagnosis.csv"
+    preexisting_report = reports_dir / "diagnosis_validation.json"
+    _ = preexisting_chunk.write_text("study_diagnosis_id\nSID1\n", encoding="utf-8")
+    _ = preexisting_report.write_text('{"node": "diagnosis", "status": "PASS"}', encoding="utf-8")
+    _write_managed_filenames(chunks_dir, {"diagnosis.csv"})
+    _write_managed_filenames(reports_dir, {"diagnosis_validation.json"})
+
+    # A recommendations file pointing at a node not defined in CTDC.json —
+    # chunk_by_node will happily produce a chunk for it, but validate_node
+    # will raise ValueError when it can't find "not_a_real_node" in the schema.
+    bad_recommendations_path = workspace / "output" / "bad_recommendations.json"
+    _ = bad_recommendations_path.write_text(
+        json.dumps({"not_a_real_node": ["study_diagnosis_id"]}), encoding="utf-8"
+    )
+
+    with pytest.raises(ValueError, match="not defined"):
+        _ = chunk_and_validate(
+            harmonized_csv_path=workspace / "output" / "harmonized.csv",
+            node_recommendations_path=bad_recommendations_path,
+            target_schema="ctdc",
+            data_model_outputs_root=workspace,
+            chunks_output_dir=chunks_dir,
+            reports_output_dir=reports_dir,
+        )
+
+    # Existing output from before this failed run must be untouched
+    assert preexisting_chunk.exists()
+    assert preexisting_report.exists()
 
 
 def test_chunk_and_validate_missing_recommendations_file_raises(workspace: Path) -> None:
