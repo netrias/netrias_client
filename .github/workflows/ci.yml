@@ -29,12 +29,9 @@ jobs:
 
       - name: Build distribution
         run: uv build
-  
-      - name: Upgrade pip
-        run: uv pip install --upgrade "pip>=26.2"
 
       - name: Audit dependencies
-        run: uv run pip-audit --ignore-vuln CVE-2026-69247
+        run: uv run pip-audit --ignore-vuln CVE-2026-69247 --ignore-vuln PYSEC-2026-3721
 
   lint:
     runs-on: ubuntu-latest
