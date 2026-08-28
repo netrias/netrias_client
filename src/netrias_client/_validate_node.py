@@ -18,7 +18,9 @@ number (1-based, header counted as line 1), not a 0-based row index:
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
+import shutil
+from uuid import uuid4
 
 
 from ._models import CDEProps
@@ -52,8 +54,6 @@ _BOOLEAN_VALUES = frozenset({"true", "false", "1", "0", "yes", "no"})
 # per row) since it signals incomplete schema coverage rather than a
 # deliberate "no check needed" like _PERMISSIVE_TYPES.
 _UNDEFINED_TYPE = "TBD"
-
-_MANAGED_FILES_MANIFEST = ".validation_managed_files.json"
 
 
 @dataclass
@@ -156,7 +156,7 @@ def chunk_by_node(
     """Slice a harmonized CSV into one CSV per node, using suggest_node's
     {node: [matched cde, ...]} classification to pick each node's cdes.
  
-    Returns {node: path_to_that_node's_chunked_csv}.
+    Returns {node: path_to_that_node_chunked_csv}.
  
     'why' a shared CDE (present under multiple nodes) is copied into every
     node's chunk rather than only one — matches suggest_node's own decision
@@ -165,7 +165,7 @@ def chunk_by_node(
     harm_header, rows = _read_csv_rows(harmonized_csv_path)
     harm_header_set = set(harm_header)
 
-    output_dir.mkdir(parents=True, exist_ok=True)
+    _ = output_dir.mkdir(parents=True, exist_ok=True)
 
     result: dict[str, Path] = {}
     for node, cdes in node_recommendations.items():
@@ -406,7 +406,7 @@ def check_foreign_keys(
     (e.g. participant.study_participant_id).
 
     Returns:
-        invalid_values: {column: [{line, cde, value}]} for values that don't
+        invalid_values: {column: [{line, value}]} for values that don't
             exist in the parent's own property column.
         missing_fk_columns: FK CDEs defined in the schema but absent from
             this node's CSV header entirely.
@@ -419,63 +419,6 @@ def check_foreign_keys(
     fk_cdes = [cde for cde in node_cdes.keys() if "." in cde]
     results = [_evaluate_fk_column(c, harm_header_set, rows, parent_sheets) for c in fk_cdes]
     return _summarize_fk_results(results)
-
-
-def _read_managed_filenames(output_dir: Path) -> set[str]:
-    """Read the set of filenames this workflow wrote into output_dir on its
-    last run, from a small manifest file it maintains for exactly this purpose.
-
-    'why' a manifest instead of just listing output_dir's current contents:
-    output_dir is caller-provided and may already contain files this
-    workflow never created (e.g. the caller's own notes) — the manifest is
-    the only reliable way to know which files are actually ours, so cleanup
-    never has to guess based on naming or timing.
-    """
-    manifest_path = output_dir / _MANAGED_FILES_MANIFEST
-    if not manifest_path.exists():
-        return set()
-
-    try:
-        raw = cast(object, json.loads(manifest_path.read_text(encoding="utf-8")))
-    except (json.JSONDecodeError, OSError):
-        return set()
-
-    if not isinstance(raw, list):
-        return set()
-
-    raw_list = cast(list[object], raw)
-    return {item for item in raw_list if isinstance(item, str)}
-
-
-def _write_managed_filenames(output_dir: Path, filenames: set[str]) -> None:
-    """Persist the filenames this workflow just wrote into output_dir, so
-    the next run knows what's safe to remove if it's no longer produced.
-
-    'why' the mkdir here: output_dir may not exist yet if zero nodes were
-    processed this run (e.g. an empty node_recommendations) — chunk_by_node
-    creates its own output dir unconditionally, but reports_output_dir has
-    no equivalent guarantee once the validate_node loop never runs.
-    """
-    output_dir.mkdir(parents=True, exist_ok=True)
-    manifest_path = output_dir / _MANAGED_FILES_MANIFEST
-    _ = manifest_path.write_text(json.dumps(sorted(filenames)), encoding="utf-8")
-
-
-def _cleanup_stale_managed_files(output_dir: Path, current_filenames: set[str]) -> None:
-    """Remove only files this workflow wrote on a prior run that this run
-    didn't recreate — never touches anything outside its own manifest.
-
-    'why' this runs after generation succeeds, not before: a failed run
-    (bad source CSV, missing model JSON, etc.) should never delete
-    previously-generated, still-valid output belonging to the caller.
-    """
-    stale = _read_managed_filenames(output_dir) - current_filenames
-    for filename in stale:
-        stale_path = output_dir / filename
-        if stale_path.exists():
-            stale_path.unlink()
-
-    _write_managed_filenames(output_dir, current_filenames)
 
 
 def validate_node(
@@ -495,10 +438,8 @@ def validate_node(
             model JSON path don't exist.
         ValueError: node_csv_path has no usable header row, target_schema
             isn't one of the 4 supported schemas, data_model_outputs_root isn't a
-            valid directory, or node isn't a key in that model JSON.
-        AssertionError: the model JSON is not a dict (currently checked via
-            an unguarded assert in _load_model_json rather than a raised
-            ValueError with a descriptive message).
+            valid directory, the model JSON is empty, or node isn't a key
+            in that model JSON.
     """
     harm_header, rows = _read_csv_rows(node_csv_path)
     model_json = _load_model_json(target_schema, data_model_outputs_root)
@@ -539,80 +480,133 @@ def validate_node(
     _ = output_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
  
     return report
- 
+
+
+def _build_final_results(
+    results: dict[str, dict[str, ValidationReport | Path]],
+    run_folder: Path,
+) -> dict[str, dict[str, ValidationReport | Path]]:
+    """Remap scratch-dir paths to their final locations inside the published
+    run folder, and include the report file path alongside the in-memory report."""
+    final: dict[str, dict[str, ValidationReport | Path]] = {}
+    for node, entry in results.items():
+        csv_path = entry["csv_path"]
+        assert isinstance(csv_path, Path)
+        final[node] = {
+            "csv_path": run_folder / "chunks" / csv_path.name,
+            "report_path": run_folder / "reports" / f"{node}_validation.json",
+            "report": entry["report"],
+        }
+    return final
+
  
 def chunk_and_validate(
+    source_path: Path,
     harmonized_csv_path: Path,
     node_recommendations_path: Path,
     target_schema: str,
     data_model_outputs_root: Path,
-    chunks_output_dir: Path,
-    reports_output_dir: Path,
+    output_dir: Path,
 ) -> dict[str, dict[str, ValidationReport | Path]]:
-    """Chunk a harmonized CSV by node, then validate every resulting chunk.
+    """Chunk a harmonized CSV by node, validate every resulting chunk, and
+    publish the results into a brand-new, uniquely-named run folder inside
+    output_dir — never modifying or deleting anything from a previous run.
 
-    node_recommendations_path points at the JSON file suggest_node already
-    wrote via its own output_path — this function doesn't call suggest_node
-    itself, it just reads that JSON back in, keeping suggest_node's
-    classification step and this chunk+validate step as two explicit,
-    separately-run stages.
+    The run folder is named
+    "{source_path.stem}_{MMDDYY-HHMMSSffffff}_{4-char-uuid}", and
+    contains "chunks/" (one CSV per node) and "reports/" (one validation
+    JSON per node).
 
-    'why' every other chunk is passed as parent_sheets for each node: this
-    module doesn't yet cross-reference relationships.json to know which
-    nodes are actually a given node's real parents, so the safe default is
-    to make every other chunk available — check_foreign_keys only looks up
-    the parent names a node's own dot-notation columns actually reference,
-    so unused entries here are harmless, just possibly more than needed.
+    'why' a fresh run folder every call, instead of writing into a shared
+    chunks_output_dir/reports_output_dir: avoids the trouble of cleaning 
+    up a previous run's leftovers, and makes it easy to compare two runs 
+    side-by-side (e.g. before/after a schema update) without overwriting
 
-    Returns {node: {"csv_path": Path, "report": dict}}.
+    'why' everything is built in a hidden scratch folder inside output_dir,
+    not tempfile.TemporaryDirectory (which usually resolves to /tmp, a
+    different filesystem): Path.rename() is only atomic when source and
+    destination are on the same filesystem. Building directly in output_dir
+    and renaming within it guarantees the real run folder either doesn't
+    exist at all, or exists complete with every chunk and every report
+    inside it — never a partial state visible to anyone reading output_dir
+    concurrently.
+
+    'why' a raised exception still propagates after cleanup: the scratch
+    folder is always removed (success or failure) so it never lingers on
+    disk, but the caller still needs to know validation failed and why.
+
+    Returns {node: {"csv_path": Path, "report_path": Path, "report": ValidationReport}},
+    with csv_path and report_path pointing at the files' final locations
+    inside the new run folder.
+
+    Raises:
+        FileNotFoundError: node_recommendations_path doesn't exist.
+        Whatever chunk_by_node or validate_node raise, propagated unchanged.
     """
-    if not Path(node_recommendations_path).exists():
-        raise FileNotFoundError(f"File not found: {node_recommendations_path}")
+    _check_path(node_recommendations_path, "file")
 
     with open(node_recommendations_path, "r", encoding="utf-8") as f:
         node_recommendations = cast(NodeRecommendations, json.load(f))
 
-    chunks = chunk_by_node(
-        harmonized_csv_path=harmonized_csv_path,
-        node_recommendations=node_recommendations,
-        output_dir=chunks_output_dir,
-    )
+    if not node_recommendations:
+        raise ValueError("node_recommendations is empty or None")
 
-    print(f"Node chunks successfully created: {chunks_output_dir}")
+    _ = output_dir.mkdir(parents=True, exist_ok=True)
+    scratch_dir = output_dir / f".tmp-{uuid4().hex[:4]}"
 
-    results: dict[str, dict[str, ValidationReport | Path]] = {}
-    report_filenames: set[str] = set()
-    for node, csv_path in chunks.items():
-        parent_sheets = {p: path for p, path in chunks.items() if p != node}
-        report_filename = f"{node}_validation.json"
-
-        report = validate_node(
-            node_csv_path=csv_path,
-            node=node,
-            target_schema=target_schema,
-            data_model_outputs_root=data_model_outputs_root,
-            output_path=reports_output_dir / report_filename,
-            parent_sheets=parent_sheets,
+    try:
+        chunks = chunk_by_node(
+            harmonized_csv_path=harmonized_csv_path,
+            node_recommendations=node_recommendations,
+            output_dir=scratch_dir / "chunks",
         )
 
-        results[node] = {"csv_path": csv_path, "report": report}
-        report_filenames.add(report_filename)
+        results: dict[str, dict[str, ValidationReport | Path]] = {}
+        for node, csv_path in chunks.items():
+            parent_sheets = {p: path for p, path in chunks.items() if p != node}
 
-    # 'why': cleanup runs only after every chunk and report above was
-    # generated successfully — a prior run's node CSV/report that this run
-    # no longer produces gets removed, but only if it's a file this workflow
-    # itself wrote (tracked via the manifest), never a caller-owned file
-    # sitting in the same directory, and never before a partial/failed run
-    # could have destroyed anything.
-    _cleanup_stale_managed_files(chunks_output_dir, {path.name for path in chunks.values()})
-    _cleanup_stale_managed_files(reports_output_dir, report_filenames)
+            report = validate_node(
+                node_csv_path=csv_path,
+                node=node,
+                target_schema=target_schema,
+                data_model_outputs_root=data_model_outputs_root,
+                output_path=scratch_dir / "reports" / f"{node}_validation.json",
+                parent_sheets=parent_sheets,
+            )
 
-    print(f"Node validation reports ready: {reports_output_dir}")
+            results[node] = {"csv_path": csv_path, "report": report}
 
-    print("Node Validation Summary:")
-    for node, entry in results.items():
-        report = entry["report"]
-        status = report["status"] if isinstance(report, dict) else "UNKNOWN"
-        print(f"{node}: {status}")
- 
-    return results
+        if len(results) != len(chunks):
+            raise RuntimeError(
+                f"Expected {len(chunks)} validated node(s), got {len(results)} — refusing to publish partial results."
+            )
+
+        # 'why' the run folder's timestamp is computed now, right before
+        # publishing, not at the top of the function: it reflects when
+        # the run actually completed
+        run_folder_name = (
+            f"{source_path.stem}_"
+            f"{datetime.now(timezone.utc):%m%d%y-%H%M%S%f}_{uuid4().hex[:4]}"
+        )
+        run_folder = output_dir / run_folder_name
+
+        # 'why' this is the one atomic step: scratch_dir and run_folder are
+        # both direct children of output_dir (same filesystem), so this
+        # rename is guaranteed atomic by the OS — run_folder either doesn't
+        # exist yet, or exists complete with everything inside it. Every
+        # chunk CSV and every report JSON physically moves in this one step;
+        # nothing needs to be individually copied or re-written afterward.
+        _ = scratch_dir.rename(run_folder)
+
+        final_results = _build_final_results(results, run_folder)
+
+        print(f"Run complete: {run_folder}")
+
+        return final_results
+
+    finally:
+        # 'why' unconditional cleanup: if the rename above succeeded,
+        # scratch_dir no longer exists under this name, so this is a no-op.
+        # If anything raised before the rename, this removes the partial
+        # scratch work so failed runs never accumulate on disk.
+        shutil.rmtree(scratch_dir, ignore_errors=True)

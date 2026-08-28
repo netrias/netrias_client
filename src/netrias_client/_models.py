@@ -126,12 +126,12 @@ class ChunkAndValidateSignature(Protocol):
     """Callable signature for chunk_and_validate, used to type NetriasClient.chunk_and_validate."""
     def __call__(
         self,
+        source_path: Path,
         harmonized_csv_path: Path,
         node_recommendations_path: Path,
         target_schema: str,
         data_model_outputs_root: Path,
-        chunks_output_dir: Path,
-        reports_output_dir: Path,
+        output_dir: Path,
     ) -> dict[str, dict[str, ValidationReport | Path]]: ...
     
 

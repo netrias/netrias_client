@@ -27,9 +27,9 @@ manifest = client.discover_mapping_from_tabular(
       top_k=3,
       confidence_threshold=0.6,
 )
-print("Discovered manifest:")
-for col_key, mapping in manifest["column_mappings"].items():
-      print(f"  {col_key} ({mapping['column_name']}) → {mapping['cde_key']}")
+# print("Discovered manifest:")
+# for col_key, mapping in manifest["column_mappings"].items():
+#       print(f"  {col_key} ({mapping['column_name']}) → {mapping['cde_key']}")
 
 
 # Step 2: harmonize using that manifest
@@ -38,26 +38,26 @@ result = client.harmonize(
       manifest=manifest,
       target_schema="gc",
       external_version_number="11.0.4",
-      output_path=Path("output/harmonized.csv"),
-      manifest_output_path=Path("output/manifest.json"),
+      output_path=EXAMPLE_DIR / "output" / "harmonized.csv",
+      manifest_output_path=EXAMPLE_DIR / "output" / "manifest.json",
 )
 
 
 # Step 3: Node Discovery: suggest node(s) for the harmonized CSV
 recommendations = client.suggest_node(
-      harmonized_csv_path=Path("output/harmonized.csv"),
+      harmonized_csv_path=EXAMPLE_DIR / "output" / "harmonized.csv",
       target_schema="gc",
       data_model_outputs_root=EXAMPLE_DIR / "data",
-      output_path=Path("output/suggested_nodes.json"),
+      output_path=EXAMPLE_DIR / "output" / "suggested_nodes.json",
 )
 
 
 # Step 4: Chunk and Validate the harmonized CSV
 result = client.chunk_and_validate(
-    harmonized_csv_path=Path("output/harmonized.csv"),
-    node_recommendations_path=Path("output/suggested_nodes.json"),
+    source_path=source,
+    harmonized_csv_path=EXAMPLE_DIR / "output" / "harmonized.csv",
+    node_recommendations_path=EXAMPLE_DIR / "output" / "suggested_nodes.json",
     target_schema="gc",
     data_model_outputs_root=EXAMPLE_DIR / "data",
-    chunks_output_dir=Path("output/node_sheets"),
-    reports_output_dir=Path("output/validation_reports"),
+    output_dir=EXAMPLE_DIR / "output",
 )
