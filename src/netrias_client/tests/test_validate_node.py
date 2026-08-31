@@ -22,6 +22,7 @@ from netrias_client._validate_node import (
     _check_path,
     _evaluate_fk_column,
     _load_model_json,
+    _load_relationships,
     _matches_boolean_type,
     _matches_datetime_type,
     _matches_numeric_type,
@@ -73,6 +74,9 @@ def workspace(tmp_path: Path, diagnosis_cdes: dict[str, CDEProps]) -> Path:
     ctdc_dir = tmp_path / "CTDC"
     ctdc_dir.mkdir(parents=True)
     _ = (ctdc_dir / "CTDC.json").write_text(json.dumps(model_json), encoding="utf-8")
+    _ = (ctdc_dir / "relationships.json").write_text(
+        json.dumps({"diagnosis": ["participant", "sample"]}), encoding="utf-8"
+    )
 
     output_dir = tmp_path / "output"
     output_dir.mkdir()
@@ -208,6 +212,48 @@ def test_load_model_json_empty_dict_raises_value_error(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="empty"):
         _ = _load_model_json("ctdc", tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# _load_relationships
+# ---------------------------------------------------------------------------
+
+def test_load_relationships_returns_parsed_json(workspace: Path) -> None:
+    relationships = _load_relationships("ctdc", workspace)
+
+    assert relationships == {"diagnosis": ["participant", "sample"]}
+
+
+def test_load_relationships_missing_file_returns_empty_dict(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A missing relationships.json falls back to an empty dict with a
+    warning, rather than raising — FK checks still run correctly, they
+    just report all parents as missing."""
+    ctdc_dir = tmp_path / "CTDC"
+    ctdc_dir.mkdir()
+
+    relationships = _load_relationships("ctdc", tmp_path)
+    captured = capsys.readouterr()
+
+    assert relationships == {}
+    assert "WARNING" in captured.out
+    assert "relationships.json" in captured.out
+
+
+def test_load_relationships_wrong_schema_returns_empty_dict(
+    workspace: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A schema whose folder exists but has no relationships.json returns
+    empty, not raise — same graceful fallback as a fully missing file."""
+    # workspace has CTDC/relationships.json but not GC/relationships.json
+    (workspace / "GC").mkdir(exist_ok=True)
+
+    relationships = _load_relationships("gc", workspace)
+    captured = capsys.readouterr()
+
+    assert relationships == {}
+    assert "WARNING" in captured.out
 
 
 # ---------------------------------------------------------------------------

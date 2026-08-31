@@ -16,7 +16,7 @@ client.configure(
 
 EXAMPLE_DIR = Path(__file__).resolve().parent
 
-source = EXAMPLE_DIR / "data" / "sampled_2019-07-25-clin.csv"
+source = EXAMPLE_DIR / "data" / "sampled_cds_single_sheet.csv"
 
 # Step 1: discover column → CDE mappings
 manifest = client.discover_mapping_from_tabular(
@@ -27,9 +27,6 @@ manifest = client.discover_mapping_from_tabular(
       top_k=3,
       confidence_threshold=0.6,
 )
-# print("Discovered manifest:")
-# for col_key, mapping in manifest["column_mappings"].items():
-#       print(f"  {col_key} ({mapping['column_name']}) → {mapping['cde_key']}")
 
 
 # Step 2: harmonize using that manifest

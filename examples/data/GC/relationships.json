@@ -1,0 +1,79 @@
+{
+  "Characterization": [
+    "sample"
+  ],
+  "Composition": [
+    "sample"
+  ],
+  "MultiplexMicroscopy": [
+    "image"
+  ],
+  "NonDICOMCTimages": [
+    "image"
+  ],
+  "NonDICOMMRimages": [
+    "image"
+  ],
+  "NonDICOMPETimages": [
+    "image"
+  ],
+  "NonDICOMpathologyImages": [
+    "image"
+  ],
+  "NonDICOMradiologyAllModalities": [
+    "image"
+  ],
+  "Protocol": [
+    "file",
+    "sample",
+    "study"
+  ],
+  "Publication": [
+    "Protocol",
+    "sample"
+  ],
+  "consent_group": [
+    "study"
+  ],
+  "diagnosis": [
+    "participant",
+    "sample"
+  ],
+  "file": [
+    "participant",
+    "sample",
+    "study"
+  ],
+  "genomic_info": [
+    "file"
+  ],
+  "image": [
+    "file"
+  ],
+  "investigator": [
+    "study"
+  ],
+  "participant": [
+    "consent_group",
+    "study"
+  ],
+  "pdx": [
+    "sample",
+    "study"
+  ],
+  "program": [],
+  "proteomic": [
+    "file"
+  ],
+  "sample": [
+    "participant",
+    "pdx",
+    "study"
+  ],
+  "study": [
+    "program"
+  ],
+  "treatment": [
+    "participant"
+  ]
+}

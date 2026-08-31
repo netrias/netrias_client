@@ -430,16 +430,17 @@ def validate_node(
     parent_sheets: dict[str, Path] | None = None,
 ) -> ValidationReport:
     """Run all 4 validation checks against a single node's harmonized sheet.
- 
-    Returns a combined report and always writes it to output_path as JSON.
- 
+
+    Returns a combined report and always writes it to output_path as JSON if 
+    the run is successful.
+
     Raises:
         FileNotFoundError: node_csv_path, a parent sheet path, or the resolved
             model JSON path don't exist.
+        NotADirectoryError: data_model_outputs_root isn't valid directory,
         ValueError: node_csv_path has no usable header row, target_schema
-            isn't one of the 4 supported schemas, data_model_outputs_root isn't a
-            valid directory, the model JSON is empty, or node isn't a key
-            in that model JSON.
+            isn't one of the 4 supported schemas, the model JSON is empty, or
+            node isn't a key in that model JSON.
     """
     harm_header, rows = _read_csv_rows(node_csv_path)
     model_json = _load_model_json(target_schema, data_model_outputs_root)
@@ -480,6 +481,25 @@ def validate_node(
     _ = output_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
  
     return report
+
+
+def _load_relationships(target_schema: str, data_model_outputs_root: Path) -> dict[str, list[str]]:
+    """Load the {child: [parents]} relationship map for a schema.
+
+    'why' a missing relationships.json falls back to an empty dict rather
+    than raising: the FK check still runs correctly without it — it just
+    falls back to passing no parent sheets at all, which surfaces as
+    missing_parent_sheets findings rather than silently skipping the check.
+    """
+    model = target_schema.strip().upper()
+    rel_path = data_model_outputs_root / model / "relationships.json"
+
+    if not rel_path.exists():
+        print(f"WARNING: relationships.json not found at {rel_path} — FK checks will report all parents as missing.")
+        return {}
+
+    with open(rel_path, "r", encoding="utf-8") as f:
+        return cast(dict[str, list[str]], json.load(f))
 
 
 def _build_final_results(
@@ -561,9 +581,12 @@ def chunk_and_validate(
             output_dir=scratch_dir / "chunks",
         )
 
+        relationships = _load_relationships(target_schema, data_model_outputs_root)
+
         results: dict[str, dict[str, ValidationReport | Path]] = {}
         for node, csv_path in chunks.items():
-            parent_sheets = {p: path for p, path in chunks.items() if p != node}
+            parent_names = relationships.get(node, [])
+            parent_sheets = {p: chunks[p] for p in parent_names if p in chunks}
 
             report = validate_node(
                 node_csv_path=csv_path,
