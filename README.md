@@ -449,12 +449,15 @@ client = NetriasClient(
 
 ### `configure(...)`
 
-Optionally adjust settings after initialization.
+Select a DataChord deployment and optionally adjust runtime settings after initialization.
 
 ```python
 from pathlib import Path
 
+BASE_URL = "https://netrias-data-chord-staging.netriasbdf.cloud"
+
 client.configure(
+    base_url=BASE_URL,
     timeout=1200.0,
     log_level="INFO",
     log_directory=Path("./logs"),
@@ -466,11 +469,18 @@ client.configure(
 | `timeout` | `float \| None` | `1200.0` | Request timeout in seconds. |
 | `log_level` | `str \| None` | `"INFO"` | Logging verbosity: `"CRITICAL"`, `"ERROR"`, `"WARNING"`, `"INFO"`, `"DEBUG"`. |
 | `log_directory` | `Path \| str \| None` | `None` | Directory for per-client log files. When omitted, logs go to stdout only. |
-| `discovery_url` | `str \| None` | Environment default | Override discovery API URL for development/testing. |
-| `harmonization_url` | `str \| None` | Environment default | Override harmonization API URL for development/testing. |
+| `base_url` | `str \| None` | `None` | DataChord deployment root. Both service roots become `{base_url}/api/v1`. |
+| `discovery_url` | `str \| None` | Current service root | Override the versioned discovery API root. |
+| `harmonization_url` | `str \| None` | Current service root | Override the versioned harmonization API root. |
 | `data_model_store_url` | `str \| None` | Environment default | Override Data Model Store API URL for development/testing. |
 
-Calling `configure()` with partial parameters preserves previously set values. Only the parameters you specify are updated.
+`base_url` replaces both current service roots. An explicit service URL in the
+same call wins for that service. Without `base_url`, partial configuration
+preserves every unspecified service root.
+
+The client appends `/recommend`, `/jobs/harmonize`, or `/jobs/{job_id}` to the
+selected service root. A service override must therefore include its API
+version, for example `https://service.example/api/v2`.
 
 ---
 

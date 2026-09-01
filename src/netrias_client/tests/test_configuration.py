@@ -36,16 +36,136 @@ def test_configure_accepts_url_overrides() -> None:
 
     # When configuring with custom URLs
     client.configure(
-        discovery_url="https://staging.example.com/discovery",
-        harmonization_url="https://staging.example.com/harmonize",
+        discovery_url="https://staging.example.com/api/v2",
+        harmonization_url="https://staging.example.com/api/v3",
         data_model_store_url="https://staging.example.com/dms",
     )
 
     # Then the URLs are updated
-    assert client.settings.discovery_url == "https://staging.example.com/discovery"
-    assert client.settings.harmonization_url == "https://staging.example.com/harmonize"
+    assert client.settings.discovery_url == "https://staging.example.com/api/v2"
+    assert client.settings.harmonization_url == "https://staging.example.com/api/v3"
     assert client.settings.data_model_store_endpoints is not None
     assert client.settings.data_model_store_endpoints.base_url == "https://staging.example.com/dms"
+
+
+@pytest.mark.parametrize(
+    ("base_url", "expected_root"),
+    [
+        ("https://data-chord.example", "https://data-chord.example/api/v1"),
+        ("https://data-chord.example/", "https://data-chord.example/api/v1"),
+    ],
+)
+def test_configure_base_url_derives_versioned_service_roots(
+    base_url: str,
+    expected_root: str,
+) -> None:
+    """A DataChord deployment root owns both versioned programmatic APIs."""
+
+    # Given: a client that still uses its initial service endpoints
+    client = NetriasClient(api_key="token")
+
+    # When: the caller selects one DataChord deployment
+    client.configure(base_url=base_url)
+
+    # Then: both service roots use the same versioned DataChord API
+    assert client.settings.discovery_url == expected_root
+    assert client.settings.harmonization_url == expected_root
+
+
+def test_configure_service_overrides_win_over_same_call_base_url() -> None:
+    """One service can use another versioned API root when needed."""
+
+    # Given: a client and two explicit service roots
+    client = NetriasClient(api_key="token")
+    discovery_override = "https://discovery.example/api/v2"
+    harmonization_override = "https://harmonization.example/api/v3"
+
+    # When: the caller supplies a deployment root and both service overrides
+    client.configure(
+        base_url="https://data-chord.example",
+        discovery_url=discovery_override,
+        harmonization_url=harmonization_override,
+    )
+
+    # Then: each explicit service root wins
+    assert client.settings.discovery_url == discovery_override
+    assert client.settings.harmonization_url == harmonization_override
+
+
+def test_configure_later_base_url_replaces_earlier_service_overrides() -> None:
+    """Selecting a deployment replaces both previously selected services."""
+
+    # Given: a client with two earlier service overrides
+    client = NetriasClient(api_key="token")
+    client.configure(
+        discovery_url="https://old-discovery.example/api/v2",
+        harmonization_url="https://old-harmonization.example/api/v2",
+    )
+
+    # When: the caller selects one DataChord deployment
+    client.configure(base_url="https://new-data-chord.example")
+
+    # Then: both service roots move to that deployment
+    expected_root = "https://new-data-chord.example/api/v1"
+    assert client.settings.discovery_url == expected_root
+    assert client.settings.harmonization_url == expected_root
+
+
+def test_configure_later_service_override_changes_only_that_service() -> None:
+    """An independent service override preserves the other derived root."""
+
+    # Given: both services use one DataChord deployment
+    client = NetriasClient(api_key="token")
+    client.configure(base_url="https://data-chord.example")
+
+    # When: the caller moves only harmonization
+    client.configure(harmonization_url="https://harmonization.example/api/v2")
+
+    # Then: discovery stays on DataChord and harmonization uses the override
+    assert client.settings.discovery_url == "https://data-chord.example/api/v1"
+    assert client.settings.harmonization_url == "https://harmonization.example/api/v2"
+
+
+def test_configure_unrelated_update_preserves_derived_service_roots() -> None:
+    """Runtime tuning does not change the selected deployment."""
+
+    # Given: both services use one DataChord deployment
+    client = NetriasClient(api_key="token")
+    client.configure(base_url="https://data-chord.example")
+
+    # When: the caller changes only the timeout
+    client.configure(timeout=30)
+
+    # Then: both service roots remain unchanged
+    assert client.settings.discovery_url == "https://data-chord.example/api/v1"
+    assert client.settings.harmonization_url == "https://data-chord.example/api/v1"
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "",
+        "data-chord.example",
+        "https://",
+        "https://data-chord.example/api",
+        "https://data-chord.example?target=staging",
+        "https://data-chord.example#staging",
+        "https://user@data-chord.example",
+    ],
+)
+def test_configure_rejects_invalid_data_chord_base_url(base_url: str) -> None:
+    """A base URL identifies a deployment, not an API path or credential."""
+
+    # Given: a client and a value that is not a DataChord deployment root
+    client = NetriasClient(api_key="token")
+
+    # When: the caller tries to use that value as the base URL
+    with pytest.raises(ClientConfigurationError, match="base_url"):
+        client.configure(base_url=base_url)
+
+    # Then: the existing service roots remain unchanged
+    assert client.settings.discovery_url == DISCOVERY_BASE_URL
+    assert client.settings.harmonization_url == HARMONIZATION_BASE_URL
 
 
 def test_configure_rejects_unsupported_log_level() -> None:
