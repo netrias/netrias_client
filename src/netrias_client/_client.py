@@ -64,10 +64,10 @@ class NetriasClient:
         discovery_use_gateway_bypass: bool | None = None,
         discovery_use_async_api: bool | None = None,
         log_directory: Path | str | None = None,
-        base_url: str | None = None,
         discovery_url: str | None = None,
         harmonization_url: str | None = None,
         data_model_store_url: str | None = None,
+        base_url: str | None = None,
     ) -> None:
         """Update settings; ``base_url`` selects one DataChord deployment."""
 

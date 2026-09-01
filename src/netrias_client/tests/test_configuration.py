@@ -48,6 +48,34 @@ def test_configure_accepts_url_overrides() -> None:
     assert client.settings.data_model_store_endpoints.base_url == "https://staging.example.com/dms"
 
 
+def test_configure_preserves_existing_positional_url_parameters() -> None:
+    """Adding base_url does not change the meaning of existing positional calls."""
+
+    # Given: the positional service values supported before base_url was added
+    client = NetriasClient(api_key="token")
+    discovery_url = "https://discovery.example/api/v2"
+    harmonization_url = "https://harmonization.example/api/v3"
+    data_model_store_url = "https://models.example/api"
+
+    # When: an existing caller uses those positional parameters
+    client.configure(
+        None,
+        None,
+        None,
+        None,
+        None,
+        discovery_url,
+        harmonization_url,
+        data_model_store_url,
+    )
+
+    # Then: every value keeps its original meaning
+    assert client.settings.discovery_url == discovery_url
+    assert client.settings.harmonization_url == harmonization_url
+    assert client.settings.data_model_store_endpoints is not None
+    assert client.settings.data_model_store_endpoints.base_url == data_model_store_url
+
+
 @pytest.mark.parametrize(
     ("base_url", "expected_root"),
     [
@@ -151,6 +179,9 @@ def test_configure_unrelated_update_preserves_derived_service_roots() -> None:
         "https://data-chord.example?target=staging",
         "https://data-chord.example#staging",
         "https://user@data-chord.example",
+        "https://[bad",
+        "https://exa\nmple.com",
+        "https://exa\rmple.com",
     ],
 )
 def test_configure_rejects_invalid_data_chord_base_url(base_url: str) -> None:

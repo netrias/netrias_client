@@ -147,10 +147,14 @@ def _normalized_bool(value: bool | None, default: bool = False) -> bool:
 
 def _data_chord_api_root(base_url: str) -> str:
     """Return the versioned API root for one DataChord deployment."""
-    if not base_url or base_url.strip() != base_url:
+    if (
+        not base_url
+        or base_url.strip() != base_url
+        or any(ord(character) < 32 or ord(character) == 127 for character in base_url)
+    ):
         raise ClientConfigurationError("base_url must be an HTTP or HTTPS deployment root")
-    parsed = urlsplit(base_url)
     try:
+        parsed = urlsplit(base_url)
         _ = parsed.port
     except ValueError as exc:
         raise ClientConfigurationError("base_url must be an HTTP or HTTPS deployment root") from exc
