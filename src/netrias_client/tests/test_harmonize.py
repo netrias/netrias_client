@@ -14,7 +14,7 @@ import pytest
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from netrias_client import ColumnKeyedManifestPayload, NetriasClient
+from netrias_client import ColumnKeyedManifestPayload, Environment, NetriasClient
 from netrias_client._errors import NetriasAPIUnavailable
 from netrias_client._models import HarmonizationResult
 
@@ -45,6 +45,7 @@ def test_harmonize_streaming_success(
     """Write harmonized output and return a success result when the API streams CSV bytes."""
 
     # Given: a harmonization client with a successful streaming API response
+    configured_client.configure(base_url="https://data-chord.example/")
     capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
     install_mock_transport(monkeypatch, capture)
     expected_output = output_directory / "sample.harmonized.csv"
@@ -72,15 +73,58 @@ def test_harmonize_streaming_success(
     final_request = capture.requests[2]
 
     assert submit_request.method == "POST"
-    assert submit_request.url.path.endswith("/v1/jobs/harmonize")
+    assert str(submit_request.url) == "https://data-chord.example/api/v1/jobs/harmonize"
     assert submit_request.headers.get("x-api-key") == "test-api-key"
     submit_body = _decode_submit_body(submit_request)
     assert submit_body.get("data_commons_key") == "ccdi"
     assert submit_body.get("use_cache") is True
     assert submit_body.get("external_version_number") == EXTERNAL_VERSION_NUMBER
     assert poll_request.method == "GET"
-    assert "/v1/jobs/" in poll_request.url.path
+    assert str(poll_request.url) == "https://data-chord.example/api/v1/jobs/job-123"
     assert final_request.method == "GET"
+
+
+@pytest.mark.parametrize(
+    ("environment", "expected_submit_url"),
+    [
+        (
+            Environment.PROD,
+            "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod/v1/jobs/harmonize",
+        ),
+        (
+            Environment.STAGING,
+            "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging/v1/jobs/harmonize",
+        ),
+    ],
+)
+def test_harmonize_environment_keeps_exact_submit_url(
+    environment: Environment,
+    expected_submit_url: str,
+    sample_csv_path: Path,
+    sample_manifest_path: Path,
+    output_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Moving version ownership into configuration preserves deployed routes."""
+
+    # Given: a client for one existing environment and a successful job service
+    client = NetriasClient(api_key="test-api-key", environment=environment)
+    capture = job_success(chunks=(b"col1,col2\n", b"7,8\n"))
+    install_mock_transport(monkeypatch, capture)
+
+    # When: the user submits a harmonization job
+    result = client.harmonize(
+        source_path=sample_csv_path,
+        manifest=sample_manifest_path,
+        target_schema="ccdi",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+        output_path=output_directory,
+    )
+
+    # Then: the request uses the existing deployed URL with one version segment
+    assert result.status == "succeeded"
+    assert str(capture.requests[0].url) == expected_submit_url
+    assert capture.requests[0].url.path.count("/v1/") == 1
 
 
 def test_harmonize_handles_api_failure(

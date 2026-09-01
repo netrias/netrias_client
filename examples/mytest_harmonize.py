@@ -6,8 +6,9 @@ from netrias_client import NetriasClient
 
 _ = load_dotenv()
 client = NetriasClient(api_key=os.environ["NETRIAS_API_KEY"])
-# Optional: tune timeout, logging
+BASE_URL = "https://netrias-data-chord-staging.netriasbdf.cloud"
 client.configure(
+   base_url=BASE_URL,
    log_level="INFO",
    log_directory=Path("./logs"),
 )
