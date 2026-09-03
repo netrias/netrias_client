@@ -231,11 +231,11 @@ async def fetch_pvs(
 
 def _build_job_submit_url(base_url: str) -> str:
     base = base_url.rstrip("/")
-    return f"{base}/v1/jobs/harmonize"
+    return f"{base}/jobs/harmonize"
 
 def _build_job_status_url(base_url: str, job_id: str) -> str:
     base = base_url.rstrip("/")
-    return f"{base}/v1/jobs/{quote(job_id, safe='')}"
+    return f"{base}/jobs/{quote(job_id, safe='')}"
 
 def _build_discovery_url(base_url: str) -> str:
     base = base_url.rstrip("/")

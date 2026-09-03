@@ -7,6 +7,7 @@ from __future__ import annotations
 from enum import Enum
 from pathlib import Path
 from typing import Final
+from urllib.parse import urlsplit
 
 from ._errors import ClientConfigurationError
 from ._models import DataModelStoreEndpoints, LogLevel, Settings
@@ -29,19 +30,19 @@ class Environment(str, Enum):
 _ENVIRONMENT_URLS: dict[Environment, dict[str, str]] = {
     Environment.PROD: {
         "discovery": "https://6lvkljeyod.execute-api.us-east-2.amazonaws.com/prod",
-        "harmonization": "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod",
+        "harmonization": "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod/v1",
         "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
     },
     Environment.STAGING: {
         "discovery": "https://reyu82i72e.execute-api.us-east-2.amazonaws.com/staging",
-        "harmonization": "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging",
+        "harmonization": "https://p9r0fv2o5g.execute-api.us-east-2.amazonaws.com/staging/v1",
         "data_model_store": "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default",
     },
 }
 
 # Legacy constants preserved for backward compatibility
 DISCOVERY_BASE_URL = "https://api.netriasbdf.cloud"
-HARMONIZATION_BASE_URL = "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod"
+HARMONIZATION_BASE_URL = "https://93y57g8ouk.execute-api.us-east-2.amazonaws.com/prod/v1"
 DATA_MODEL_STORE_BASE_URL = "https://85fnwlcuc2.execute-api.us-east-2.amazonaws.com/default"
 # TODO: remove once API Gateway latency constraints are resolved.
 BYPASS_FUNCTION = "cde-recommend-prod"
@@ -59,6 +60,7 @@ def build_settings(
     discovery_use_gateway_bypass: bool | None = None,
     discovery_use_async_api: bool | None = None,
     log_directory: Path | str | None = None,
+    base_url: str | None = None,
     discovery_url: str | None = None,
     harmonization_url: str | None = None,
     data_model_store_url: str | None = None,
@@ -80,8 +82,13 @@ def build_settings(
     directory = _validated_log_directory(log_directory)
 
     env_urls = _ENVIRONMENT_URLS.get(environment) if environment else None
-    resolved_discovery_url = discovery_url or (env_urls or {}).get("discovery", DISCOVERY_BASE_URL)
-    resolved_harmonization_url = harmonization_url or (env_urls or {}).get("harmonization", HARMONIZATION_BASE_URL)
+    data_chord_api_root = _data_chord_api_root(base_url) if base_url is not None else None
+    resolved_discovery_url = discovery_url or data_chord_api_root or (env_urls or {}).get("discovery", DISCOVERY_BASE_URL)
+    resolved_harmonization_url = (
+        harmonization_url
+        or data_chord_api_root
+        or (env_urls or {}).get("harmonization", HARMONIZATION_BASE_URL)
+    )
     resolved_dms_url = data_model_store_url or (env_urls or {}).get("data_model_store", DATA_MODEL_STORE_BASE_URL)
 
     data_model_store_endpoints = DataModelStoreEndpoints(
@@ -136,6 +143,32 @@ def _normalized_bool(value: bool | None, default: bool = False) -> bool:
     if value is None:
         return default
     return bool(value)
+
+
+def _data_chord_api_root(base_url: str) -> str:
+    """Return the versioned API root for one DataChord deployment."""
+    if (
+        not base_url
+        or base_url.strip() != base_url
+        or any(ord(character) < 32 or ord(character) == 127 for character in base_url)
+    ):
+        raise ClientConfigurationError("base_url must be an HTTP or HTTPS deployment root")
+    try:
+        parsed = urlsplit(base_url)
+        _ = parsed.port
+    except ValueError as exc:
+        raise ClientConfigurationError("base_url must be an HTTP or HTTPS deployment root") from exc
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.path not in {"", "/"}
+        or parsed.query
+        or parsed.fragment
+    ):
+        raise ClientConfigurationError("base_url must be an HTTP or HTTPS deployment root")
+    return f"{base_url.rstrip('/')}/api/v1"
 
 
 def _validated_log_directory(value: Path | str | None) -> Path | None:

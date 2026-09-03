@@ -71,8 +71,9 @@ class NetriasClient:
         discovery_url: str | None = None,
         harmonization_url: str | None = None,
         data_model_store_url: str | None = None,
+        base_url: str | None = None,
     ) -> None:
-        """Update settings; unspecified parameters preserve their current value."""
+        """Update settings; ``base_url`` selects one DataChord deployment."""
 
         current = self._settings
         current_dms_url = (
@@ -85,6 +86,16 @@ class NetriasClient:
             if discovery_use_gateway_bypass is not None
             else current.discovery_use_gateway_bypass
         )
+        selected_discovery_url = (
+            discovery_url
+            if discovery_url is not None or base_url is not None
+            else current.discovery_url
+        )
+        selected_harmonization_url = (
+            harmonization_url
+            if harmonization_url is not None or base_url is not None
+            else current.harmonization_url
+        )
         settings = build_settings(
             api_key=current.api_key,
             timeout=timeout if timeout is not None else current.timeout,
@@ -94,8 +105,9 @@ class NetriasClient:
                 discovery_use_async_api if discovery_use_async_api is not None else current.discovery_use_async_api
             ),
             log_directory=log_directory if log_directory is not None else current.log_directory,
-            discovery_url=discovery_url if discovery_url is not None else current.discovery_url,
-            harmonization_url=harmonization_url if harmonization_url is not None else current.harmonization_url,
+            base_url=base_url,
+            discovery_url=selected_discovery_url,
+            harmonization_url=selected_harmonization_url,
             data_model_store_url=data_model_store_url if data_model_store_url is not None else current_dms_url,
             environment=self._environment,
         )

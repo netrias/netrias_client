@@ -14,7 +14,7 @@ from typing import cast
 import httpx
 import pytest
 
-from netrias_client import ColumnKeyedManifestPayload, ColumnMappingRecord, NetriasClient, column_key_for_index
+from netrias_client import ColumnKeyedManifestPayload, ColumnMappingRecord, Environment, NetriasClient, column_key_for_index
 from netrias_client._errors import MappingDiscoveryError, MappingValidationError, NetriasAPIUnavailable
 from netrias_client._gateway_bypass import invoke_cde_recommendation_alias
 from netrias_client._models import ColumnSamples
@@ -345,6 +345,7 @@ def test_discover_mapping_from_tabular_sends_top_k_parameter(
     """Verify top_k parameter is included in the request payload."""
 
     # Given: a discovery response that succeeds for the source columns
+    configured_client.configure(base_url="https://data-chord.example/")
     payload = _array_payload(
         [
             {"column_name": "a", "matches": []},
@@ -366,8 +367,50 @@ def test_discover_mapping_from_tabular_sends_top_k_parameter(
 
     # Then: the outbound recommendation request includes that top_k choice
     request = capture.requests[0]
+    assert str(request.url) == "https://data-chord.example/api/v1/recommend"
     content = cast(dict[str, object], json.loads(request.content.decode("utf-8")))
     assert content.get("top_k") == 5
+
+
+@pytest.mark.parametrize(
+    ("environment", "expected_recommendation_url"),
+    [
+        (
+            Environment.PROD,
+            "https://6lvkljeyod.execute-api.us-east-2.amazonaws.com/prod/recommend",
+        ),
+        (
+            Environment.STAGING,
+            "https://reyu82i72e.execute-api.us-east-2.amazonaws.com/staging/recommend",
+        ),
+    ],
+)
+def test_discovery_environment_keeps_exact_recommendation_url(
+    environment: Environment,
+    expected_recommendation_url: str,
+    sample_csv_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Existing environment selection keeps its deployed recommendation route."""
+
+    # Given: a client for one existing environment and a valid response
+    client = NetriasClient(api_key="test-api-key", environment=environment)
+    payload = _array_payload([
+        {"column_name": header, "matches": []}
+        for header in ("a", "b", "c")
+    ])
+    capture = json_success(payload)
+    install_mock_transport(monkeypatch, capture)
+
+    # When: the user requests recommendations
+    _ = client.discover_mapping_from_tabular(
+        source_path=sample_csv_path,
+        target_schema="gc",
+        external_version_number=EXTERNAL_VERSION_NUMBER,
+    )
+
+    # Then: the request uses the existing deployed URL
+    assert str(capture.requests[0].url) == expected_recommendation_url
 
 
 def test_discover_mapping_from_tabular_returns_column_keyed_manifest(
