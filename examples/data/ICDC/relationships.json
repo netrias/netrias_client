@@ -1,0 +1,84 @@
+{
+  "adverse_event": [
+    "case"
+  ],
+  "case": [
+    "adverse_event",
+    "canine_individual",
+    "cohort",
+    "consent_group",
+    "study",
+    "study_arm"
+  ],
+  "cohort": [
+    "study",
+    "study_arm"
+  ],
+  "consent_group": [
+    "study"
+  ],
+  "cycle": [
+    "case"
+  ],
+  "demographic": [
+    "case"
+  ],
+  "diagnosis": [
+    "case"
+  ],
+  "disease_extent": [
+    "visit"
+  ],
+  "enrollment": [
+    "case"
+  ],
+  "file": [
+    "case",
+    "diagnosis",
+    "sample",
+    "study"
+  ],
+  "human_relevance": [
+    "study"
+  ],
+  "physical_exam": [
+    "enrollment",
+    "visit"
+  ],
+  "principal_investigator": [
+    "study"
+  ],
+  "prior_surgery": [
+    "enrollment"
+  ],
+  "prior_therapy": [
+    "enrollment"
+  ],
+  "program": [],
+  "publication": [
+    "study"
+  ],
+  "registration": [
+    "case"
+  ],
+  "sample": [
+    "case",
+    "visit"
+  ],
+  "study_arm": [
+    "study"
+  ],
+  "study_site": [
+    "study"
+  ],
+  "study": [
+    "program"
+  ],
+  "visit": [
+    "case",
+    "cycle"
+  ],
+  "vital_signs": [
+    "visit"
+  ]
+}

@@ -1,0 +1,1001 @@
+primary_diagnosis,phs_accession,study_name,gender,race,ethnicity,sample_type,instrument_model,tissue_or_organ_of_origin,site_of_resection_or_biopsy,progression_or_recurrence
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,No
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,No
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Unknown
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Unknown
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,No
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,No
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Unknown
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Unknown
+Multiple myeloma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Bone Marrow,Illumina NovaSeq 6000,Bone Marrow,Bone marrow,Yes
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Rectosigmoid Region,Rectosigmoid junction,Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Rectosigmoid Region,Rectosigmoid junction,Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Rectosigmoid Region,Rectosigmoid junction,Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Rectosigmoid Region,Rectosigmoid junction,Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Unknown,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Unknown,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Unknown,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Unknown,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Unknown,Tissue,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Cell,Illumina NovaSeq 6000,,,
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Trachea,Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Trachea,Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Trachea,Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Trachea,Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,Illumina NextSeq,Lung,"Upper lobe, lung",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,Illumina NextSeq,Lung,Not Reported,Unknown
+Lobular and ductal carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Spindle cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Central portion of breast,No
+"Spindle cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Central portion of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Not Allowed to Collect,Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Upper-outer quadrant of breast,Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Not Allowed to Collect,Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Upper-outer quadrant of breast,Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Not Allowed to Collect,Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Upper-outer quadrant of breast,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+Mucous adenocarcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+Lobular and ductal carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Overlapping lesion of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Overlapping lesion of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Overlapping lesion of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,Unknown
+"Ductal carcinoma in situ, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Overlapping lesion of breast,Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectum,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectum,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectosigmoid Region,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectosigmoid Region,Liver,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectum,Liver,Yes
+"Carcinoma, metastatic, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Abdomen,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Descending Colon,Liver,Yes
+"Adenocarcinoma, metastatic, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Colon,Liver,Yes
+"Adenocarcinoma, metastatic, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectum,Liver,Yes
+"Ductal carcinoma in situ, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,Yes
+"Ductal carcinoma in situ, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,Yes
+"Adenocarcinoma, metastatic, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Liver,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Not Reported
+"Adenocarcinoma, pancreatobiliary type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Pancreas,"Pancreas, NOS",Yes
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Descending Colon,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Descending Colon,Liver,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectosigmoid Region,Liver,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+Lobular and ductal carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Spindle cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Central portion of breast,No
+"Spindle cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Central portion of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Not Allowed to Collect,Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Upper-outer quadrant of breast,Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Not Allowed to Collect,Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Upper-outer quadrant of breast,Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Not Allowed to Collect,Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Upper-outer quadrant of breast,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+Mucous adenocarcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+Lobular and ductal carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,No
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Overlapping lesion of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Overlapping lesion of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Overlapping lesion of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,Unknown
+"Ductal carcinoma in situ, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Overlapping lesion of breast,Yes
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Inner Quadrant of the Breast,Upper-inner quadrant of breast,No
+"Infiltrating duct carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectum,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectum,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectosigmoid Region,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectosigmoid Region,Liver,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectum,Liver,Yes
+"Carcinoma, metastatic, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Abdomen,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Descending Colon,Liver,Yes
+"Adenocarcinoma, metastatic, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Colon,Liver,Yes
+"Adenocarcinoma, metastatic, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectum,Liver,Yes
+"Ductal carcinoma in situ, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,Yes
+"Ductal carcinoma in situ, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Upper-Outer Quadrant of the Breast,Upper-outer quadrant of breast,Yes
+"Adenocarcinoma, metastatic, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,Liver,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Not Reported
+"Adenocarcinoma, pancreatobiliary type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NextSeq,Pancreas,"Pancreas, NOS",Yes
+"Lobular carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Descending Colon,Liver,Yes
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Descending Colon,Liver,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",No
+"Adenocarcinoma, intestinal type",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Rectosigmoid Region,Liver,Yes
+"Ductal carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NextSeq,Breast,"Breast, NOS",Yes
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,,,
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Not Reported,Not Reported,Analyte,,Lung,Not Reported,Unknown
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Trachea,Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Squamous cell carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,Trachea,Not Reported
+Not Reported,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,Not Reported,Unknown
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Micropapillary carcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Unknown,Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Adenocarcinoma in situ, non-mucinous",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma in situ, non-mucinous",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma in situ, non-mucinous",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+"Adenocarcinoma in situ, non-mucinous",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Analyte,,Lung,"Lower lobe, lung",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Analyte,,Lung,"Lung, NOS",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+Acinar cell carcinoma,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma in situ, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma in situ, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma in situ, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Unknown,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Unknown,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Unknown,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Unknown,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Unknown,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Unknown,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Unknown,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Adenocarcinoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Not Reported,Unknown,Not Hispanic or Latino,Analyte,,Lung,"Upper lobe, lung",Not Reported
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,Asian,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Unknown,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Unknown,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Unknown,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Unknown,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Unknown,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Unknown,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Unknown,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Unknown,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Unknown,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Unknown,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Unknown,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Unknown,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Unknown,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Unknown,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Unknown,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Unknown,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Unknown,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Unknown,Tissue,Illumina NovaSeq 6000,Liver,Liver,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+Familial Adenomatous Polyposis,phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Colon,"Colon, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Adrenal Gland,"Adrenal gland, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Lymph Node,"Lymph node, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Unknown,Unknown,Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Asian,Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Male,Black or African American,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown
+"Neuroblastoma, NOS",phs002371.v7.p1,Human Tumor Atlas Network (HTAN) primary sequencing data,Female,White,Not Hispanic or Latino,Tissue,Illumina NovaSeq 6000,Abdomen,"Abdomen, NOS",Unknown

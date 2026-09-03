@@ -347,7 +347,9 @@ async def test_csv_includes_all_distinct_values(
     assert matched_values == {"White", "Black or African American", "Asian"}
 
     unmatched_rows = col_a_rows[col_a_rows["in_pv_set"] == False]
-    unmatched_values = set(unmatched_rows["value"].dropna())
+    unmatched_series = unmatched_rows["value"]
+    assert isinstance(unmatched_series, pd.Series)
+    unmatched_values = set(unmatched_series.dropna())
     assert "Unkown" in unmatched_values
     assert "Not Reported" in unmatched_values
 

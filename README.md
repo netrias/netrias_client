@@ -612,7 +612,39 @@ Two files are written to `overlap_report_output_dir`:
 
 ---
 
-## Harmonization Methods
+## Relationship Data
+
+The `relationships.json` file in each schema's data folder maps each node to its parent nodes, used by the FK validation check to know which nodes are genuine parents rather than treating every sibling node as a potential parent.
+
+### How relationships are derived
+
+Each schema's relationships are extracted directly from its **Data Loading Template** files, obtained from the [CRDC Data Hub portal](https://hub.datacommons.cancer.gov/model-navigator/GC/latest). These templates are TSVs — one per node — where each column header is a CDE name. Columns using dot notation (e.g. `participant.study_participant_id`) indicate a foreign-key relationship to a parent node: the part before the dot is the parent node name.
+
+### Data sources
+
+| Source | What it provides | Where it comes from |
+|--------|-----------------|---------------------|
+| Data Loading Templates | Node-to-parent relationships (via dot-notation column headers) | [CRDC Data Hub portal](https://hub.datacommons.cancer.gov/model-navigator/GC/latest) |
+| Model definition YAMLs | CDE properties (`Req`, `Type`, `Enum`) used by the validation checks | [CBIIT GitHub](https://github.com/CBIIT) — each schema's own repository |
+
+### Example output
+
+For CTDC, `relationships.json` looks like:
+
+```json
+{
+    "demographic": ["participant"],
+    "diagnosis": ["participant"],
+    "participant": ["study"],
+    "sample": ["diagnosis", "participant"],
+    "study": ["program"],
+    "program": []
+}
+```
+
+This means `sample`'s FK columns can only reference `diagnosis` and `participant`.
+
+---
 
 ## Harmonization Methods
 

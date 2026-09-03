@@ -29,7 +29,11 @@ from ._models import (
     HarmonizationResult,
     OperationContext,
     Settings,
+    SuggestNodeSignature,
+    ChunkAndValidateSignature,
 )
+from ._suggest_node import suggest_node as _suggest_node
+from ._validate_node import chunk_and_validate as _chunk_and_validate
 
 
 class NetriasClient:
@@ -362,6 +366,9 @@ class NetriasClient:
                 include_inactive=include_inactive,
             )
         )
+    
+    suggest_node: SuggestNodeSignature = staticmethod(_suggest_node)
+    chunk_and_validate: ChunkAndValidateSignature = staticmethod(_chunk_and_validate)
 
     def _snapshot_settings(self) -> Settings:
         with self._lock:
