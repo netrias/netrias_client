@@ -295,13 +295,12 @@ def test_chunk_by_node_filters_cdes_absent_from_harmonized_header(workspace: Pat
     )
 
     header, _ = _read_csv_rows(result["diagnosis"])
-    assert header == ["study_diagnosis_id"]  # only the real CDE survives
+    assert header == ["type", "study_diagnosis_id"]  # only the real CDE survives, after the type column
 
 
 def test_chunk_by_node_writes_one_csv_per_node(workspace: Path) -> None:
     node_recommendations = {
         "diagnosis": ["study_diagnosis_id", "primary_diagnosis"],
-        "empty_node": ["some_cde_not_in_csv"],
     }
     result = chunk_by_node(
         harmonized_csv_path=workspace / "output" / "harmonized.csv",
@@ -309,12 +308,13 @@ def test_chunk_by_node_writes_one_csv_per_node(workspace: Path) -> None:
         output_dir=workspace / "output" / "chunks",
     )
 
-    assert set(result.keys()) == {"diagnosis"}  # empty_node produced no file
+    assert set(result.keys()) == {"diagnosis"}
     assert result["diagnosis"].exists()
 
     header, rows = _read_csv_rows(result["diagnosis"])
-    assert header == ["study_diagnosis_id", "primary_diagnosis"]
+    assert header == ["type", "study_diagnosis_id", "primary_diagnosis"]
     assert len(rows) == 2
+    assert all(row["type"] == "diagnosis" for row in rows)  # node name repeated on every row
 
 
 def test_chunk_by_node_shared_cde_appears_in_both_chunks(workspace: Path) -> None:
@@ -356,7 +356,7 @@ def test_chunk_by_node_ignores_columns_not_listed_under_any_node(workspace: Path
     )
 
     header, _ = _read_csv_rows(result["diagnosis"])
-    assert header == ["study_diagnosis_id"]
+    assert header == ["type", "study_diagnosis_id"]
     assert "undefined_field" not in header
     assert "primary_diagnosis" not in header
 

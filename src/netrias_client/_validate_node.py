@@ -171,24 +171,20 @@ def chunk_by_node(
 
     result: dict[str, Path] = {}
     for node, cdes in node_recommendations.items():
-        node_columns = ['type'] + [cde for cde in cdes if cde in harm_header_set]
-        if not node_columns:
-            continue
-
         node_path = output_dir / f"{node}.csv"
-        with open(node_path, "w", encoding="utf-8", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=node_columns)
-            writer.writeheader()
-            for row in rows:
-                row_data = {"type": node}
-                for col in node_columns:
-                    if col != "type":
-                        row_data[col] = row.get(col, "")
-                writer.writerow(row_data)
- 
+        _write_node_chunk(node, [cde for cde in cdes if cde in harm_header_set], rows, node_path)
         result[node] = node_path
- 
+
     return result
+
+
+def _write_node_chunk(node: str, node_cdes: list[str], rows: list[dict[str, str]], node_path: Path) -> None:
+    """Write one node's chunk: a "type" column holding the node name, then that node's cdes."""
+    with open(node_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["type"] + node_cdes)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({"type": node} | {cde: row.get(cde, "") for cde in node_cdes})
  
  
 def check_required_cdes(harm_header_set: set[str], node_cdes: dict[str, CDEProps]) -> list[str]:
