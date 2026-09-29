@@ -1,8 +1,6 @@
 """Classify a harmonized CSV's columns by which node they belong to.
 
-'why': helps users understand which node(s) the harmonized CSV's columns
-belong to, so they can pass them through the appropriate submission
-readiness checklist and submit the right sheets to the portal.
+'why': helps users understand which node(s) the harmonized CSV's columns belong to.
 """
 
 from __future__ import annotations

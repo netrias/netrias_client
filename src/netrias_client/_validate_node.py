@@ -154,7 +154,9 @@ def chunk_by_node(
     output_dir: Path,
 ) -> dict[str, Path]:
     """Slice a harmonized CSV into one CSV per node, using suggest_node's
-    {node: [matched cde, ...]} classification to pick each node's cdes.
+    {node: [matched cde, ...]} classification to pick each node's cdes. 
+    Each chunk has a "type" column added with the node name repeated on
+    every row to meet the submission format requirement.
  
     Returns {node: path_to_that_node_chunked_csv}.
  
@@ -169,7 +171,7 @@ def chunk_by_node(
 
     result: dict[str, Path] = {}
     for node, cdes in node_recommendations.items():
-        node_columns = [cde for cde in cdes if cde in harm_header_set]
+        node_columns = ['type'] + [cde for cde in cdes if cde in harm_header_set]
         if not node_columns:
             continue
 
@@ -178,7 +180,11 @@ def chunk_by_node(
             writer = csv.DictWriter(f, fieldnames=node_columns)
             writer.writeheader()
             for row in rows:
-                writer.writerow({col: row.get(col, "") for col in node_columns})
+                row_data = {"type": node}
+                for col in node_columns:
+                    if col != "type":
+                        row_data[col] = row.get(col, "")
+                writer.writerow(row_data)
  
         result[node] = node_path
  
