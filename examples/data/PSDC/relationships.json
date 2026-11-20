@@ -1,0 +1,27 @@
+{
+  "associated_link": [
+    "study"
+  ],
+  "file": [
+    "study"
+  ],
+  "participant": [
+    "study"
+  ],
+  "program": [],
+  "publication": [
+    "study"
+  ],
+  "study_country": [
+    "study"
+  ],
+  "study_personnel": [
+    "study"
+  ],
+  "study_state_province_territory": [
+    "study"
+  ],
+  "study": [
+    "program"
+  ]
+}

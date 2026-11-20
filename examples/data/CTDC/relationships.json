@@ -1,0 +1,76 @@
+{
+  "assay": [
+    "cell_based_assay",
+    "immune_assay",
+    "next_generation_sequencing_assay",
+    "specimen"
+  ],
+  "associated_link": [
+    "study"
+  ],
+  "cell_based_assay": [],
+  "cohort": [
+    "study",
+    "study_arm"
+  ],
+  "consent_group": [
+    "study"
+  ],
+  "demographic": [
+    "participant"
+  ],
+  "diagnosis": [
+    "participant"
+  ],
+  "exposure": [
+    "participant"
+  ],
+  "file": [
+    "assay",
+    "diagnosis",
+    "participant",
+    "specimen",
+    "study"
+  ],
+  "image_collection": [
+    "study"
+  ],
+  "immune_assay": [],
+  "next_generation_sequencing_assay": [],
+  "non_targeted_therapy": [
+    "participant"
+  ],
+  "participant_status": [
+    "participant"
+  ],
+  "participant": [
+    "cohort",
+    "consent_group",
+    "study"
+  ],
+  "principal_investigator": [
+    "study"
+  ],
+  "program": [],
+  "publication": [
+    "study"
+  ],
+  "radiotherapy": [
+    "participant"
+  ],
+  "specimen": [
+    "participant"
+  ],
+  "study_arm": [
+    "study"
+  ],
+  "study": [
+    "program"
+  ],
+  "surgery": [
+    "participant"
+  ],
+  "targeted_therapy": [
+    "participant"
+  ]
+}

@@ -1,0 +1,2003 @@
+{
+  "adverse_event": {
+    "case.case_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "adverse_event_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "day_in_cycle": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "integer"
+    },
+    "date_of_onset": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "datetime"
+    },
+    "existing_adverse_event": {
+      "Enum": [
+        "No",
+        "Yes"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    },
+    "date_of_resolution": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    },
+    "ongoing_adverse_event": {
+      "Enum": [
+        "No",
+        "Yes"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    },
+    "adverse_event_term": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "adverse_event_description": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    },
+    "adverse_event_grade": {
+      "Enum": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "Unknown"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "adverse_event_grade_description": {
+      "Enum": [
+        "Death",
+        "Life-threatening",
+        "Mild",
+        "Moderate",
+        "Severe",
+        "Unknown"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    },
+    "adverse_event_agent_name": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "adverse_event_agent_dose": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "attribution_to_research": {
+      "Enum": [
+        "Definite",
+        "Possible",
+        "Probable",
+        "Undefined",
+        "Unlikely",
+        "Unrelated"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "attribution_to_ind": {
+      "Enum": [
+        "Definite",
+        "Not Applicable",
+        "Possible",
+        "Probable",
+        "Unlikely",
+        "Unrelated"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "attribution_to_disease": {
+      "Enum": [
+        "Definite",
+        "Possible",
+        "Probable",
+        "Undefined",
+        "Unlikely",
+        "Unrelated"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "attribution_to_commercial": {
+      "Enum": [
+        "Definite",
+        "Not Applicable",
+        "Possible",
+        "Probable",
+        "Unlikely",
+        "Unrelated"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "attribution_to_other": {
+      "Enum": [
+        "Definite",
+        "Possible",
+        "Probable",
+        "Undefined",
+        "Unlikely",
+        "Unrelated"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "other_attribution_description": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "dose_limiting_toxicity": {
+      "Enum": [
+        "No",
+        "Not Applicable",
+        "Yes"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    },
+    "unexpected_adverse_event": {
+      "Enum": [
+        "No",
+        "Undefined",
+        "Yes"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    }
+  },
+  "case": {
+    "cohort.cohort_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "study.clinical_study_designation": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "consent_group.consent_group_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "study_arm.arm_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "adverse_event.adverse_event_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "canine_individual.canine_individual_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "case_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "patient_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "patient_first_name": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    }
+  },
+  "cohort": {
+    "study_arm.arm_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "study.clinical_study_designation": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "cohort_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "cohort_description": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "cohort_dose": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    }
+  },
+  "consent_group": {
+    "study.clinical_study_designation": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "consent_group_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "consent_group_name": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "consent_group_number": {
+      "Enum": [],
+      "Req": true,
+      "Type": "integer"
+    }
+  },
+  "cycle": {
+    "case.case_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "cycle_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "cycle_number": {
+      "Enum": [],
+      "Req": true,
+      "Type": "integer"
+    },
+    "date_of_cycle_start": {
+      "Enum": [],
+      "Req": null,
+      "Type": "datetime"
+    },
+    "date_of_cycle_end": {
+      "Enum": [],
+      "Req": null,
+      "Type": "datetime"
+    }
+  },
+  "demographic": {
+    "case.case_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "demographic_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "breed": {
+      "Enum": [
+        "Affenpinscher",
+        "Afghan Hound",
+        "Airedale Terrier",
+        "Akita",
+        "Alaskan Klee Kai",
+        "Alaskan Malamute",
+        "American Bulldog",
+        "American English Coonhound",
+        "American Eskimo Dog",
+        "American Foxhound",
+        "American Hairless Terrier",
+        "American Leopard Hound",
+        "American Staffordshire Terrier",
+        "American Water Spaniel",
+        "Anatolian Shepherd Dog",
+        "Appenzeller Sennenhunde",
+        "Australian Cattle Dog",
+        "Australian Kelpie",
+        "Australian Shepherd",
+        "Australian Stumpy Tail Cattle Dog",
+        "Australian Terrier",
+        "Azawakh",
+        "Barbado da Terceira",
+        "Barbet",
+        "Basenji",
+        "Basset Fauve de Bretagne",
+        "Basset Hound",
+        "Bavarian Mountain Scent Hound",
+        "Beagle",
+        "Bearded Collie",
+        "Beauceron",
+        "Bedlington Terrier",
+        "Belgian Laekenois",
+        "Belgian Malinois",
+        "Belgian Sheepdog",
+        "Belgian Tervuren",
+        "Bergamasco Sheepdog",
+        "Berger Picard",
+        "Bernese Mountain Dog",
+        "Bichon Frise",
+        "Biewer Terrier",
+        "Black and Tan Coonhound",
+        "Black Russian Terrier",
+        "Bloodhound",
+        "Bluetick Coonhound",
+        "Boerboel",
+        "Bohemian Shepherd",
+        "Bolognese",
+        "Border Collie",
+        "Border Terrier",
+        "Borzoi",
+        "Boston Terrier",
+        "Bouvier des Flandres",
+        "Boxer",
+        "Boykin Spaniel",
+        "Bracco Italiano",
+        "Braque du Bourbonnais",
+        "Braque Francais Pyrenean",
+        "Briard",
+        "Brittany",
+        "Broholmer",
+        "Brussels Griffon",
+        "Bull Terrier",
+        "Bulldog",
+        "Bullmastiff",
+        "Cairn Terrier",
+        "Canaan Dog",
+        "Cane Corso",
+        "Cardigan Welsh Corgi",
+        "Carolina Dog",
+        "Catahoula Hound",
+        "Catahoula Leopard Dog",
+        "Caucasian Shepherd Dog",
+        "Cavalier King Charles Spaniel",
+        "Central Asian Shepherd Dog",
+        "Cesky Terrier",
+        "Chesapeake Bay Retriever",
+        "Chihuahua",
+        "Chinese Crested",
+        "Chinese Shar-Pei",
+        "Chinook",
+        "Chow Chow",
+        "Cirneco dell'Etna",
+        "Clumber Spaniel",
+        "Cocker Spaniel",
+        "Collie",
+        "Coton de Tulear",
+        "Croatian Sheepdog",
+        "Curly-Coated Retriever",
+        "Czechoslovakian Vlcak",
+        "Dachshund",
+        "Dalmatian",
+        "Dandie Dinmont Terrier",
+        "Danish-Swedish Farmdog",
+        "Deutscher Wachtelhund",
+        "Doberman Pinscher",
+        "Dogo Argentino",
+        "Dogue de Bordeaux",
+        "Drentsche Patrijshond",
+        "Drever",
+        "Dutch Shepherd",
+        "English Cocker Spaniel",
+        "English Foxhound",
+        "English Setter",
+        "English Springer Spaniel",
+        "English Toy Spaniel",
+        "Entlebucher Mountain Dog",
+        "Estrela Mountain Dog",
+        "Eurasier",
+        "Field Spaniel",
+        "Finnish Lapphund",
+        "Finnish Spitz",
+        "Flat-Coated Retriever",
+        "French Bulldog",
+        "French Spaniel",
+        "German Longhaired Pointer",
+        "German Pinscher",
+        "German Shepherd Dog",
+        "German Shorthaired Pointer",
+        "German Spitz",
+        "German Wirehaired Pointer",
+        "Giant Schnauzer",
+        "Glen of Imaal Terrier",
+        "Golden Retriever",
+        "Gordon Setter",
+        "Grand Basset Griffon Vendeen",
+        "Great Dane",
+        "Great Pyrenees",
+        "Greater Swiss Mountain Dog",
+        "Greyhound",
+        "Hamiltonstovare",
+        "Hanoverian Scenthound",
+        "Harrier",
+        "Havanese",
+        "Hokkaido",
+        "Hovawart",
+        "Ibizan Hound",
+        "Icelandic Sheepdog",
+        "Irish Red and White Setter",
+        "Irish Setter",
+        "Irish Terrier",
+        "Irish Water Spaniel",
+        "Irish Wolfhound",
+        "Italian Greyhound",
+        "Jagdterrier",
+        "Japanese Akitainu",
+        "Japanese Chin",
+        "Japanese Spitz",
+        "Japanese Terrier",
+        "Jindo",
+        "Kai Ken",
+        "Karelian Bear Dog",
+        "Keeshond",
+        "Kerry Blue Terrier",
+        "Kishu Ken",
+        "Komondor",
+        "Kromfohrlander",
+        "Kuvasz",
+        "Labrador Retriever",
+        "Lagotto Romagnolo",
+        "Lakeland Terrier",
+        "Lancashire Heeler",
+        "Lapponian Herder",
+        "Leonberger",
+        "Lhasa Apso",
+        "Lowchen",
+        "Maltese",
+        "Manchester Terrier",
+        "Mastiff",
+        "Miniature American Shepherd",
+        "Miniature Bull Terrier",
+        "Miniature Dachshund",
+        "Miniature Pinscher",
+        "Miniature Schnauzer",
+        "Mixed Breed",
+        "Mountain Cur",
+        "Mudi",
+        "Neapolitan Mastiff",
+        "Nederlandse Kooikerhondje",
+        "Newfoundland",
+        "Norfolk Terrier",
+        "Norrbottenspets",
+        "Norwegian Buhund",
+        "Norwegian Elkhound",
+        "Norwegian Lundehund",
+        "Norwich Terrier",
+        "Nova Scotia Duck Tolling Retriever",
+        "Old English Sheepdog",
+        "Other",
+        "Otterhound",
+        "Papillon",
+        "Parson Russell Terrier",
+        "Pekingese",
+        "Pembroke Welsh Corgi",
+        "Perro de Presa Canario",
+        "Peruvian Inca Orchid",
+        "Petit Basset Griffon Vendeen",
+        "Pharaoh Hound",
+        "Plott Hound",
+        "Pointer",
+        "Polish Lowland Sheepdog",
+        "Pomeranian",
+        "Poodle",
+        "Porcelaine",
+        "Portuguese Podengo",
+        "Portuguese Podengo Pequeno",
+        "Portuguese Pointer",
+        "Portuguese Sheepdog",
+        "Portuguese Water Dog",
+        "Pudelpointer",
+        "Pug",
+        "Puli",
+        "Pumi",
+        "Pyrenean Mastiff",
+        "Pyrenean Shepherd",
+        "Rafeiro do Alentejo",
+        "Rat Terrier",
+        "Redbone Coonhound",
+        "Rhodesian Ridgeback",
+        "Romanian Mioritic Shepherd Dog",
+        "Rottweiler",
+        "Russell Terrier",
+        "Russian Toy",
+        "Russian Tsvetnaya Bolonka",
+        "Saint Bernard",
+        "Saluki",
+        "Samoyed",
+        "Schapendoes",
+        "Schipperke",
+        "Scottish Deerhound",
+        "Scottish Terrier",
+        "Sealyham Terrier",
+        "Segugio Italiano",
+        "Shetland Sheepdog",
+        "Shiba Inu",
+        "Shih Tzu",
+        "Shikoku",
+        "Siberian Husky",
+        "Silky Terrier",
+        "Skye Terrier",
+        "Sloughi",
+        "Slovakian Wirehaired Pointer",
+        "Slovensky Cuvac",
+        "Slovensky Kopov",
+        "Small Munsterlander Pointer",
+        "Smooth Fox Terrier",
+        "Soft Coated Wheaten Terrier",
+        "Spanish Mastiff",
+        "Spanish Water Dog",
+        "Spinone Italiano",
+        "Stabyhoun",
+        "Staffordshire Bull Terrier",
+        "Standard Schnauzer",
+        "Sussex Spaniel",
+        "Swedish Lapphund",
+        "Swedish Vallhund",
+        "Taiwan Dog",
+        "Teddy Roosevelt Terrier",
+        "Thai Ridgeback",
+        "Tibetan Mastiff",
+        "Tibetan Spaniel",
+        "Tibetan Terrier",
+        "Tornjak",
+        "Tosa",
+        "Toy Fox Terrier",
+        "Toy Poodle",
+        "Transylvanian Hound",
+        "Treeing Tennessee Brindle Coonhound",
+        "Treeing Walker Coonhound",
+        "Unknown",
+        "Vizsla",
+        "Weimaraner",
+        "Welsh Springer Spaniel",
+        "Welsh Terrier",
+        "West Highland White Terrier",
+        "Wetterhoun",
+        "Whippet",
+        "Wire Fox Terrier",
+        "Wirehaired Pointing Griffon",
+        "Wirehaired Vizsla",
+        "Working Kelpie",
+        "Xoloitzcuintli",
+        "Yakutian Laika",
+        "Yorkshire Terrier"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "additional_breed_detail": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    },
+    "patient_age_at_enrollment": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "number"
+    },
+    "date_of_birth": {
+      "Enum": [],
+      "Req": false,
+      "Type": "datetime"
+    },
+    "sex": {
+      "Enum": [
+        "Female",
+        "Male",
+        "Unknown"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "weight": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "number"
+    },
+    "neutered_indicator": {
+      "Enum": [
+        "No",
+        "Unknown",
+        "Yes"
+      ],
+      "Req": true,
+      "Type": "list"
+    }
+  },
+  "diagnosis": {
+    "case.case_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "diagnosis_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "disease_term": {
+      "Enum": [
+        "B Cell Lymphoma",
+        "Bladder Cancer",
+        "Diffuse Large B Cell Lymphoma",
+        "Fibrolipoma",
+        "Glioma",
+        "Healthy Control",
+        "Hemangiosarcoma",
+        "Histiocytic Sarcoma",
+        "Lipoma",
+        "Lymphoma",
+        "Mammary Cancer",
+        "Mast Cell Tumor",
+        "Melanoma",
+        "Osteosarcoma",
+        "Pulmonary Neoplasms",
+        "Soft Tissue Sarcoma",
+        "Splenic Hematoma",
+        "Splenic Hyperplasia",
+        "T Cell Leukemia",
+        "T Cell Lymphoma",
+        "Thyroid Cancer",
+        "Unknown",
+        "Urothelial Carcinoma"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "primary_disease_site": {
+      "Enum": [
+        "Abdomen",
+        "Bladder",
+        "Bladder, Prostate",
+        "Bladder, Urethra",
+        "Bladder, Urethra, Prostate",
+        "Bladder, Urethra, Vagina",
+        "Bone",
+        "Bone (Appendicular)",
+        "Bone (Axial)",
+        "Bone Marrow",
+        "Brain",
+        "Carpus",
+        "Chest Wall",
+        "Cranial Sternum",
+        "Distal Urethra",
+        "Elbow Joint",
+        "Femur",
+        "Flank",
+        "Hip",
+        "Hock",
+        "Humerus",
+        "Inguinal Region",
+        "Kidney",
+        "Knee Region",
+        "Lip",
+        "Lung",
+        "Lymph Node",
+        "Mammary Gland",
+        "Mandible",
+        "Maxilla",
+        "Mouth",
+        "Neck",
+        "Not Applicable",
+        "Pleural Cavity",
+        "Rib Region",
+        "Shoulder",
+        "Skin",
+        "Spleen",
+        "Subcutis",
+        "Tarsus",
+        "Thigh",
+        "Thorax",
+        "Thyroid Gland",
+        "Unknown",
+        "Urethra",
+        "Urethra, Prostate",
+        "Urinary Tract",
+        "Urogenital Tract"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "stage_of_disease": {
+      "Enum": [
+        "I",
+        "Ia",
+        "Ib",
+        "II",
+        "IIa",
+        "IIb",
+        "III",
+        "IIIa",
+        "IIIb",
+        "IV",
+        "IVa",
+        "IVb",
+        "Not Applicable",
+        "Not Determined",
+        "T1N0M0",
+        "T1NXM0",
+        "T2N0M0",
+        "T2N0M1",
+        "T2N1M0",
+        "T2N1M1",
+        "T2N2M1",
+        "T3N0M0",
+        "T3N0M1",
+        "T3N1M0",
+        "T3N1M1",
+        "T3NXM1",
+        "TisN0M0",
+        "TisN1M1",
+        "TXN0M0",
+        "Unknown",
+        "V",
+        "Va",
+        "Vb"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "date_of_diagnosis": {
+      "Enum": [],
+      "Req": false,
+      "Type": "datetime"
+    },
+    "histology_cytopathology": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "date_of_histology_confirmation": {
+      "Enum": [],
+      "Req": false,
+      "Type": "datetime"
+    },
+    "histological_grade": {
+      "Enum": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "High",
+        "Low",
+        "Medium",
+        "Not Applicable",
+        "Not Determined",
+        "Unknown"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    },
+    "best_response": {
+      "Enum": [
+        "Complete Response",
+        "Not Applicable",
+        "Not Determined",
+        "Partial Response",
+        "Progressive Disease",
+        "Stable Disease",
+        "Unknown"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "pathology_report": {
+      "Enum": [
+        "No",
+        "Not Applicable",
+        "Yes"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    },
+    "treatment_data": {
+      "Enum": [
+        "No",
+        "Not Applicable",
+        "Yes"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    },
+    "follow_up_data": {
+      "Enum": [
+        "No",
+        "Not Applicable",
+        "Yes"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    },
+    "concurrent_disease": {
+      "Enum": [
+        "No",
+        "Unknown",
+        "Yes"
+      ],
+      "Req": "Preferred",
+      "Type": "list"
+    },
+    "concurrent_disease_type": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    }
+  },
+  "disease_extent": {
+    "visit.visit_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "disease_extent_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "lesion_number": {
+      "Enum": [],
+      "Req": false,
+      "Type": "integer"
+    },
+    "lesion_site": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "lesion_description": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "previously_irradiated": {
+      "Enum": [],
+      "Req": false,
+      "Type": "TBD"
+    },
+    "previously_treated": {
+      "Enum": [],
+      "Req": false,
+      "Type": "TBD"
+    },
+    "measurable_lesion": {
+      "Enum": [],
+      "Req": false,
+      "Type": "TBD"
+    },
+    "target_lesion": {
+      "Enum": [],
+      "Req": false,
+      "Type": "TBD"
+    },
+    "date_of_evaluation": {
+      "Enum": [],
+      "Req": false,
+      "Type": "datetime"
+    },
+    "measured_how": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "longest_measurement": {
+      "Enum": [],
+      "Req": false,
+      "Type": "number"
+    },
+    "evaluation_number": {
+      "Enum": [],
+      "Req": false,
+      "Type": "integer"
+    },
+    "evaluation_code": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    }
+  },
+  "enrollment": {
+    "case.case_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "enrollment_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "initials": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    },
+    "site_short_name": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "veterinary_medical_center": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "registering_institution": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "date_of_registration": {
+      "Enum": [],
+      "Req": false,
+      "Type": "datetime"
+    },
+    "date_of_informed_consent": {
+      "Enum": [],
+      "Req": false,
+      "Type": "datetime"
+    },
+    "patient_subgroup": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    }
+  },
+  "file": {
+    "case.case_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "study.clinical_study_designation": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "sample.sample_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "diagnosis.diagnosis_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "file_name": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "file_type": {
+      "Enum": [
+        "Affymetrix GeneChip Analysis File",
+        "Array CGH Analysis File",
+        "Data Analysis Whitepaper",
+        "DNA Methylation Analysis File",
+        "Image File",
+        "Index File",
+        "Mutation Annotation File",
+        "NanoString nCounter Canine IO Analysis File",
+        "Pathology Report",
+        "RNA Sequence File",
+        "scATAC Sequence File",
+        "scH5 Matrix File",
+        "scRNA Sequence File",
+        "Study Protocol",
+        "Supplemental Data File",
+        "Variant Call File",
+        "Variant Report",
+        "Whole Exome Sequence File",
+        "Whole Genome Sequence File"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "file_description": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "file_format": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "file_size": {
+      "Enum": [],
+      "Req": true,
+      "Type": "integer"
+    },
+    "md5sum": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "file_status": {
+      "Enum": [
+        "error",
+        "invalid",
+        "live",
+        "md5summed",
+        "md5summing",
+        "redacted",
+        "released",
+        "submitted",
+        "suppressed",
+        "uploaded",
+        "uploading",
+        "validated",
+        "validating"
+      ],
+      "Req": false,
+      "Type": "list"
+    }
+  },
+  "human_relevance": {
+    "study.clinical_study_designation": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "human_relevance_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "human_relevance_statement": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "relevant_human_cancer": {
+      "Enum": [],
+      "Req": false,
+      "Type": "list"
+    },
+    "relevant_experimental_therapeutic_intervention": {
+      "Enum": [],
+      "Req": false,
+      "Type": "list"
+    },
+    "relevant_human_genes": {
+      "Enum": [],
+      "Req": false,
+      "Type": "list"
+    },
+    "relevant_human_pathways": {
+      "Enum": [],
+      "Req": false,
+      "Type": "list"
+    },
+    "nci_link_to_relevant_human_cancer": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    }
+  },
+  "physical_exam": {
+    "enrollment.enrollment_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "visit.visit_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "physical_exam_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "date_of_examination": {
+      "Enum": [],
+      "Req": null,
+      "Type": "datetime"
+    },
+    "day_in_cycle": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "integer"
+    },
+    "body_system": {
+      "Enum": [
+        "Attitude",
+        "Cardiovascular",
+        "Endocrine",
+        "Eyes, Ears, Nose and Throat",
+        "Gastrointestinal",
+        "Genitourinary",
+        "Integumentary",
+        "Lymphatic",
+        "Musculoskeletal",
+        "Neurologic",
+        "Other",
+        "Respiratory"
+      ],
+      "Req": null,
+      "Type": "list"
+    },
+    "pe_finding": {
+      "Enum": [
+        "Abnormal",
+        "Normal",
+        "Not examined"
+      ],
+      "Req": null,
+      "Type": "list"
+    },
+    "pe_comment": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    },
+    "phase_pe": {
+      "Enum": [],
+      "Req": null,
+      "Type": "TBD"
+    },
+    "assessment_timepoint": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    }
+  },
+  "principal_investigator": {
+    "study.clinical_study_designation": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "person_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "pi_first_name": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "pi_last_name": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "pi_middle_initial": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    }
+  },
+  "prior_surgery": {
+    "enrollment.enrollment_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "prior_surgery_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "date_of_surgery": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "datetime"
+    },
+    "procedure": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "anatomical_site_of_surgery": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "surgical_finding": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    },
+    "residual_disease": {
+      "Enum": [],
+      "Req": null,
+      "Type": "TBD"
+    },
+    "therapeutic_indicator": {
+      "Enum": [],
+      "Req": false,
+      "Type": "TBD"
+    }
+  },
+  "prior_therapy": {
+    "enrollment.enrollment_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "prior_therapy_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "date_of_first_dose": {
+      "Enum": [],
+      "Req": null,
+      "Type": "datetime"
+    },
+    "date_of_last_dose": {
+      "Enum": [],
+      "Req": null,
+      "Type": "datetime"
+    },
+    "agent_name": {
+      "Enum": [],
+      "Req": null,
+      "Type": "list"
+    },
+    "dose_schedule": {
+      "Enum": [],
+      "Req": null,
+      "Type": "TBD"
+    },
+    "total_dose": {
+      "Enum": [],
+      "Req": null,
+      "Type": "number"
+    },
+    "agent_units_of_measure": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    },
+    "best_response_to_prior_therapy": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    },
+    "nonresponse_therapy_type": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    },
+    "prior_therapy_type": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    },
+    "prior_steroid_exposure": {
+      "Enum": [],
+      "Req": null,
+      "Type": "boolean"
+    },
+    "number_of_prior_regimens_steroid": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    },
+    "total_number_of_doses_steroid": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    },
+    "date_of_last_dose_steroid": {
+      "Enum": [],
+      "Req": null,
+      "Type": "datetime"
+    },
+    "prior_nsaid_exposure": {
+      "Enum": [],
+      "Req": null,
+      "Type": "boolean"
+    },
+    "number_of_prior_regimens_nsaid": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    },
+    "total_number_of_doses_nsaid": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    },
+    "date_of_last_dose_nsaid": {
+      "Enum": [],
+      "Req": null,
+      "Type": "datetime"
+    },
+    "tx_loc_geo_loc_ind_nsaid": {
+      "Enum": [],
+      "Req": null,
+      "Type": "TBD"
+    },
+    "min_rsdl_dz_tx_ind_nsaids_treatment_pe": {
+      "Enum": [],
+      "Req": null,
+      "Type": "TBD"
+    },
+    "therapy_type": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    },
+    "any_therapy": {
+      "Enum": [],
+      "Req": null,
+      "Type": "boolean"
+    },
+    "number_of_prior_regimens_any_therapy": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    },
+    "total_number_of_doses_any_therapy": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    },
+    "date_of_last_dose_any_therapy": {
+      "Enum": [],
+      "Req": null,
+      "Type": "datetime"
+    },
+    "treatment_performed_at_site": {
+      "Enum": [],
+      "Req": null,
+      "Type": "boolean"
+    },
+    "treatment_performed_in_minimal_residual": {
+      "Enum": [],
+      "Req": null,
+      "Type": "boolean"
+    }
+  },
+  "program": {
+    "program_name": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "program_acronym": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "program_short_description": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "program_full_description": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "program_external_url": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    },
+    "program_sort_order": {
+      "Enum": [],
+      "Req": false,
+      "Type": "integer"
+    }
+  },
+  "publication": {
+    "study.clinical_study_designation": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "publication_title": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "authorship": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "year_of_publication": {
+      "Enum": [],
+      "Req": true,
+      "Type": "number"
+    },
+    "journal_citation": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "digital_object_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "pubmed_id": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "number"
+    }
+  },
+  "registration": {
+    "case.case_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "registration_origin": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "registration_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    }
+  },
+  "sample": {
+    "case.case_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "visit.visit_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "sample_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "sample_site": {
+      "Enum": [
+        "Abdomen",
+        "Abdominal Mass",
+        "Bladder",
+        "Bladder Apex",
+        "Bladder Apex-Mid",
+        "Bladder Mid",
+        "Bladder Mid-Trigone",
+        "Bladder Mucosa",
+        "Bladder Trigone",
+        "Bladder Trigone-Urethra",
+        "Blood",
+        "Bone",
+        "Bone Marrow",
+        "Brain",
+        "Carpus",
+        "Cerebellar",
+        "Colon",
+        "Cranial Sternum",
+        "Cutis",
+        "Diaphragm",
+        "Distal Urethra",
+        "Elbow Joint",
+        "Extradural",
+        "Femur",
+        "Flank",
+        "Genitourinary Tract",
+        "Heart",
+        "Hemispheric",
+        "Hip",
+        "Hock",
+        "Humerus",
+        "Inguinal Region",
+        "Kidney",
+        "Knee Region",
+        "L4 Vertebra",
+        "Lip",
+        "Liver",
+        "Liver, Spleen, Heart",
+        "Lung",
+        "Lung, Caudal Aspect of Left Caudal Lobe",
+        "Lung, Caudal Right Lobe",
+        "Lung, Cranial Left Lobe",
+        "Lymph Node",
+        "Lymph Node, Popliteal",
+        "Mammary Gland",
+        "Mandible",
+        "Mandible, Mucosa",
+        "Maxilla",
+        "Mesentery",
+        "Midline",
+        "Mouth",
+        "Mouth, Lingual",
+        "Mouth, Mandible, Mucosa",
+        "Mouth, Maxilla, Mucosa",
+        "Muscle",
+        "Neck",
+        "Omentum",
+        "Oral Cavity",
+        "Pancreas",
+        "Phalange",
+        "Pleural Effusion",
+        "Radius",
+        "Rib",
+        "Rib Region",
+        "Scapula",
+        "Skeletal Muscle",
+        "Skin",
+        "Skin and Muscle",
+        "Spine",
+        "Spleen",
+        "Stomach",
+        "Subcutaneous Tissue",
+        "Sublumbar",
+        "T11/T13 Vertebrae",
+        "T5 Vertebra",
+        "T6 Vertebra",
+        "Tarsus",
+        "Thigh",
+        "Thoracic Wall",
+        "Thorax",
+        "Thyroid Gland",
+        "Tibia",
+        "Ulna",
+        "Unknown",
+        "Urethra",
+        "Urethra Mid-distal",
+        "Urinary Bladder",
+        "Urogenital Tract",
+        "Uterus"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "physical_sample_type": {
+      "Enum": [
+        "Blood",
+        "Cell Line",
+        "Fractionated Blood (PBMNC)",
+        "Organoid",
+        "Tissue",
+        "Urine Sediment",
+        "Whole Blood"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "general_sample_pathology": {
+      "Enum": [
+        "Benign",
+        "Diseased",
+        "Hyperplastic",
+        "Malignant",
+        "Normal",
+        "Not Applicable"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "tumor_sample_origin": {
+      "Enum": [
+        "Metastatic",
+        "Not Applicable",
+        "Primary",
+        "Unknown"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "summarized_sample_type": {
+      "Enum": [
+        "Metastatic Tumor Tissue",
+        "Normal Cell Line",
+        "Normal Tissue",
+        "Organoid (ASC-derived)",
+        "Peripheral Blood Mononuclear Cells",
+        "Primary Malignant Tumor Tissue",
+        "Tumor Cell Line",
+        "Tumor Cell Line (metastasis-derived)",
+        "Tumoroid",
+        "Tumoroid (urine-derived)",
+        "Urine Sediment",
+        "Whole Blood"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "molecular_subtype": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "specific_sample_pathology": {
+      "Enum": [
+        "Astrocytoma",
+        "B Cell Lymphoma",
+        "Carcinoma",
+        "Carcinoma With Simple And Complex Components",
+        "Chondroblastic Osteosarcoma",
+        "Complex Carcinoma",
+        "Endometrium (organoid)",
+        "Fibroblastic Osteosarcoma",
+        "Fibrosarcoma",
+        "Giant Cell Osteosarcoma",
+        "Hemangiosarcoma",
+        "Histiocytic Sarcoma",
+        "Induced Endometrium",
+        "Liver (organoid)",
+        "Lung (organoid)",
+        "Lymphoma",
+        "Mast Cell Tumor",
+        "Melanoma",
+        "Not Applicable",
+        "Oligodendroglioma",
+        "Osteoblastic and Chondroblastic Osteosarcoma",
+        "Osteoblastic Osteosarcoma",
+        "Osteosarcoma",
+        "Osteosarcoma; Combined Type",
+        "Pancreas (organoid)",
+        "Peripheral Nerve Sheath Tumor",
+        "Primitive T-Cell Leukemia",
+        "Pulmonary Adenocarcinoma",
+        "Pulmonary Carcinoma",
+        "Simple Carcinoma",
+        "Simple Carcinoma, Ductal",
+        "Simple Carcinoma, Ductular",
+        "Simple Carcinoma, Ductular, Vascular Invasive",
+        "Simple Carcinoma, Inflammatory",
+        "Simple Carcinoma, Invasive, Ductal",
+        "Soft Tissue Sarcoma",
+        "T Cell Lymphoma",
+        "Telangiectatic Osteosarcoma",
+        "Undefined",
+        "Undifferentiated Pleiomorphic Sarcoma",
+        "Urinary Bladder (organoid)",
+        "Urothelial Carcinoma",
+        "Urothelial Carcinoma (organoid)"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "date_of_sample_collection": {
+      "Enum": [],
+      "Req": false,
+      "Type": "datetime"
+    },
+    "sample_chronology": {
+      "Enum": [
+        "After Treatment",
+        "Before Treatment",
+        "During Treatment",
+        "Not Applicable",
+        "Unknown",
+        "Upon Death",
+        "Upon Progression",
+        "Upon Relapse"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "necropsy_sample": {
+      "Enum": [
+        "No",
+        "Not Applicable",
+        "Unknown",
+        "Yes"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "tumor_grade": {
+      "Enum": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "High",
+        "Low",
+        "Medium",
+        "Not Applicable",
+        "Not Determined",
+        "Unknown"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "length_of_tumor": {
+      "Enum": [],
+      "Req": false,
+      "Type": "number"
+    },
+    "width_of_tumor": {
+      "Enum": [],
+      "Req": false,
+      "Type": "number"
+    },
+    "volume_of_tumor": {
+      "Enum": [],
+      "Req": false,
+      "Type": "number"
+    },
+    "percentage_tumor": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "sample_preservation": {
+      "Enum": [
+        "EDTA",
+        "FFPE",
+        "Not Applicable",
+        "RNAlater",
+        "Snap Frozen",
+        "TRIzol",
+        "Unknown"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "comment": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    }
+  },
+  "study_arm": {
+    "study.clinical_study_designation": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "arm_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "arm": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    },
+    "arm_description": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    }
+  },
+  "study_site": {
+    "study.clinical_study_designation": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "site_short_name": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "veterinary_medical_center": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "registering_institution": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    }
+  },
+  "study": {
+    "program.program_acronym": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "clinical_study_id": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "clinical_study_designation": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "clinical_study_name": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "clinical_study_description": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "clinical_study_type": {
+      "Enum": [
+        "Adverse Effect Mitigation Study",
+        "Ancillary Study",
+        "Basic Science Research",
+        "Correlative Study",
+        "Cure Study",
+        "Device Feasibility Study",
+        "Diagnosis Study",
+        "Disease Modifying Treatment Study",
+        "Early Detection Study",
+        "Education Training Clinical Study",
+        "Epidemiology Research",
+        "Genomics Research",
+        "Health Services Research",
+        "Imaging Research",
+        "Interventional Study",
+        "Observational Study",
+        "Outcomes Research",
+        "Prevention Study",
+        "Proteomic Research",
+        "Rehabilitation Clinical Study",
+        "Screening Study",
+        "Supportive Care Study",
+        "Transcriptomics Research",
+        "Treatment Study"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "date_of_iacuc_approval": {
+      "Enum": [],
+      "Req": false,
+      "Type": "string"
+    },
+    "dates_of_conduct": {
+      "Enum": [],
+      "Req": "Preferred",
+      "Type": "string"
+    },
+    "accession_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "study_disposition": {
+      "Enum": [
+        "Pending",
+        "Under Embargo",
+        "Unrestricted"
+      ],
+      "Req": true,
+      "Type": "list"
+    },
+    "study_accession": {
+      "Enum": [],
+      "Req": false,
+      "Type": "^phs[0-9]+$"
+    }
+  },
+  "visit": {
+    "case.case_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "cycle.cycle_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "visit_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "visit_date": {
+      "Enum": [],
+      "Req": false,
+      "Type": "datetime"
+    },
+    "visit_number": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    }
+  },
+  "vital_signs": {
+    "visit.visit_record_id": {
+      "Enum": [],
+      "Req": null,
+      "Type": null
+    },
+    "vital_signs_record_id": {
+      "Enum": [],
+      "Req": true,
+      "Type": "string"
+    },
+    "date_of_vital_signs": {
+      "Enum": [],
+      "Req": null,
+      "Type": "datetime"
+    },
+    "body_temperature": {
+      "Enum": [],
+      "Req": null,
+      "Type": "number"
+    },
+    "respiration_rate": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    },
+    "respiration_pattern": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    },
+    "pulse": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    },
+    "pulse_ox": {
+      "Enum": [],
+      "Req": null,
+      "Type": "number"
+    },
+    "systolic_bp": {
+      "Enum": [],
+      "Req": null,
+      "Type": "integer"
+    },
+    "ecg": {
+      "Enum": [],
+      "Req": null,
+      "Type": "TBD"
+    },
+    "patient_weight": {
+      "Enum": [],
+      "Req": null,
+      "Type": "number"
+    },
+    "body_surface_area": {
+      "Enum": [],
+      "Req": null,
+      "Type": "number"
+    },
+    "modified_ecog": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    },
+    "assessment_timepoint": {
+      "Enum": [],
+      "Req": null,
+      "Type": "string"
+    }
+  }
+}
