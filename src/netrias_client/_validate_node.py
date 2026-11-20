@@ -19,6 +19,7 @@ number (1-based, header counted as line 1), not a 0-based row index:
 from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import os
 import shutil
 from uuid import uuid4
 
@@ -54,6 +55,12 @@ _BOOLEAN_VALUES = frozenset({"true", "false", "1", "0", "yes", "no"})
 # per row) since it signals incomplete schema coverage rather than a
 # deliberate "no check needed" like _PERMISSIVE_TYPES.
 _UNDEFINED_TYPE = "TBD"
+
+# 'why': the "_{MMDDYY-HHMMSSffffff}_{4-char-uuid}" tail that
+# chunk_and_validate appends to a source file's stem when it names a run
+# folder — matched here so the stem can be recovered from the folder name
+# when an existing run is revalidated.
+_RUN_FOLDER_SUFFIX = re.compile(r"_\d{6}-\d{12}_[0-9a-f]{4}$")
 
 
 @dataclass
@@ -521,7 +528,174 @@ def _build_final_results(
         }
     return final
 
- 
+
+def _run_folder_name(source_stem: str) -> str:
+    """Build a fresh run folder name: the source file's stem, plus the time
+    the run finished and a short uuid so no two runs ever collide."""
+    return f"{source_stem}_{datetime.now(timezone.utc):%m%d%y-%H%M%S%f}_{uuid4().hex[:4]}"
+
+
+def _source_stem_from_run_folder(run_folder_name: str) -> str:
+    """Recover the source file's stem from an existing run folder's name.
+
+    'why' a regex rather than rsplit("_", 2): the stem itself usually
+    contains underscores (e.g. "sampled_cds_single_sheet"), and a folder
+    renamed by hand may carry no timestamp/uuid suffix at all. The pattern
+    only strips a suffix that actually looks like one this module
+    generated, and otherwise leaves the name alone.
+    """
+    return _RUN_FOLDER_SUFFIX.sub("", run_folder_name)
+
+
+def _collect_existing_chunks(run_folder: Path) -> dict[str, Path]:
+    """Read a previous run's chunks/ folder back as {node: csv_path}.
+
+    'why' the node name comes from the filename: chunk_by_node writes
+    "{node}.csv", so once the recommendations file is out of the picture
+    the filename is the only record of which node a chunk belongs to.
+
+    Raises:
+        FileNotFoundError / NotADirectoryError: run_folder or its chunks/
+            subfolder isn't there.
+        ValueError: chunks/ exists but holds no CSVs, so there would be
+            nothing to validate.
+    """
+    _check_path(run_folder, "dir")
+    chunks_dir = run_folder / "chunks"
+    _check_path(chunks_dir, "dir")
+
+    chunks = {path.stem: path for path in sorted(chunks_dir.glob("*.csv"))}
+    if not chunks:
+        raise ValueError(f"No chunk CSVs found in {chunks_dir}")
+
+    return chunks
+
+
+def _stage_existing_chunks(run_folder: Path, dest_dir: Path) -> dict[str, Path]:
+    """Mirror a previous run's chunks into dest_dir and return
+    {node: staged_csv_path}.
+
+    'why' the chunks are staged into the scratch dir instead of being
+    validated where they lie: it lets a revalidation finish through exactly
+    the same single atomic rename a fresh run uses. The scratch dir ends up
+    holding the complete next run — old chunks, new reports — so that one
+    rename publishes both at once, and nothing about the existing run
+    folder is touched until after it has already succeeded.
+
+    'why' hard links rather than copies: a link is a second name for the
+    very same bytes on disk, so staging costs no extra space and cannot
+    diverge from the original. Once the old run folder is removed, the
+    staged names are the only ones left and the data lives on under them.
+    Filesystems that refuse links fall back to a real copy.
+    """
+    chunks = _collect_existing_chunks(run_folder)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    staged: dict[str, Path] = {}
+    for node, source in chunks.items():
+        destination = dest_dir / source.name
+        try:
+            os.link(source, destination)
+        except OSError:
+            _ = shutil.copy2(source, destination)
+        staged[node] = destination
+
+    return staged
+
+
+def _load_node_recommendations(node_recommendations_path: Path) -> NodeRecommendations:
+    """Read suggest_node's {node: [cde, ...]} output off disk.
+
+    Raises:
+        FileNotFoundError / IsADirectoryError: the path isn't a readable file.
+        ValueError: the file holds an empty mapping, so there'd be no node
+            to chunk by.
+    """
+    _check_path(node_recommendations_path, "file")
+
+    with open(node_recommendations_path, "r", encoding="utf-8") as f:
+        node_recommendations = cast(NodeRecommendations, json.load(f))
+
+    if not node_recommendations:
+        raise ValueError("node_recommendations is empty or None")
+
+    return node_recommendations
+
+
+def _validate_chunks(
+    chunks: dict[str, Path],
+    target_schema: str,
+    data_model_outputs_root: Path,
+    reports_dir: Path,
+) -> dict[str, dict[str, ValidationReport | Path]]:
+    """Validate every node chunk, writing one report JSON per node into
+    reports_dir, and return {node: {"csv_path", "report"}}.
+
+    'why' shared by both the fresh and the revalidate path: the only thing
+    that differs between them is where the chunks came from, not how they
+    get checked or how their parent sheets are resolved.
+    """
+    relationships = _load_relationships(target_schema, data_model_outputs_root)
+
+    results: dict[str, dict[str, ValidationReport | Path]] = {}
+    for node, csv_path in chunks.items():
+        parent_names = relationships.get(node, [])
+        parent_sheets = {p: chunks[p] for p in parent_names if p in chunks}
+
+        report = validate_node(
+            node_csv_path=csv_path,
+            node=node,
+            target_schema=target_schema,
+            data_model_outputs_root=data_model_outputs_root,
+            output_path=reports_dir / f"{node}_validation.json",
+            parent_sheets=parent_sheets,
+        )
+
+        results[node] = {"csv_path": csv_path, "report": report}
+
+    if len(results) != len(chunks):
+        raise RuntimeError(
+            f"Expected {len(chunks)} validated node(s), got {len(results)} — refusing to publish partial results."
+        )
+
+    return results
+
+
+def _publish_new_run(scratch_dir: Path, output_dir: Path, source_stem: str) -> Path:
+    """Move a completed scratch build into its own new run folder.
+
+    'why' this is the one atomic step: scratch_dir and the run folder are
+    both direct children of output_dir (same filesystem), so this rename is
+    guaranteed atomic by the OS — the run folder either doesn't exist yet,
+    or exists complete with everything inside it. Every chunk CSV and every
+    report JSON physically moves in this one step; nothing needs to be
+    individually copied or re-written afterward.
+    """
+    run_folder = output_dir / _run_folder_name(source_stem)
+    _ = scratch_dir.rename(run_folder)
+    return run_folder
+
+
+def _remove_existing_folder(folder: Path) -> None:
+    """Delete the run folder a revalidation has just replaced.
+
+    'why' a failure here warns instead of raising: this only ever runs
+    after the publishing rename, so every chunk worth keeping is already
+    reachable under the new folder's name and this folder is pure
+    redundancy. A delete that fails costs a stale duplicate on disk, never
+    data — and raising would turn that into a failed run whose results had
+    in fact been published successfully.
+
+    'why' it's reported rather than ignored outright: a leftover duplicate
+    is confusing to whoever reads output_dir next, since two run folders
+    for the same source file give no hint as to which one is valid.
+    """
+    try:
+        shutil.rmtree(folder)
+    except OSError as exc:
+        print(f"WARNING: could not remove the old run folder {folder}: {exc}")
+
+
 def chunk_and_validate(
     source_path: Path,
     harmonized_csv_path: Path,
@@ -529,6 +703,7 @@ def chunk_and_validate(
     target_schema: str,
     data_model_outputs_root: Path,
     output_dir: Path,
+    existing_run_folder: str | None = None,
 ) -> dict[str, dict[str, ValidationReport | Path]]:
     """Chunk a harmonized CSV by node, validate every resulting chunk, and
     publish the results into a brand-new, uniquely-named run folder inside
@@ -539,10 +714,28 @@ def chunk_and_validate(
     contains "chunks/" (one CSV per node) and "reports/" (one validation
     JSON per node).
 
-    'why' a fresh run folder every call, instead of writing into a shared
-    chunks_output_dir/reports_output_dir: avoids the trouble of cleaning 
-    up a previous run's leftovers, and makes it easy to compare two runs 
-    side-by-side (e.g. before/after a schema update) without overwriting
+    Pass existing_run_folder — the *name* of a run folder already sitting
+    in output_dir, e.g. "sampled_cds_single_sheet_092926-201321357818_c717"
+    — to skip chunking entirely and revalidate that run's existing chunks
+    instead. Those chunks carry over unchanged, its reports/ are replaced
+    with freshly-written ones, and the folder ends up renamed: same
+    source-file stem, new timestamp and uuid. harmonized_csv_path and
+    node_recommendations_path are unused in that mode.
+
+    'why' the revalidated run still gets a new folder name: the timestamp
+    in the name is meant to say when the reports inside were produced, so
+    keeping the old name on freshly-written reports would be wrong.
+
+    'why' a revalidation goes through the same publish-then-delete path as
+    a fresh run rather than editing the existing folder in place: replacing
+    reports/ and renaming the folder are two distinct changes, and making
+    them in place means a crash between the two leaves a folder whose name
+    disagrees with its contents. Staging the existing chunks (as hard
+    links, so it costs no space) next to the new reports instead makes the
+    scratch dir a complete run in its own right, so the single rename that
+    publishes it commits both changes at once. The superseded folder is
+    deleted only afterwards, where failing to delete it costs nothing but
+    a stale duplicate.
 
     'why' everything is built in a hidden scratch folder inside output_dir,
     not tempfile.TemporaryDirectory (which usually resolves to /tmp, a
@@ -559,69 +752,50 @@ def chunk_and_validate(
 
     Returns {node: {"csv_path": Path, "report_path": Path, "report": ValidationReport}},
     with csv_path and report_path pointing at the files' final locations
-    inside the new run folder.
+    inside the new (or newly-renamed) run folder.
 
     Raises:
-        FileNotFoundError: node_recommendations_path doesn't exist.
+        FileNotFoundError: node_recommendations_path, or the named
+            existing run folder, doesn't exist.
+        ValueError: node_recommendations is empty, or the named existing
+            run folder holds no chunk CSVs.
         Whatever chunk_by_node or validate_node raise, propagated unchanged.
     """
-    _check_path(node_recommendations_path, "file")
-
-    with open(node_recommendations_path, "r", encoding="utf-8") as f:
-        node_recommendations = cast(NodeRecommendations, json.load(f))
-
-    if not node_recommendations:
-        raise ValueError("node_recommendations is empty or None")
-
     _ = output_dir.mkdir(parents=True, exist_ok=True)
     scratch_dir = output_dir / f".tmp-{uuid4().hex[:4]}"
 
+    existing_folder = output_dir / existing_run_folder if existing_run_folder is not None else None
+
     try:
-        chunks = chunk_by_node(
-            harmonized_csv_path=harmonized_csv_path,
-            node_recommendations=node_recommendations,
-            output_dir=scratch_dir / "chunks",
+        if existing_folder is not None:
+            chunks = _stage_existing_chunks(existing_folder, scratch_dir / "chunks")
+            source_stem = _source_stem_from_run_folder(existing_folder.name)
+        else:
+            chunks = chunk_by_node(
+                harmonized_csv_path=harmonized_csv_path,
+                node_recommendations=_load_node_recommendations(node_recommendations_path),
+                output_dir=scratch_dir / "chunks",
+            )
+            source_stem = source_path.stem
+
+        results = _validate_chunks(
+            chunks=chunks,
+            target_schema=target_schema,
+            data_model_outputs_root=data_model_outputs_root,
+            reports_dir=scratch_dir / "reports",
         )
-
-        relationships = _load_relationships(target_schema, data_model_outputs_root)
-
-        results: dict[str, dict[str, ValidationReport | Path]] = {}
-        for node, csv_path in chunks.items():
-            parent_names = relationships.get(node, [])
-            parent_sheets = {p: chunks[p] for p in parent_names if p in chunks}
-
-            report = validate_node(
-                node_csv_path=csv_path,
-                node=node,
-                target_schema=target_schema,
-                data_model_outputs_root=data_model_outputs_root,
-                output_path=scratch_dir / "reports" / f"{node}_validation.json",
-                parent_sheets=parent_sheets,
-            )
-
-            results[node] = {"csv_path": csv_path, "report": report}
-
-        if len(results) != len(chunks):
-            raise RuntimeError(
-                f"Expected {len(chunks)} validated node(s), got {len(results)} — refusing to publish partial results."
-            )
 
         # 'why' the run folder's timestamp is computed now, right before
         # publishing, not at the top of the function: it reflects when
         # the run actually completed
-        run_folder_name = (
-            f"{source_path.stem}_"
-            f"{datetime.now(timezone.utc):%m%d%y-%H%M%S%f}_{uuid4().hex[:4]}"
-        )
-        run_folder = output_dir / run_folder_name
+        run_folder = _publish_new_run(scratch_dir, output_dir, source_stem)
 
-        # 'why' this is the one atomic step: scratch_dir and run_folder are
-        # both direct children of output_dir (same filesystem), so this
-        # rename is guaranteed atomic by the OS — run_folder either doesn't
-        # exist yet, or exists complete with everything inside it. Every
-        # chunk CSV and every report JSON physically moves in this one step;
-        # nothing needs to be individually copied or re-written afterward.
-        _ = scratch_dir.rename(run_folder)
+        # 'why' strictly after the rename above: that rename is the commit
+        # point for both the new reports and the new folder name, so until
+        # it has succeeded the existing run folder is still the only copy
+        # of the chunks and has to stay exactly as it was.
+        if existing_folder is not None:
+            _remove_existing_folder(existing_folder)
 
         final_results = _build_final_results(results, run_folder)
 

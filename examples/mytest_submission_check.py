@@ -57,4 +57,5 @@ result = client.chunk_and_validate(
     target_schema="gc",
     data_model_outputs_root=EXAMPLE_DIR / "data",
     output_dir=EXAMPLE_DIR / "output",
+    existing_run_folder="sampled_cds_single_sheet_102826-170232697008_5449",
 )

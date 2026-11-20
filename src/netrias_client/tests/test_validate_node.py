@@ -30,6 +30,7 @@ from netrias_client._validate_node import (
     _matches_semantic_type,
     _read_csv_rows,
     _should_check_type,
+    _source_stem_from_run_folder,
     _summarize_fk_results,
     _value_matches_type,
     check_foreign_keys,
@@ -1016,3 +1017,170 @@ def test_chunk_and_validate_empty_recommendations_raises(workspace: Path) -> Non
             data_model_outputs_root=workspace,
             output_dir=workspace / "output" / "runs_empty_recs",
         )
+
+
+# ---------------------------------------------------------------------------
+# chunk_and_validate — existing_run_folder (revalidate without re-chunking)
+# ---------------------------------------------------------------------------
+
+def _revalidate(workspace: Path, run_folder_name: str) -> dict[str, dict[str, ValidationReport | Path]]:
+    """Helper: rerun validation against an already-published run folder.
+
+    'why' the chunking inputs are still passed: they're unused in this mode
+    but still required by the signature, and passing them mirrors what a
+    caller editing an existing script would actually do."""
+    return chunk_and_validate(
+        source_path=workspace / "my_source_data.csv",
+        harmonized_csv_path=workspace / "output" / "harmonized.csv",
+        node_recommendations_path=workspace / "output" / "suggested_nodes.json",
+        target_schema="ctdc",
+        data_model_outputs_root=workspace,
+        output_dir=workspace / "output" / "runs",
+        existing_run_folder=run_folder_name,
+    )
+
+
+def _published_run_folder(results: dict[str, dict[str, ValidationReport | Path]]) -> Path:
+    csv_path = results["diagnosis"]["csv_path"]
+    assert isinstance(csv_path, Path)
+    return csv_path.parent.parent
+
+
+def test_existing_run_folder_reuses_chunks_and_renames_folder(workspace: Path) -> None:
+    """Revalidating an existing run keeps its chunks, renames the folder
+    with a fresh timestamp/uuid, and leaves the old name behind."""
+    existing_run = _published_run_folder(_call_chunk_and_validate(workspace))
+    chunk_bytes = (existing_run / "chunks" / "diagnosis.csv").read_bytes()
+
+    results = _revalidate(workspace, existing_run.name)
+    renamed = _published_run_folder(results)
+
+    assert renamed != existing_run
+    assert not existing_run.exists()
+    assert renamed.name.startswith("my_source_data_")
+    assert (renamed / "chunks" / "diagnosis.csv").read_bytes() == chunk_bytes
+    assert (renamed / "reports" / "diagnosis_validation.json").exists()
+
+
+def test_existing_run_folder_replaces_reports_folder(workspace: Path) -> None:
+    """The reports/ folder is replaced wholesale — a stale report left over
+    from the previous run does not survive into the renamed folder."""
+    existing_run = _published_run_folder(_call_chunk_and_validate(workspace))
+    _ = (existing_run / "reports" / "stale_validation.json").write_text("{}", encoding="utf-8")
+
+    renamed = _published_run_folder(_revalidate(workspace, existing_run.name))
+
+    assert not (renamed / "reports" / "stale_validation.json").exists()
+    assert (renamed / "reports" / "diagnosis_validation.json").exists()
+
+
+def test_existing_run_folder_returns_reports_in_memory(workspace: Path) -> None:
+    """Revalidating returns the same shape as a fresh run, with paths
+    pointing inside the renamed folder."""
+    existing_run = _published_run_folder(_call_chunk_and_validate(workspace))
+
+    results = _revalidate(workspace, existing_run.name)
+
+    report = results["diagnosis"]["report"]
+    report_path = results["diagnosis"]["report_path"]
+    assert isinstance(report, dict)
+    assert isinstance(report_path, Path)
+    assert report["node"] == "diagnosis"
+    assert report_path.exists()
+
+
+def test_existing_run_folder_leaves_exactly_one_run_folder(workspace: Path) -> None:
+    """The superseded folder is removed once the new one is published, so a
+    revalidation never accumulates folders."""
+    existing_run = _published_run_folder(_call_chunk_and_validate(workspace))
+    runs_dir = workspace / "output" / "runs"
+
+    renamed = _published_run_folder(_revalidate(workspace, existing_run.name))
+
+    published = [p for p in runs_dir.iterdir() if not p.name.startswith(".")]
+    assert published == [renamed]
+
+
+def test_existing_run_folder_stages_chunks_without_copying_bytes(workspace: Path) -> None:
+    """Carried-over chunks are hard links to the originals, not copies — the
+    staged file is the same inode, so staging costs no disk space."""
+    existing_run = _published_run_folder(_call_chunk_and_validate(workspace))
+    existing_chunk = existing_run / "chunks" / "diagnosis.csv"
+    existing_inode = existing_chunk.stat().st_ino
+
+    renamed = _published_run_folder(_revalidate(workspace, existing_run.name))
+
+    assert (renamed / "chunks" / "diagnosis.csv").stat().st_ino == existing_inode
+
+
+def test_revalidation_creates_run_folder_with_chunks_and_reports(workspace: Path) -> None:
+    """A revalidation publishes a complete run folder, same as a fresh run:
+    a chunks/ holding exactly the files carried over from the previous run,
+    and a reports/ beside it. This is what lets the single publishing
+    rename stand in for both the new reports and the new folder name."""
+    existing_run = _published_run_folder(_call_chunk_and_validate(workspace))
+    chunk_names = sorted(p.name for p in (existing_run / "chunks").iterdir())
+
+    renamed = _published_run_folder(_revalidate(workspace, existing_run.name))
+
+    assert (renamed / "chunks").is_dir()
+    assert (renamed / "reports").is_dir()
+    assert sorted(p.name for p in (renamed / "chunks").iterdir()) == chunk_names
+
+
+def test_existing_run_folder_missing_raises(workspace: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        _ = _revalidate(workspace, "no_such_run_folder")
+
+
+def test_existing_run_folder_without_chunks_raises(workspace: Path) -> None:
+    """A folder that exists but has no chunks/ subfolder is an error, not an
+    empty result — there'd be nothing at all to validate."""
+    empty_run = workspace / "output" / "runs" / "my_source_data_010125-000000000000_abcd"
+    empty_run.mkdir(parents=True)
+
+    with pytest.raises(FileNotFoundError):
+        _ = _revalidate(workspace, empty_run.name)
+
+
+def test_existing_run_folder_with_empty_chunks_dir_raises(workspace: Path) -> None:
+    empty_run = workspace / "output" / "runs" / "my_source_data_010125-000000000000_beef"
+    (empty_run / "chunks").mkdir(parents=True)
+
+    with pytest.raises(ValueError, match="No chunk CSVs"):
+        _ = _revalidate(workspace, empty_run.name)
+
+
+def test_revalidation_failure_leaves_existing_run_untouched(workspace: Path) -> None:
+    """If a revalidation raises, the run folder it was given keeps its name
+    and its reports byte-for-byte, and no scratch work is left behind —
+    nothing is half-swapped. This is what publishing before deleting buys."""
+    existing_run = _published_run_folder(_call_chunk_and_validate(workspace))
+    report_path = existing_run / "reports" / "diagnosis_validation.json"
+    report_before = report_path.read_bytes()
+    # 'why' a chunk named after a node the schema doesn't define: the node
+    # name is read from the chunk's filename, so this makes validate_node
+    # raise partway through the revalidation.
+    _ = (existing_run / "chunks" / "not_a_real_node.csv").write_text("type\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="not defined"):
+        _ = _revalidate(workspace, existing_run.name)
+
+    assert existing_run.exists()
+    assert report_path.read_bytes() == report_before
+    scratch_dirs = [p for p in (workspace / "output" / "runs").iterdir() if p.name.startswith(".tmp-")]
+    assert scratch_dirs == []
+
+
+@pytest.mark.parametrize(
+    ("folder_name", "expected"),
+    [
+        ("sampled_cds_single_sheet_092926-201321357818_c717", "sampled_cds_single_sheet"),
+        ("my_source_data_010125-000000000000_abcd", "my_source_data"),
+        ("hand_renamed_folder", "hand_renamed_folder"),
+    ],
+)
+def test_source_stem_from_run_folder(folder_name: str, expected: str) -> None:
+    """The stem survives underscores in the filename, and a folder with no
+    generated suffix is left exactly as-is."""
+    assert _source_stem_from_run_folder(folder_name) == expected

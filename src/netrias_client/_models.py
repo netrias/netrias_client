@@ -132,6 +132,7 @@ class ChunkAndValidateSignature(Protocol):
         target_schema: str,
         data_model_outputs_root: Path,
         output_dir: Path,
+        existing_run_folder: str | None = None,
     ) -> dict[str, dict[str, ValidationReport | Path]]: ...
     
 
